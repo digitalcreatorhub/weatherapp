@@ -476,9 +476,10 @@ function sunElev(sp, lat, lon) {
   const la = lat*RAD, H = ((sp.utcMin + sp.eqt + 4*lon)/4 - 180)*RAD;
   return Math.asin(Math.sin(la)*Math.sin(sp.decl) + Math.cos(la)*Math.cos(sp.decl)*Math.cos(H))/RAD;
 }
-/* ---------- карты на Leaflet: подложка CARTO, слои погоды, ветер, города ---------- */
-const BASE_URL = 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png';
-const BASE_ATTR = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> © <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
+/* ---------- карты на Leaflet: подложка Esri, слои погоды, ветер, города ---------- */
+/* тёмная подложка Esri World Dark Gray: бесплатна и без ключа (CARTO с осени 2026 требует ключ) */
+const BASE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+const BASE_ATTR = 'Powered by <a href="https://www.esri.com/" target="_blank" rel="noopener noreferrer">Esri</a> · Esri, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>';
 const LV_BOUNDS = [[55.66, 20.95], [58.09, 28.25]];
 const MAP_LAYERS = ['clouds', 'precip', 'temp'];
 const MAP_KEY = {clouds:'cloud_cover', precip:'precipitation', temp:'temperature_2m'};
@@ -492,7 +493,7 @@ function makeMap(el) {
   const map = L.map(el, {zoomSnap:.25, zoomDelta:.5, minZoom:5.5, maxZoom:10, scrollWheelZoom:false, dragging:!mobile, tap:false,
     maxBounds:[[53.4, 17], [60.4, 32.5]], maxBoundsViscosity:.9, attributionControl:true, zoomControl:true, fadeAnimation:true});
   map.attributionControl.setPrefix(false);
-  L.tileLayer(BASE_URL, {subdomains:'abcd', maxZoom:12, attribution:BASE_ATTR, className:'basemap'}).addTo(map);
+  L.tileLayer(BASE_URL, {maxNativeZoom:16, maxZoom:12, attribution:BASE_ATTR, className:'basemap'}).addTo(map);
   map._fitLV = () => { map.invalidateSize(); map.fitBounds(LV_BOUNDS, {padding:[4, 4], animate:false}); map._fitZ = map.getZoom(); };
   map._fitLV();
   /* на телефоне карта не перехватывает прокрутку страницы: двигать можно после приближения двумя пальцами */

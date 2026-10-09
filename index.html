@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Meteo LV: погода и радар Латвии</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.rainviewer.com https://*.basemaps.cartocdn.com; connect-src 'self' https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://marine-api.open-meteo.com https://api.rainviewer.com https://feeds.meteoalarm.org; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.rainviewer.com https://server.arcgisonline.com; connect-src 'self' https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://marine-api.open-meteo.com https://api.rainviewer.com https://feeds.meteoalarm.org; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
@@ -133,7 +133,7 @@
   .lmap{width:100%;height:clamp(260px,64vw,470px);background:#0b1622;border-top:1px solid var(--edge);border-bottom:1px solid var(--edge);z-index:0}
   .rmap{height:clamp(240px,58vw,380px);border:1px solid var(--edge);border-radius:16px;overflow:hidden}
   .leaflet-container{font:inherit;background:#0b1622;outline:0}
-  .basemap{filter:brightness(1.35) contrast(1.08) saturate(.9)}
+  .basemap{filter:brightness(1.2) contrast(1.06)}
   .leaflet-bar{border:1px solid var(--edge)!important;border-radius:12px!important;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.35)!important}
   .leaflet-bar a{background:rgba(10,21,34,.86)!important;color:var(--text)!important;border-bottom-color:var(--edge)!important;width:34px!important;height:34px!important;line-height:34px!important}
   .leaflet-bar a:hover{background:rgba(30,50,72,.95)!important}
