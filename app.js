@@ -127,7 +127,8 @@ function rebuildPlaces() {
 rebuildPlaces();
 
 /* ---------- состояние ---------- */
-const L0 = 20.9, L1 = 28.3, A0 = 55.6, A1 = 58.0, NLAT = 6, NLON = 9;
+const L0 = 19.4, L1 = 29.8, A0 = 54.7, A1 = 58.9, NLAT = 8, NLON = 12;   /* сетка прогноза шире Латвии: края поля уходят за видимую карту */
+const inLV = (la, lo) => la >= 55.6 && la <= 58.1 && lo >= 20.9 && lo <= 28.3;
 const LATVIA = [[57.76,22.59],[57.6,22.0],[57.39,21.55],[57.0,21.2],[56.51,21.01],[56.07,21.06],[56.15,21.7],[56.1,22.2],[56.25,22.9],[56.1,23.4],[56.07,24.0],[56.1,24.6],[56.0,25.3],[55.9,26.0],[55.7,26.6],[55.9,27.3],[56.1,28.15],[56.6,28.15],[57.0,27.9],[57.5,27.35],[57.57,26.6],[57.78,26.03],[57.87,25.2],[57.87,24.36],[57.55,24.35],[57.26,24.4],[56.95,24.1],[56.97,23.6],[57.15,23.2],[57.5,22.8]];
 const GRID_VARS = ['cloud_cover','precipitation','temperature_2m','wind_speed_10m','wind_direction_10m'];
 const REFRESH = {current:60e3, point:15*60e3, cities:15*60e3, grid:30*60e3, radar:10*60e3, now:5*60e3, official:15*60e3, sea:30*60e3, road:15*60e3};
@@ -505,10 +506,13 @@ function makeMap(el) {
 }
 
 /* поля погоды по сетке 6×9 точек */
+/* плавная (бикубическая, Катмулл — Ром) интерполяция между точками сетки: без «квадратов» */
+const cr = (p0, p1, p2, p3, t) => p1 + .5*t*(p2 - p0 + t*(2*p0 - 5*p1 + 4*p2 - p3 + t*(3*(p1 - p2) + p3 - p0)));
 function gridVal(f, lat, lon) {
-  const gi = clamp((lat - A0)/(A1 - A0), 0, 1)*(NLAT - 1), i0 = Math.min(Math.floor(gi), NLAT - 2), fi = gi - i0;
-  const gj = clamp((lon - L0)/(L1 - L0), 0, 1)*(NLON - 1), j0 = Math.min(Math.floor(gj), NLON - 2), fj = gj - j0;
-  return (f[i0][j0]*(1 - fj) + f[i0][j0 + 1]*fj)*(1 - fi) + (f[i0 + 1][j0]*(1 - fj) + f[i0 + 1][j0 + 1]*fj)*fi;
+  const gi = clamp((lat - A0)/(A1 - A0), 0, 1)*(NLAT - 1), i1 = Math.min(Math.floor(gi), NLAT - 2), fi = gi - i1;
+  const gj = clamp((lon - L0)/(L1 - L0), 0, 1)*(NLON - 1), j1 = Math.min(Math.floor(gj), NLON - 2), fj = gj - j1;
+  const row = i => { const r = f[clamp(i, 0, NLAT - 1)], c = j => r[clamp(j, 0, NLON - 1)]; return cr(c(j1 - 1), c(j1), c(j1 + 1), c(j1 + 2), fj); };
+  return cr(row(i1 - 1), row(i1), row(i1 + 1), row(i1 + 2), fi);
 }
 function windField(p) {
   const h0 = Math.min(Math.floor(p), gridN - 1), h1 = Math.min(h0 + 1, gridN - 1), f = p - h0;
@@ -521,7 +525,7 @@ function windField(p) {
   }
   return {U, V};
 }
-const PRECIP_STOPS = [[0.05, [120, 200, 255, .0]], [0.15, [120, 200, 255, .32]], [0.6, [70, 160, 255, .5]], [2, [70, 100, 240, .62]], [5, [150, 70, 225, .74]], [10, [235, 70, 160, .85]]];
+const PRECIP_STOPS = [[0.02, [120, 200, 255, .0]], [0.3, [120, 200, 255, .34]], [0.6, [70, 160, 255, .5]], [2, [70, 100, 240, .62]], [5, [150, 70, 225, .74]], [10, [235, 70, 160, .85]]];
 function precipColor(v) {
   if (v <= PRECIP_STOPS[0][0]) return [0, 0, 0, 0];
   for (let i = 1; i < PRECIP_STOPS.length; i++) {
@@ -574,25 +578,76 @@ function wmBuildField(ms) {
       const lon = L0 + (x + .5)/IW*(L1 - L0), v = gridVal(f, lat, lon), p = (y*IW + x)*4;
       const edge = Math.min(x, IW - 1 - x, y, IH - 1 - y)/(IW*0.07), fe = clamp(edge, 0, 1), feather = fe*fe*(3 - 2*fe);
       let r, g, b, a;
-      if (layer === 'clouds') { const tt = clamp(v/100, 0, 1); r = 236; g = 243; b = 250; a = Math.pow(tt, 1.15)*.82; }
+      let k = clamp((sunElev(sp, lat, lon) + 6)/12, 0, 1); k = k*k*(3 - 2*k);
+      if (layer === 'clouds') { const tt = clamp(v/100, 0, 1); r = 128 + 112*k; g = 142 + 104*k; b = 170 + 82*k; a = Math.pow(tt, 1.1)*.96; }
       else if (layer === 'precip') { [r, g, b, a] = precipColor(v); }
       else { [r, g, b] = rgbOf(tempColor(v)); a = .5; }
       im.data[p] = r; im.data[p + 1] = g; im.data[p + 2] = b; im.data[p + 3] = Math.round(255*a*feather);
-      let k = clamp((sunElev(sp, lat, lon) + 6)/12, 0, 1); k = k*k*(3 - 2*k);
       nm.data[p] = 0; nm.data[p + 1] = 4; nm.data[p + 2] = 22; nm.data[p + 3] = Math.round((1 - k)*110*feather);
     }
   }
   c1.putImageData(im, 0, 0); c2.putImageData(nm, 0, 0);
-  for (let i = 0; i < NLAT; i++) for (let j = 0; j < NLON; j++) sum += f[i][j];
-  WM.mean = sum/(NLAT*NLON);
+  let cnt = 0;
+  for (let i = 0; i < NLAT; i++) for (let j = 0; j < NLON; j++) if (inLV(lats[i], lons[j])) { sum += f[i][j]; cnt++; }
+  WM.mean = cnt ? sum/cnt : null;
 }
-function wmFrame() {
+/* бесшовный шум (несколько октав) — фактура облаков и осадков */
+function makeNoise(size, cells, lo, hi, seed) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = size;
+  const ctx = cv.getContext('2d'), im = ctx.createImageData(size, size), acc = new Float32Array(size*size);
+  let sd = seed; const rnd = () => { sd = (sd*16807) % 2147483647; return sd/2147483647; };
+  let amp = 1, tot = 0;
+  for (let o = 0; o < 4; o++) {
+    const n = cells << o, g = Array.from({length:n*n}, rnd), st = size/n;
+    for (let y = 0; y < size; y++) {
+      const gy = y/st, y0 = Math.floor(gy), fy = gy - y0, sy = fy*fy*(3 - 2*fy), y1 = (y0 + 1) % n;
+      for (let x = 0; x < size; x++) {
+        const gx = x/st, x0 = Math.floor(gx), fx = gx - x0, sx = fx*fx*(3 - 2*fx), x1 = (x0 + 1) % n;
+        const a = g[y0*n + x0]*(1 - sx) + g[y0*n + x1]*sx, b = g[y1*n + x0]*(1 - sx) + g[y1*n + x1]*sx;
+        acc[y*size + x] += (a*(1 - sy) + b*sy)*amp;
+      }
+    }
+    tot += amp; amp *= .5;
+  }
+  for (let i = 0; i < size*size; i++) {
+    let v = acc[i]/tot; v = clamp((v - .28)/.5, 0, 1); v = v*v*(3 - 2*v);
+    im.data[i*4] = im.data[i*4 + 1] = im.data[i*4 + 2] = 255; im.data[i*4 + 3] = Math.round(255*(lo + (hi - lo)*v));
+  }
+  ctx.putImageData(im, 0, 0);
+  return cv;
+}
+function wmTex() {
+  if (WM.tex) return WM.tex;
+  const c = WM.fc.getContext('2d');
+  WM.tex = {a:c.createPattern(makeNoise(256, 4, .5, 1, 7), 'repeat'), b:c.createPattern(makeNoise(256, 8, .62, 1, 31), 'repeat'),
+    p:c.createPattern(makeNoise(256, 6, .72, 1, 13), 'repeat'), ox:0, oy:0, ox2:0, oy2:0, last:0};
+  WM.tmp = document.createElement('canvas');
+  return WM.tex;
+}
+function wmFrame(ts) {
   if (!WM.map) return;
   wmPlace();
   const c = WM.fc.getContext('2d'); c.clearRect(0, 0, WM.W, WM.H);
   if (!grid) return;
   const r = wmRect(); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
-  c.drawImage(WM.nimg, r.x, r.y, r.w, r.h); c.drawImage(WM.img, r.x, r.y, r.w, r.h);
+  c.drawImage(WM.nimg, r.x, r.y, r.w, r.h);
+  if (layer === 'temp') { c.drawImage(WM.img, r.x, r.y, r.w, r.h); return; }
+  /* облака и осадки: поле × движущаяся фактура */
+  const T = wmTex(), now = ts || performance.now(), dt = T.last ? Math.min(.1, (now - T.last)/1000) : 0; T.last = now;
+  const w = WM.wmean || {u:3, v:0}, sp = layer === 'clouds' ? 2.2 : 3;
+  T.ox -= w.u*sp*dt; T.oy += w.v*sp*dt; T.ox2 -= w.u*sp*1.6*dt; T.oy2 += w.v*sp*1.6*dt;
+  const tc = WM.tmp; if (tc.width !== WM.fc.width || tc.height !== WM.fc.height) { tc.width = WM.fc.width; tc.height = WM.fc.height; }
+  const t = tc.getContext('2d'); t.setTransform(WM.dpr, 0, 0, WM.dpr, 0, 0);
+  t.globalCompositeOperation = 'source-over'; t.clearRect(0, 0, WM.W, WM.H);
+  t.imageSmoothingEnabled = true; t.filter = `blur(${layer === 'precip' ? 6 : 3}px)`; t.drawImage(WM.img, r.x, r.y, r.w, r.h); t.filter = 'none';
+  t.globalCompositeOperation = 'destination-in';
+  const z = Math.pow(2, (WM.map.getZoom() - 6.2)*.6), mod = (v, m) => ((v % m) + m) % m;
+  const layerFill = (pat, ox, oy, sc) => { t.save(); t.translate(mod(ox, 256*sc), mod(oy, 256*sc)); t.scale(sc, sc); t.fillStyle = pat;
+    t.fillRect(-256, -256, WM.W/sc + 512, WM.H/sc + 512); t.restore(); };
+  if (layer === 'clouds') { layerFill(T.a, T.ox, T.oy, 1.3*z); layerFill(T.b, T.ox2, T.oy2, .8*z); }
+  else layerFill(T.p, T.ox, T.oy, 1.1*z);
+  t.globalCompositeOperation = 'source-over';
+  c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(tc, 0, 0); c.setTransform(WM.dpr, 0, 0, WM.dpr, 0, 0);
 }
 
 /* ветер: частицы, которые текут по полю ветра (как в больших погодных приложениях) */
@@ -607,6 +662,8 @@ function wmVel() {
     const q = (r*cols + c)*2; vel[q] = gridVal(U, ll.lat, ll.lng)*k; vel[q + 1] = -gridVal(V, ll.lat, ll.lng)*k;
   }
   WM.vel = {vel, cols, rows, step}; WM.velPos = pos;
+  { let su = 0, sv = 0, n = 0; for (let i = 0; i < NLAT; i++) for (let j = 0; j < NLON; j++) if (inLV(lats[i], lons[j])) { su += U[i][j]; sv += V[i][j]; n++; }
+    WM.wmean = n ? {u:su/n, v:sv/n} : {u:3, v:0}; }
   const rr = wmRect(), x0 = Math.max(0, rr.x), y0 = Math.max(0, rr.y), x1 = Math.min(W, rr.x + rr.w), y1 = Math.min(H, rr.y + rr.h);
   WM.spawn = {x0, y0, w:Math.max(1, x1 - x0), h:Math.max(1, y1 - y0)};
   const n = Math.min(1100, Math.round(WM.spawn.w*WM.spawn.h/430));
@@ -635,20 +692,23 @@ function wmParticles(fade) {
   });
   c.stroke();
 }
+const animTex = () => layer !== 'temp';
 function wmLoop(ts) {
   WM.raf = 0;
-  if (!windOn || !grid || !WM.visible || document.hidden || reducedMotion()) return;
+  if (!grid || !WM.visible || document.hidden || reducedMotion() || (!windOn && !animTex())) return;
   if (ts - WM.last >= 33) {
     WM.last = ts;
     if (!WM.velKey || Math.abs(WM.velPos - pos) > .05) { WM.velKey = 'ok'; wmVel(); wmClearParts(); }
-    wmParticles(true);
+    if (animTex()) wmFrame(ts);
+    if (windOn) wmParticles(true);
   }
   WM.raf = requestAnimationFrame(wmLoop);
 }
 function wmKick() {
   if (!WM.map) return;
-  if (!windOn || !grid) { wmClearParts(); return; }
-  if (reducedMotion()) { wmVel(); wmClearParts(); for (let i = 0; i < 26; i++) wmParticles(false); WM.velKey = 'ok'; return; }
+  if (!grid) return;
+  if (!windOn) wmClearParts();
+  if (reducedMotion()) { wmVel(); wmFrame(); wmClearParts(); if (windOn) { for (let i = 0; i < 26; i++) wmParticles(false); } WM.velKey = 'ok'; return; }
   if (!WM.raf && WM.visible && !document.hidden) WM.raf = requestAnimationFrame(wmLoop);
 }
 
@@ -760,7 +820,8 @@ function setLive(v) { live = v; $('nowbtn').setAttribute('aria-pressed', v); if 
 function buildStrip() {
   if (!grid) return;
   const times = grid[0].hourly.time, s = $('strip'), key = MAP_KEY[layer];
-  const means = times.map((_, h) => grid.reduce((a, p) => a + (p.hourly[key] ? p.hourly[key][h] ?? 0 : 0), 0)/grid.length);
+  const lvIdx = grid.map((_, ix) => ix).filter(ix => inLV(lats[Math.floor(ix/NLON)], lons[ix % NLON]));
+  const means = times.map((_, h) => lvIdx.reduce((a, ix) => a + (grid[ix].hourly[key] ? grid[ix].hourly[key][h] ?? 0 : 0), 0)/Math.max(1, lvIdx.length));
   const lo = Math.min(...means), hi = Math.max(...means);
   const hgt = v => layer === 'clouds' ? v*0.38 : layer === 'precip' ? Math.min(38, v*30) : 4 + (v - lo)/Math.max(hi - lo, 1)*34;
   s.style.gridTemplateColumns = `repeat(${times.length},1fr)`;
@@ -1258,7 +1319,9 @@ let installEvt = null;
 if (canSW) {
   navigator.serviceWorker.register('sw.js', {scope:'./'}).then(r => { swReg = r; notifStatus(); if (perm() === 'granted') registerBg(); })
     .catch(e => { lastNotifErr = t('nRegFail', {e:(e && e.message) || e}); notifStatus(); });
-  navigator.serviceWorker.addEventListener('controllerchange', () => notifStatus());
+  const hadSW = !!navigator.serviceWorker.controller; let swReloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { notifStatus(); if (hadSW && !swReloaded) { swReloaded = true; location.reload(); } });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && swReg) swReg.update().catch(() => {}); });
 }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('installBtn').style.display = 'inline-block'; });
 window.addEventListener('appinstalled', () => { $('installBtn').style.display = 'none'; registerBg(); });

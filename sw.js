@@ -1,6 +1,6 @@
 // Сервис-воркер: офлайн-кэш, уведомления Android, фоновая проверка погоды (для установленного приложения).
-const VER = 'wx-v15';
-const SHELL = ['./', 'index.html', 'i18n.js', 'app.js', 'viz.js', 'drive.js', 'leaflet.js', 'leaflet.css', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+const VER = 'wx-v16';
+const SHELL = ['./', 'index.html', 'i18n.js?v=16', 'app.js?v=16', 'viz.js?v=16', 'drive.js?v=16', 'leaflet.js?v=16', 'leaflet.css?v=16', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 const TYPES = {
   storm:['⛈️','Гроза'], rain:['🌧️','Сильный дождь'], snow:['❄️','Сильный снег'], ice:['🧊','Ледяной дождь, гололёд'],
   wind:['💨','Сильный ветер'], heat:['🥵','Сильная жара'], frost:['🥶','Сильный мороз'], freeze:['🌱','Заморозок']
@@ -22,7 +22,9 @@ self.addEventListener('fetch', e => {
   const u = new URL(r.url);
   const ours = u.origin === location.origin && !u.pathname.endsWith('__state') && !u.pathname.endsWith('__seen');
   if (!ours && u.hostname !== 'api.open-meteo.com' && u.hostname !== 'air-quality-api.open-meteo.com') return;
-  e.respondWith(fetch(r).then(res => {
+  /* свои файлы всегда сверяем с сервером (без устаревшего HTTP-кэша), чтобы версии не смешивались */
+  const net = ours ? (r.mode === 'navigate' ? fetch(r.url, {cache:'no-cache', credentials:'same-origin'}) : fetch(r, {cache:'no-cache'})) : fetch(r);
+  e.respondWith(net.then(res => {
     if (res.ok) { const cp = res.clone(); caches.open(VER).then(c => c.put(r, cp)); }
     return res;
   }).catch(() => caches.match(r).then(x => x || Response.error())));
