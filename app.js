@@ -129,7 +129,7 @@ rebuildPlaces();
 /* ---------- состояние ---------- */
 const L0 = 20.9, L1 = 28.3, A0 = 55.6, A1 = 58.0, NLAT = 6, NLON = 9;
 const LATVIA = [[57.76,22.59],[57.6,22.0],[57.39,21.55],[57.0,21.2],[56.51,21.01],[56.07,21.06],[56.15,21.7],[56.1,22.2],[56.25,22.9],[56.1,23.4],[56.07,24.0],[56.1,24.6],[56.0,25.3],[55.9,26.0],[55.7,26.6],[55.9,27.3],[56.1,28.15],[56.6,28.15],[57.0,27.9],[57.5,27.35],[57.57,26.6],[57.78,26.03],[57.87,25.2],[57.87,24.36],[57.55,24.35],[57.26,24.4],[56.95,24.1],[56.97,23.6],[57.15,23.2],[57.5,22.8]];
-const LAYER_KEYS = ['cloud_cover','cloud_cover_low','cloud_cover_mid','cloud_cover_high'];
+const GRID_VARS = ['cloud_cover','precipitation','temperature_2m','wind_speed_10m','wind_direction_10m'];
 const REFRESH = {current:60e3, point:15*60e3, cities:15*60e3, grid:30*60e3, radar:10*60e3, now:5*60e3, official:15*60e3, sea:30*60e3, road:15*60e3};
 const mer = a => Math.log(Math.tan(Math.PI/4 + a*Math.PI/360));
 const M0 = mer(A1), M1 = mer(A0);
@@ -137,7 +137,7 @@ const M0 = mer(A1), M1 = mer(A0);
 let sel = {id:'riga', lat:TOWNS.riga.lat, lon:TOWNS.riga.lon};
 const selKey = () => sel.lat.toFixed(4) + ',' + sel.lon.toFixed(4);
 let lastW = null, hourlyData = null, air = null, pollen = null, models = null, nowcast = null, h24Idx = -1;
-let grid = null, gridBase = 0, gridN = 72, layer = 'cloud_cover';
+let grid = null, gridBase = 0, gridN = 72, layer = ['clouds','precip','temp'].includes(store.get('wx_layer', 'clouds')) ? store.get('wx_layer', 'clouds') : 'clouds';
 let live = true, pos = 0, playTimer = null, offline = false;
 const stamp = {current:0, point:0, cities:0, grid:0, warn:0, moon:0, radar:0, now:0, official:0, sea:0, road:0}, busy = {};
 const lats = Array.from({length:NLAT}, (_, i) => A0 + i*(A1-A0)/(NLAT-1));
@@ -452,7 +452,7 @@ function cityAt(p, ps) {
 async function loadGrid() {
   const la = [], lo = [];
   lats.forEach(a => lons.forEach(b => { la.push(a.toFixed(2)); lo.push(b.toFixed(2)); }));
-  const url = `${API}?latitude=${la.join(',')}&longitude=${lo.join(',')}&hourly=${LAYER_KEYS.join(',')}&forecast_days=3&timezone=${ENC_TZ}`;
+  const url = `${API}?latitude=${la.join(',')}&longitude=${lo.join(',')}&hourly=${GRID_VARS.join(',')}&forecast_days=3&wind_speed_unit=ms&timezone=${ENC_TZ}`;
   const j = await getJSON(url);
   grid = Array.isArray(j) ? j : [j];
   setBase(grid[0]);
@@ -476,123 +476,297 @@ function sunElev(sp, lat, lon) {
   const la = lat*RAD, H = ((sp.utcMin + sp.eqt + 4*lon)/4 - 180)*RAD;
   return Math.asin(Math.sin(la)*Math.sin(sp.decl) + Math.cos(la)*Math.cos(sp.decl)*Math.cos(H))/RAD;
 }
-const off = document.createElement('canvas'), nt = document.createElement('canvas');
-off.width = nt.width = 148; off.height = nt.height = 88;
-function renderLayers(ms, f) {
-  const CW = off.width, CH = off.height, sp = sunParams(ms);
-  const c1 = off.getContext('2d'), c2 = nt.getContext('2d'), im1 = c1.createImageData(CW, CH), im2 = c2.createImageData(CW, CH);
-  for (let y = 0; y < CH; y++) {
-    const m = M0 - y/(CH-1)*(M0-M1), lat = (2*Math.atan(Math.exp(m)) - Math.PI/2)/RAD;
-    const gi = clamp((lat - A0)/(A1-A0), 0, 1)*(NLAT-1), i0 = Math.min(Math.floor(gi), NLAT-2), fi = gi - i0;
-    for (let x = 0; x < CW; x++) {
-      const lon = L0 + x/(CW-1)*(L1-L0), gj = x/(CW-1)*(NLON-1), j0 = Math.min(Math.floor(gj), NLON-2), fj = gj - j0;
-      const c = (f[i0][j0]*(1-fj) + f[i0][j0+1]*fj)*(1-fi) + (f[i0+1][j0]*(1-fj) + f[i0+1][j0+1]*fj)*fi;
-      let k = clamp((sunElev(sp, lat, lon) + 6)/12, 0, 1); k = k*k*(3 - 2*k);
-      const tt = c/100, p = (y*CW + x)*4;
-      im1.data[p]   = k*(248 - 55*tt) + (1-k)*(120 - 30*tt);
-      im1.data[p+1] = k*(251 - 55*tt) + (1-k)*(138 - 30*tt);
-      im1.data[p+2] = Math.min(255, k*(255 - 46*tt) + (1-k)*(172 - 30*tt));
-      im1.data[p+3] = Math.round(255*Math.pow(tt, 1.05)*0.94);
-      im2.data[p] = 2; im2.data[p+1] = 6; im2.data[p+2] = 18; im2.data[p+3] = Math.round((1-k)*150);
-    }
-  }
-  c1.putImageData(im1, 0, 0); c2.putImageData(im2, 0, 0);
+/* ---------- карты на Leaflet: подложка CARTO, слои погоды, ветер, города ---------- */
+const BASE_URL = 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png';
+const BASE_ATTR = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> © <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
+const LV_BOUNDS = [[55.66, 20.95], [58.09, 28.25]];
+const MAP_LAYERS = ['clouds', 'precip', 'temp'];
+const MAP_KEY = {clouds:'cloud_cover', precip:'precipitation', temp:'temperature_2m'};
+let windOn = store.get('wx_wind', true) !== false;
+const hasL = () => typeof L !== 'undefined' && !!L.map;
+const reducedMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+
+function makeMap(el) {
+  if (!hasL() || !el) return null;
+  const mobile = !!(L.Browser && L.Browser.mobile);
+  const map = L.map(el, {zoomSnap:.25, zoomDelta:.5, minZoom:5.5, maxZoom:10, scrollWheelZoom:false, dragging:!mobile, tap:false,
+    maxBounds:[[53.4, 17], [60.4, 32.5]], maxBoundsViscosity:.9, attributionControl:true, zoomControl:true, fadeAnimation:true});
+  map.attributionControl.setPrefix(false);
+  L.tileLayer(BASE_URL, {subdomains:'abcd', maxZoom:12, attribution:BASE_ATTR, className:'basemap'}).addTo(map);
+  map._fitLV = () => { map.invalidateSize(); map.fitBounds(LV_BOUNDS, {padding:[4, 4], animate:false}); map._fitZ = map.getZoom(); };
+  map._fitLV();
+  /* на телефоне карта не перехватывает прокрутку страницы: двигать можно после приближения двумя пальцами */
+  if (mobile) map.on('zoomend', () => { const on = map.getZoom() > (map._fitZ ?? 0) + .2; on ? map.dragging.enable() : map.dragging.disable(); });
+  map.on('click', e => newSel({pt:true, lat:e.latlng.lat, lon:e.latlng.lng}));
+  let touched = false; map.on('zoomstart dragstart', () => { touched = true; });
+  try { new ResizeObserver(() => { if (!touched) map._fitLV(); else map.invalidateSize(); }).observe(el); } catch (e) {}
+  return map;
 }
 
-/* ---------- общие части карт ---------- */
-function canvasCtx(cvEl) {
-  const W = cvEl.clientWidth || 600, H = Math.round(W*0.592), dpr = window.devicePixelRatio || 1, k = W + 'x' + dpr;
-  if (cvEl._k !== k) { cvEl._k = k; cvEl.width = Math.round(W*dpr); cvEl.height = Math.round(H*dpr); cvEl.style.height = H + 'px'; }
-  const c = cvEl.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const X = lo => (lo - L0)/(L1 - L0)*W, Y = la => (M0 - mer(la))/(M0 - M1)*H;
-  const poly = () => LATVIA.forEach(([la, lo], i) => i ? c.lineTo(X(lo), Y(la)) : c.moveTo(X(lo), Y(la)));
-  return {c, W, H, X, Y, poly};
+/* поля погоды по сетке 6×9 точек */
+function gridVal(f, lat, lon) {
+  const gi = clamp((lat - A0)/(A1 - A0), 0, 1)*(NLAT - 1), i0 = Math.min(Math.floor(gi), NLAT - 2), fi = gi - i0;
+  const gj = clamp((lon - L0)/(L1 - L0), 0, 1)*(NLON - 1), j0 = Math.min(Math.floor(gj), NLON - 2), fj = gj - j0;
+  return (f[i0][j0]*(1 - fj) + f[i0][j0 + 1]*fj)*(1 - fi) + (f[i0 + 1][j0]*(1 - fj) + f[i0 + 1][j0 + 1]*fj)*fi;
 }
-function paintLand(s) {
-  const {c, W, H} = s, bg = c.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#12304c'); bg.addColorStop(1, '#0c2034');
-  c.fillStyle = bg; c.fillRect(0, 0, W, H);
-  c.beginPath(); s.poly(); c.closePath(); c.fillStyle = '#25506f'; c.fill();
+function windField(p) {
+  const h0 = Math.min(Math.floor(p), gridN - 1), h1 = Math.min(h0 + 1, gridN - 1), f = p - h0;
+  const U = [], V = [];
+  for (let i = 0; i < NLAT; i++) { U.push([]); V.push([]);
+    for (let j = 0; j < NLON; j++) {
+      const hh = grid[i*NLON + j].hourly, uv = h => { const s = hh.wind_speed_10m ? hh.wind_speed_10m[h] ?? 0 : 0, d = (hh.wind_direction_10m ? hh.wind_direction_10m[h] ?? 0 : 0)*RAD; return [-s*Math.sin(d), -s*Math.cos(d)]; };
+      const a = uv(h0), b = uv(h1); U[i].push(a[0]*(1 - f) + b[0]*f); V[i].push(a[1]*(1 - f) + b[1]*f);
+    }
+  }
+  return {U, V};
 }
-function paintFrame(s) {
-  const {c, W, H, X, Y} = s, cn = t('countries');
-  c.beginPath(); c.rect(0, 0, W, H); s.poly(); c.closePath(); c.fillStyle = 'rgba(8,16,27,.58)'; c.fill('evenodd');
-  c.beginPath(); s.poly(); c.closePath(); c.strokeStyle = 'rgba(255,181,71,.85)'; c.lineWidth = 1.5; c.lineJoin = 'round'; c.stroke();
-  c.font = '500 11px system-ui,Roboto,sans-serif'; c.fillStyle = 'rgba(255,255,255,.22)';
-  c.textAlign = 'center'; c.fillText(cn.ee, X(25.4), Y(57.97) + 12); c.fillText(cn.lt, X(23.4), Y(55.75));
-  c.fillText(cn.by, X(27.3), Y(55.7)); c.textAlign = 'right'; c.fillText(cn.ru, X(28.25), Y(56.9));
+const PRECIP_STOPS = [[0.05, [120, 200, 255, .0]], [0.15, [120, 200, 255, .32]], [0.6, [70, 160, 255, .5]], [2, [70, 100, 240, .62]], [5, [150, 70, 225, .74]], [10, [235, 70, 160, .85]]];
+function precipColor(v) {
+  if (v <= PRECIP_STOPS[0][0]) return [0, 0, 0, 0];
+  for (let i = 1; i < PRECIP_STOPS.length; i++) {
+    const [b, cb] = PRECIP_STOPS[i], [a, ca] = PRECIP_STOPS[i - 1];
+    if (v <= b) { const f = (v - a)/(b - a); return ca.map((x, k) => x + (cb[k] - x)*f); }
+  }
+  return PRECIP_STOPS[PRECIP_STOPS.length - 1][1];
+}
+const rgbOf = s => { const m = s.match(/\d+/g); return m ? m.slice(0, 3).map(Number) : [143, 166, 186]; };
+
+const WM = {map:null, pane:null, fc:null, pc:null, dpr:1, W:0, H:0, img:document.createElement('canvas'), nimg:document.createElement('canvas'),
+  fieldKey:'', mean:null, markers:{}, pin:null, route:null, routeKey:'', parts:[], vel:null, velKey:'', velPos:-1, raf:0, visible:true, last:0, layoutKey:''};
+WM.img.width = WM.nimg.width = 180; WM.img.height = WM.nimg.height = 120;
+
+function wmInit() {
+  if (WM.map) return true;
+  const map = makeMap($('map')); if (!map) return false;
+  WM.map = map;
+  const pane = map.createPane('wx'); pane.style.zIndex = 350; pane.style.pointerEvents = 'none'; WM.pane = pane;
+  WM.fc = document.createElement('canvas'); WM.pc = document.createElement('canvas');
+  [WM.fc, WM.pc].forEach(c => { c.className = 'wxc'; pane.appendChild(c); });
+  map.on('move', () => { wmFrame(); wmClearParts(); WM.velKey = ''; });
+  map.on('resize', () => { wmSize(); wmFrame(); WM.velKey = ''; wmLayout(); });
+  map.on('zoomstart', () => pane.classList.add('zooming'));
+  map.on('zoomend', () => { pane.classList.remove('zooming'); wmSize(); wmFrame(); WM.velKey = ''; wmLayout(); });
+  try { new IntersectionObserver(es => { WM.visible = es[0].isIntersecting; wmKick(); }).observe($('map')); } catch (e) {}
+  document.addEventListener('visibilitychange', wmKick);
+  wmSize();
+  return true;
+}
+function wmSize() {
+  const s = WM.map.getSize(); WM.dpr = Math.min(window.devicePixelRatio || 1, 2); WM.W = s.x; WM.H = s.y;
+  [WM.fc, WM.pc].forEach(c => { c.width = Math.round(s.x*WM.dpr); c.height = Math.round(s.y*WM.dpr); c.style.width = s.x + 'px'; c.style.height = s.y + 'px';
+    c.getContext('2d').setTransform(WM.dpr, 0, 0, WM.dpr, 0, 0); });
+}
+function wmPlace() { const p = WM.map.containerPointToLayerPoint([0, 0]); L.DomUtil.setPosition(WM.fc, p); L.DomUtil.setPosition(WM.pc, p); }
+function wmRect() {
+  const a = WM.map.latLngToContainerPoint([A1, L0]), b = WM.map.latLngToContainerPoint([A0, L1]);
+  return {x:a.x, y:a.y, w:b.x - a.x, h:b.y - a.y};
+}
+/* растр поля: строки по меркатору, как у подложки; края плавно растворяются */
+function wmBuildField(ms) {
+  const IW = WM.img.width, IH = WM.img.height, sp = sunParams(ms), key = MAP_KEY[layer];
+  const f = fieldAt(key, pos), c1 = WM.img.getContext('2d'), c2 = WM.nimg.getContext('2d');
+  const im = c1.createImageData(IW, IH), nm = c2.createImageData(IW, IH);
+  let sum = 0;
+  for (let y = 0; y < IH; y++) {
+    const m = M0 - (y + .5)/IH*(M0 - M1), lat = (2*Math.atan(Math.exp(m)) - Math.PI/2)/RAD;
+    for (let x = 0; x < IW; x++) {
+      const lon = L0 + (x + .5)/IW*(L1 - L0), v = gridVal(f, lat, lon), p = (y*IW + x)*4;
+      const edge = Math.min(x, IW - 1 - x, y, IH - 1 - y)/(IW*0.07), fe = clamp(edge, 0, 1), feather = fe*fe*(3 - 2*fe);
+      let r, g, b, a;
+      if (layer === 'clouds') { const tt = clamp(v/100, 0, 1); r = 236; g = 243; b = 250; a = Math.pow(tt, 1.15)*.82; }
+      else if (layer === 'precip') { [r, g, b, a] = precipColor(v); }
+      else { [r, g, b] = rgbOf(tempColor(v)); a = .5; }
+      im.data[p] = r; im.data[p + 1] = g; im.data[p + 2] = b; im.data[p + 3] = Math.round(255*a*feather);
+      let k = clamp((sunElev(sp, lat, lon) + 6)/12, 0, 1); k = k*k*(3 - 2*k);
+      nm.data[p] = 0; nm.data[p + 1] = 4; nm.data[p + 2] = 22; nm.data[p + 3] = Math.round((1 - k)*110*feather);
+    }
+  }
+  c1.putImageData(im, 0, 0); c2.putImageData(nm, 0, 0);
+  for (let i = 0; i < NLAT; i++) for (let j = 0; j < NLON; j++) sum += f[i][j];
+  WM.mean = sum/(NLAT*NLON);
+}
+function wmFrame() {
+  if (!WM.map) return;
+  wmPlace();
+  const c = WM.fc.getContext('2d'); c.clearRect(0, 0, WM.W, WM.H);
+  if (!grid) return;
+  const r = wmRect(); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
+  c.drawImage(WM.nimg, r.x, r.y, r.w, r.h); c.drawImage(WM.img, r.x, r.y, r.w, r.h);
+}
+
+/* ветер: частицы, которые текут по полю ветра (как в больших погодных приложениях) */
+function wmClearParts() { if (WM.pc) WM.pc.getContext('2d').clearRect(0, 0, WM.W, WM.H); }
+function wmVel() {
+  const W = WM.W, H = WM.H, step = 12, cols = Math.ceil(W/step) + 2, rows = Math.ceil(H/step) + 2;
+  const {U, V} = windField(pos), k = .17*Math.pow(2, (WM.map.getZoom() - 6.2)*.5);
+  const vel = new Float32Array(cols*rows*2).fill(NaN);
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const ll = WM.map.containerPointToLatLng([c*step, r*step]);
+    if (ll.lat < A0 || ll.lat > A1 || ll.lng < L0 || ll.lng > L1) continue;
+    const q = (r*cols + c)*2; vel[q] = gridVal(U, ll.lat, ll.lng)*k; vel[q + 1] = -gridVal(V, ll.lat, ll.lng)*k;
+  }
+  WM.vel = {vel, cols, rows, step}; WM.velPos = pos;
+  const rr = wmRect(), x0 = Math.max(0, rr.x), y0 = Math.max(0, rr.y), x1 = Math.min(W, rr.x + rr.w), y1 = Math.min(H, rr.y + rr.h);
+  WM.spawn = {x0, y0, w:Math.max(1, x1 - x0), h:Math.max(1, y1 - y0)};
+  const n = Math.min(1100, Math.round(WM.spawn.w*WM.spawn.h/430));
+  WM.parts = Array.from({length:n}, () => wmSpawn({}));
+}
+function wmSpawn(p) { const s = WM.spawn; p.x = s.x0 + Math.random()*s.w; p.y = s.y0 + Math.random()*s.h; p.age = Math.floor(Math.random()*70); p.max = 50 + Math.random()*60; return p; }
+function velAt(x, y) {
+  const V = WM.vel, c = x/V.step, r = y/V.step, c0 = Math.floor(c), r0 = Math.floor(r);
+  if (c0 < 0 || r0 < 0 || c0 >= V.cols - 1 || r0 >= V.rows - 1) return null;
+  const fx = c - c0, fy = r - r0, g = (rr, cc, o) => V.vel[(rr*V.cols + cc)*2 + o];
+  const a = g(r0, c0, 0); if (Number.isNaN(a)) return null;
+  const pick = o => { const v00 = g(r0, c0, o), v01 = g(r0, c0 + 1, o), v10 = g(r0 + 1, c0, o), v11 = g(r0 + 1, c0 + 1, o);
+    if ([v01, v10, v11].some(Number.isNaN)) return v00; return (v00*(1 - fx) + v01*fx)*(1 - fy) + (v10*(1 - fx) + v11*fx)*fy; };
+  return [pick(0), pick(1)];
+}
+function wmParticles(fade) {
+  const c = WM.pc.getContext('2d');
+  if (fade) { c.globalCompositeOperation = 'destination-in'; c.fillStyle = 'rgba(0,0,0,.86)'; c.fillRect(0, 0, WM.W, WM.H); c.globalCompositeOperation = 'source-over'; }
+  c.lineWidth = 1; c.lineCap = 'round'; c.strokeStyle = layer === 'clouds' ? 'rgba(170,220,255,.7)' : 'rgba(255,255,255,.72)';
+  c.beginPath();
+  WM.parts.forEach(p => {
+    const v = velAt(p.x, p.y);
+    if (!v || ++p.age > p.max) { wmSpawn(p); p.age = 0; return; }
+    const nx = p.x + v[0], ny = p.y + v[1];
+    c.moveTo(p.x, p.y); c.lineTo(nx, ny); p.x = nx; p.y = ny;
+  });
+  c.stroke();
+}
+function wmLoop(ts) {
+  WM.raf = 0;
+  if (!windOn || !grid || !WM.visible || document.hidden || reducedMotion()) return;
+  if (ts - WM.last >= 33) {
+    WM.last = ts;
+    if (!WM.velKey || Math.abs(WM.velPos - pos) > .05) { WM.velKey = 'ok'; wmVel(); wmClearParts(); }
+    wmParticles(true);
+  }
+  WM.raf = requestAnimationFrame(wmLoop);
+}
+function wmKick() {
+  if (!WM.map) return;
+  if (!windOn || !grid) { wmClearParts(); return; }
+  if (reducedMotion()) { wmVel(); wmClearParts(); for (let i = 0; i < 26; i++) wmParticles(false); WM.velKey = 'ok'; return; }
+  if (!WM.raf && WM.visible && !document.hidden) WM.raf = requestAnimationFrame(wmLoop);
+}
+
+/* города: «таблетки» с анимированным значком; при тесноте — компактные точки */
+const CITY_PRIO = id => { const i = CITY_IDS.indexOf(id); return i < 0 ? 50 : i; };
+function cityHtml(p, cw, ms, mode) {
+  mode = mode || {};
+  if (mode.gone) return '<div class="cm gone"></div>';
+  const compact = mode.mini, isSel = samePlace(p, sel), day = sunElev(sunParams(ms), p.lat, p.lon) > 0 ? 1 : 0;
+  const cls = 'cm' + (cw && cw.warn ? ' warn' : '') + (isSel ? ' sel' : '') + (p.fav ? ' fav' : '') + (compact ? ' mini' : '') + (mode.al ? ' cm-l' : mode.ar ? ' cm-r' : '');
+  if (!cw) return `<div class="${cls}"><small>${esc(placeName(p))}</small></div>`;
+  if (compact) return `<div class="${cls}" title="${esc(placeName(p))}"><i style="background:${tempColor(cw.T)}"></i><b>${fmt(cw.T)}</b></div>`;
+  return `<div class="${cls}"><span class="cm-i">${typeof wxIcon === 'function' ? wxIcon(cw.code, day, 24) : wmo(cw.code)[1]}</span><b>${fmt(cw.T)}</b><small>${esc(placeName(p))}${cw.warn ? ' ⚠' : ''}</small></div>`;
+}
+function wmLayout() {
+  if (!WM.map) return;
+  /* простое «избегание столкновений»: важные места рисуются целиком, соседние — компактно */
+  const list = PLACES.filter(p => !p.hide).map(p => ({p, k:placeKey(p), pr:samePlace(p, sel) ? -2 : p.fav ? -1 : CITY_PRIO(p.id)})).sort((a, b) => a.pr - b.pr);
+  const boxes = [], compact = {}, W = WM.map.getSize().x;
+  const hits = b => boxes.some(q => b.x0 < q.x1 && b.x1 > q.x0 && b.y0 < q.y1 && b.y1 > q.y0);
+  const place = (pt, w, h) => {   /* у краёв метка прижимается внутрь карты */
+    let x0 = pt.x - w/2, al = false, ar = false;
+    if (x0 < 4) { x0 = pt.x - 14; al = true; } else if (x0 + w > W - 4) { x0 = pt.x - w + 14; ar = true; }
+    return {x0, x1:x0 + w, y0:pt.y - h/2, y1:pt.y + h/2, al, ar};
+  };
+  list.forEach(o => {
+    const pt = WM.map.latLngToContainerPoint([o.p.lat, o.p.lon]);
+    const full = place(pt, 64 + placeName(o.p).length*6.4, 30);
+    if (!hits(full)) { boxes.push(full); compact[o.k] = {al:full.al, ar:full.ar}; return; }
+    const mini = place(pt, 54, 22);
+    if (!hits(mini)) { boxes.push(mini); compact[o.k] = {mini:true, al:mini.al, ar:mini.ar}; return; }
+    compact[o.k] = {gone:true};
+  });
+  WM.compact = compact; WM.layoutKey = '';
+  wmMarkers(true);
+}
+function wmMarkers(force) {
+  if (!WM.map) return;
+  const ms = gridBase ? gridBase + pos*36e5 : Date.now(), seen = {};
+  if (!WM.compact) { WM.compact = {}; setTimeout(wmLayout, 0); }
+  PLACES.forEach(p => {
+    if (p.hide) return;
+    const k = placeKey(p), cw = cityAt(p, pos); seen[k] = 1;
+    const html = cityHtml(p, cw, ms, WM.compact[k]);
+    let m = WM.markers[k];
+    if (!m) {
+      m = L.marker([p.lat, p.lon], {icon:L.divIcon({className:'cmw', html, iconSize:null}), keyboard:false, riseOnHover:true, zIndexOffset:samePlace(p, sel) ? 1000 : 0})
+        .on('click', () => newSel(p.id ? {id:p.id, lat:p.lat, lon:p.lon} : {name:p.name, lat:p.lat, lon:p.lon}));
+      m._html = html; m.addTo(WM.map); WM.markers[k] = m;
+    } else if (m._html !== html || force) {
+      if (m._html !== html) { m.setIcon(L.divIcon({className:'cmw', html, iconSize:null})); m._html = html; }
+      m.setZIndexOffset(samePlace(p, sel) ? 1000 : WM.compact[k] && WM.compact[k].mini ? -100 : 0);
+    }
+  });
+  Object.keys(WM.markers).forEach(k => { if (!seen[k]) { WM.map.removeLayer(WM.markers[k]); delete WM.markers[k]; } });
+  /* выбранная точка, если это не город */
+  const isCity = PLACES.some(p => !p.hide && samePlace(p, sel));
+  if (!isCity) {
+    if (!WM.pin) WM.pin = L.marker([sel.lat, sel.lon], {icon:L.divIcon({className:'cmw', html:'<div class="pin"></div>', iconSize:null}), interactive:false, zIndexOffset:2000}).addTo(WM.map);
+    else WM.pin.setLatLng([sel.lat, sel.lon]);
+  } else if (WM.pin) { WM.map.removeLayer(WM.pin); WM.pin = null; }
 }
 const LV_COL = ['#4ade80', '#ffb547', '#ff6b4a'];
-function paintRoute(s) {
-  if (!roadRes || !roadRes.evals || roadState !== 'ok') return;
-  const {c} = s, p = roadRes.pts, ev = roadRes.evals;
-  c.lineCap = 'round'; c.lineWidth = 4;
-  for (let i = 0; i < p.length - 1; i++) {
-    c.beginPath(); c.moveTo(s.X(p[i].lon), s.Y(p[i].lat)); c.lineTo(s.X(p[i+1].lon), s.Y(p[i+1].lat));
-    c.strokeStyle = LV_COL[Math.max(ev[i].lvl, ev[i+1].lvl)]; c.globalAlpha = .85; c.stroke(); c.globalAlpha = 1;
-  }
+function wmRoute() {
+  const ok = roadRes && roadRes.evals && roadState === 'ok';
+  const key = ok ? roadRes.key + ':' + roadRes.evals.map(e => e.lvl).join('') : '';
+  if (key === WM.routeKey) return;
+  WM.routeKey = key;
+  if (WM.route) { WM.map.removeLayer(WM.route); WM.route = null; }
+  if (!ok) return;
+  const g = L.layerGroup(), P = roadRes.pts, ev = roadRes.evals, ll = P.map(q => [q.lat, q.lon]);
+  L.polyline(ll, {color:'#0a1522', weight:9, opacity:.55, interactive:false, lineCap:'round', lineJoin:'round'}).addTo(g);
+  for (let i = 0; i < P.length - 1; i++)
+    L.polyline([ll[i], ll[i + 1]], {color:LV_COL[Math.max(ev[i].lvl, ev[i + 1].lvl)], weight:4.5, opacity:.95, interactive:false, lineCap:'round', className:'route-seg'}).addTo(g);
+  WM.route = g.addTo(WM.map);
 }
-function paintPlaces(s, wx) {
-  const {c, W} = s;
-  PLACES.forEach(p => {
-    if (p.hide) return;
-    const x = s.X(p.lon), y = s.Y(p.lat), right = x > W - 92, cw = wx ? cityAt(p, pos) : null, nm = placeName(p);
-    if (cw && cw.warn) { c.beginPath(); c.arc(x, y, 8, 0, 6.283); c.strokeStyle = '#ff6b4a'; c.lineWidth = 2.5; c.stroke(); }
-    c.beginPath(); c.arc(x, y, p.fav ? 4.5 : 3.5, 0, 6.283); c.fillStyle = p.fav ? '#ffb547' : '#fff'; c.fill();
-    c.textAlign = right ? 'right' : 'left'; const tx = right ? x - 10 : x + 10;
-    c.lineWidth = 3; c.strokeStyle = 'rgba(8,16,27,.85)'; c.lineJoin = 'round';
-    if (cw) {
-      const s2 = `${wmo(cw.code)[1]} ${fmt(cw.T)}${cw.warn ? ' ⚠' : ''}`;
-      c.font = '700 14px system-ui,Roboto,sans-serif'; c.strokeText(s2, tx, y - 1); c.fillStyle = cw.warn ? '#ffb4a0' : '#ffd08a'; c.fillText(s2, tx, y - 1);
-    }
-    c.font = '400 11px system-ui,Roboto,sans-serif'; c.strokeText(nm, tx, y + 12); c.fillStyle = '#d5e2ee'; c.fillText(nm, tx, y + 12);
-  });
-  c.beginPath(); c.arc(s.X(sel.lon), s.Y(sel.lat), 11, 0, 6.283); c.strokeStyle = '#ffb547'; c.lineWidth = 2; c.stroke();
-}
-function mapClick(cvEl, e) {
-  const r = cvEl.getBoundingClientRect(), W = r.width, H = r.height, px = e.clientX - r.left, py = e.clientY - r.top;
-  let best = null, bd = 30;
-  PLACES.forEach(p => {
-    if (p.hide) return;
-    const d = Math.hypot(px - (p.lon - L0)/(L1 - L0)*W, py - (M0 - mer(p.lat))/(M0 - M1)*H);
-    if (d < bd) { bd = d; best = p; }
-  });
-  if (best) { newSel(best.id ? {id:best.id, lat:best.lat, lon:best.lon} : {name:best.name, lat:best.lat, lon:best.lon}); return; }
-  const lo = L0 + px/W*(L1 - L0), m = M0 - py/H*(M0 - M1), la = (2*Math.atan(Math.exp(m)) - Math.PI/2)/RAD;
-  newSel({pt:true, lat:la, lon:lo});
+function mapLegend() {
+  const el = $('mlegend'); if (!el) return;
+  let h;
+  if (layer === 'clouds') h = `<span>${esc(t('clear'))}</span><i style="background:linear-gradient(90deg,rgba(236,243,250,.05),rgba(236,243,250,.9))"></i><span>${esc(t('overcast'))}</span>`;
+  else if (layer === 'precip') h = `<span>0.1</span><i style="background:linear-gradient(90deg,rgba(120,200,255,.35),rgb(70,160,255) 30%,rgb(70,100,240) 55%,rgb(150,70,225) 78%,rgb(235,70,160))"></i><span>10+ ${esc(t('mmh'))}</span>`;
+  else { const a = TSTOPS[0][0], b = TSTOPS[TSTOPS.length - 1][0];
+    h = `<span>${fmt(a)}</span><i style="background:linear-gradient(90deg,${TSTOPS.map(([v, c]) => `${c} ${((v - a)/(b - a)*100).toFixed(1)}%`).join(',')})"></i><span>+${b}°</span>`; }
+  if (windOn) h += `<em>〰 ${esc(t('windLines'))}</em>`;
+  el.innerHTML = h;
 }
 
-/* ---------- карта облачности и погоды в городах ---------- */
-const cv = $('map');
+/* ---------- карта погоды: перерисовка (вызывается и каждую секунду — тяжёлое только при изменениях) ---------- */
 function draw() {
-  const s = canvasCtx(cv); paintLand(s);
-  let mean = null; const ms = gridBase ? gridBase + pos*36e5 : Date.now();
+  if (!wmInit()) return;
+  const ms = gridBase ? gridBase + pos*36e5 : Date.now();
   if (grid) {
-    const f = fieldAt(layer, pos); renderLayers(ms, f);
-    s.c.imageSmoothingEnabled = true; s.c.drawImage(nt, 0, 0, s.W, s.H); s.c.drawImage(off, 0, 0, s.W, s.H);
-    mean = f.flat().reduce((a, b) => a + b, 0) / (NLAT*NLON);
+    const fk = layer + '|' + pos.toFixed(2) + '|' + stamp.grid;
+    if (fk !== WM.fieldKey) { WM.fieldKey = fk; wmBuildField(ms); wmFrame(); }
   }
-  paintFrame(s); paintRoute(s); paintPlaces(s, true);
+  wmMarkers(false); wmRoute(); wmKick();
   if (gridBase) {
     const e = sunElev(sunParams(ms), 56.95, 24.1), phase = t('phase')[e > 3 ? 0 : e > -6 ? 1 : 2];
-    $('when').textContent = new Date(ms).toLocaleString(LOC, {timeZone:TZ, weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', second:live ? '2-digit' : undefined, hour12:false}) + '  ' + phase;
-    const mi = moonInfo(ms);
-    $('mean').textContent = (mean === null ? '' : t('meanClouds', {c:Math.round(mean)})) + t('moonShort', {e:mi.emoji, p:Math.round(mi.frac*100)});
+    $('when').textContent = new Date(ms).toLocaleString(LOC, {timeZone:TZ, weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hour12:false}) + '  ' + phase;
+    const mi = moonInfo(ms), mean = WM.mean;
+    const mtxt = mean === null ? '' : layer === 'clouds' ? t('meanClouds', {c:Math.round(mean)}) : layer === 'precip' ? t('meanPrecip', {v:mean.toFixed(1)}) : t('meanTemp', {v:fmt(mean)});
+    $('mean').textContent = mtxt + t('moonShort', {e:mi.emoji, p:Math.round(mi.frac*100)});
     const on = Math.round(pos);
-    document.querySelectorAll('#strip i').forEach((el, n) => el.classList.toggle('on', n === on));
+    if (on !== WM.stripOn) { WM.stripOn = on; document.querySelectorAll('#strip i').forEach((el, n) => el.classList.toggle('on', n === on)); }
   }
 }
-cv.addEventListener('click', e => mapClick(cv, e));
 
 function setLive(v) { live = v; $('nowbtn').setAttribute('aria-pressed', v); if (v) { stopPlay(); if (gridBase) { pos = posNow(); $('slider').value = pos; } } draw(); }
 function buildStrip() {
   if (!grid) return;
-  const times = grid[0].hourly.time, s = $('strip');
-  s.style.gridTemplateColumns = `repeat(${times.length},1fr)`; s.innerHTML = '';
-  times.forEach((_, h) => {
-    const m = grid.reduce((a, p) => a + (p.hourly[layer][h] ?? 0), 0) / grid.length, i = document.createElement('i');
-    i.style.height = Math.max(4, m*0.4) + 'px'; s.appendChild(i);
-  });
+  const times = grid[0].hourly.time, s = $('strip'), key = MAP_KEY[layer];
+  const means = times.map((_, h) => grid.reduce((a, p) => a + (p.hourly[key] ? p.hourly[key][h] ?? 0 : 0), 0)/grid.length);
+  const lo = Math.min(...means), hi = Math.max(...means);
+  const hgt = v => layer === 'clouds' ? v*0.38 : layer === 'precip' ? Math.min(38, v*30) : 4 + (v - lo)/Math.max(hi - lo, 1)*34;
+  s.style.gridTemplateColumns = `repeat(${times.length},1fr)`;
+  s.innerHTML = means.map(v => `<i style="height:${Math.max(3, hgt(v)).toFixed(1)}px${layer === 'temp' ? `;background:${tempColor(v)};opacity:.55` : ''}"></i>`).join('');
+  WM.stripOn = -1;
   $('d3').innerHTML = Array.from({length:times.length/24}, (_, n) => `<span>${dFmt(times[n*24], {weekday:'short', day:'numeric', month:'short'})}</span>`).join('');
+  mapLegend();
 }
 $('slider').addEventListener('input', e => { setLive(false); pos = +e.target.value; draw(); });
 $('nowbtn').addEventListener('click', () => setLive(true));
@@ -601,51 +775,65 @@ $('play').addEventListener('click', () => {
   if (playTimer) return stopPlay();
   setLive(false);
   $('play').textContent = '❚❚'; $('play').setAttribute('aria-label', t('stop'));
-  playTimer = setInterval(() => { pos += 0.2; if (pos > gridN - 1) pos = 0; $('slider').value = pos; draw(); }, 120);
+  playTimer = setInterval(() => { pos += 0.25; if (pos > gridN - 1) pos = 0; $('slider').value = pos; draw(); }, 110);
 });
 function buildLayers() {
   const box = $('layers'); box.innerHTML = '';
-  LAYER_KEYS.forEach((key, i) => {
-    const b = document.createElement('button'); b.textContent = t('layers')[i]; b.setAttribute('aria-pressed', key === layer);
-    b.onclick = () => { layer = key; buildLayers(); buildStrip(); draw(); };
+  MAP_LAYERS.forEach(k => {
+    const b = document.createElement('button'); b.textContent = t('ml')[k]; b.setAttribute('aria-pressed', k === layer);
+    b.onclick = () => { layer = k; store.set('wx_layer', k); buildLayers(); buildStrip(); WM.fieldKey = ''; draw(); };
     box.appendChild(b);
   });
+  const w = document.createElement('button'); w.className = 'tog'; w.textContent = '〰 ' + t('ml').wind; w.setAttribute('aria-pressed', windOn);
+  w.onclick = () => { windOn = !windOn; store.set('wx_wind', windOn); buildLayers(); mapLegend(); wmKick(); };
+  box.appendChild(w);
+  mapLegend();
 }
 
-/* ---------- радар осадков (RainViewer, последние 2 часа) и дождь в ближайшие часы ---------- */
-const RZ = 6, RN = 64, RX = [35, 37], RY = [19, 20];
-const radar = {frames:[], host:'', tiles:[], idx:0, err:false, timer:null};
-const rcv = $('radar');
+/* ---------- радар осадков: RainViewer на той же подложке, плавная смена кадров ---------- */
+const radar = {frames:[], host:'', idx:0, err:false, timer:null};
+const RM = {map:null, layers:[], sig:'', pin:null, dots:null};
 async function loadRadar() {
   stamp.radar = Date.now();
   try {
     const j = await getJSON('https://api.rainviewer.com/public/weather-maps.json');
     const past = (j.radar && j.radar.past) || [];
     if (!past.length) throw new Error('no frames');
-    radar.host = j.host; radar.frames = past; radar.tiles = past.map(() => null); radar.err = false;
-    radar.idx = past.length - 1; $('rslider').max = radar.idx; $('rslider').value = radar.idx;
-    for (let i = past.length - 1; i >= 0; i--) await loadRadarFrame(i);
+    const keep = radar.timer;
+    radar.host = j.host; radar.frames = past; radar.err = false;
+    if (!keep) { radar.idx = past.length - 1; }
+    $('rslider').max = past.length - 1; $('rslider').value = radar.idx;
   } catch (e) { radar.err = true; }
   drawRadar();
 }
-function loadRadarFrame(i) {
-  const f = radar.frames[i], jobs = [];
-  for (let x = RX[0]; x <= RX[1]; x++) for (let y = RY[0]; y <= RY[1]; y++) jobs.push(new Promise(res => {
-    const img = new Image(); img.onload = () => res({img, x, y}); img.onerror = () => res(null);
-    img.src = `${radar.host}${f.path}/256/${RZ}/${x}/${y}/2/1_1.png`;
-  }));
-  return Promise.all(jobs).then(tl => { radar.tiles[i] = tl.filter(Boolean); if (i === radar.idx) drawRadar(); });
-}
-function tileRect(s, x, y) {
-  const m = yy => Math.PI*(1 - 2*yy/RN), Yy = v => (M0 - m(v))/(M0 - M1)*s.H;
-  const x0 = s.X(x/RN*360 - 180), x1 = s.X((x + 1)/RN*360 - 180);
-  return {x:x0, w:x1 - x0, y:Yy(y), h:Yy(y + 1) - Yy(y)};
+function rmInit() {
+  if (RM.map) return true;
+  const map = makeMap($('radar')); if (!map) return false;
+  RM.map = map;
+  RM.dots = L.layerGroup().addTo(map);
+  return true;
 }
 function drawRadar() {
-  const s = canvasCtx(rcv); paintLand(s);
-  const fr = radar.tiles[radar.idx];
-  if (fr) fr.forEach(tl => { const r = tileRect(s, tl.x, tl.y); s.c.globalAlpha = .92; s.c.drawImage(tl.img, r.x, r.y, r.w + .6, r.h + .6); s.c.globalAlpha = 1; });
-  paintFrame(s); paintPlaces(s, false);
+  if (!rmInit()) return;
+  const n = radar.frames.length, sig = radar.host + radar.frames.map(f => f.path).join(',');
+  if (sig !== RM.sig) {
+    RM.layers.forEach(l => RM.map.removeLayer(l)); RM.sig = sig;
+    RM.layers = radar.frames.map(f => L.tileLayer(`${radar.host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`,
+      {maxNativeZoom:7, maxZoom:10, opacity:0, className:'rvl', zIndex:5, attribution:'<a href="https://www.rainviewer.com/" target="_blank" rel="noopener noreferrer">RainViewer</a>'}));
+  }
+  RM.layers.forEach((ly, i) => {
+    const cur = i === radar.idx, next = n && i === (radar.idx + 1) % n;
+    if ((cur || next) && !RM.map.hasLayer(ly)) ly.addTo(RM.map);
+    if (RM.map.hasLayer(ly)) ly.setOpacity(cur ? .9 : 0);
+  });
+  /* подписи городов и выбранная точка */
+  const dk = PLACES.map(p => placeKey(p)).join() + '|' + selKey() + '|' + lang;
+  if (dk !== RM.dotsKey) {
+    RM.dotsKey = dk; RM.dots.clearLayers();
+    PLACES.filter(p => !p.hide).forEach(p => L.marker([p.lat, p.lon], {icon:L.divIcon({className:'cmw', html:`<div class="rdot${samePlace(p, sel) ? ' sel' : ''}"><i></i>${esc(placeName(p))}</div>`, iconSize:null}), keyboard:false})
+      .on('click', () => newSel(p.id ? {id:p.id, lat:p.lat, lon:p.lon} : {name:p.name, lat:p.lat, lon:p.lon})).addTo(RM.dots));
+    if (!PLACES.some(p => !p.hide && samePlace(p, sel))) L.marker([sel.lat, sel.lon], {icon:L.divIcon({className:'cmw', html:'<div class="pin"></div>', iconSize:null}), interactive:false, zIndexOffset:2000}).addTo(RM.dots);
+  }
   const f = radar.frames[radar.idx];
   if (radar.err) $('rwhen').textContent = t('radarNA');
   else if (f) {
@@ -653,14 +841,13 @@ function drawRadar() {
     $('rwhen').textContent = hhmm(f.time*1000) + (ago > 1 ? t('agoMin', {n:ago}) : t('justNow'));
   } else $('rwhen').textContent = t('radarLoading');
 }
-rcv.addEventListener('click', e => mapClick(rcv, e));
 $('rslider').addEventListener('input', e => { stopRadar(); radar.idx = +e.target.value; drawRadar(); });
 function stopRadar() { clearInterval(radar.timer); radar.timer = null; $('rplay').textContent = '▶'; }
 $('rplay').addEventListener('click', () => {
   if (radar.timer) return stopRadar();
   if (!radar.frames.length) return;
   $('rplay').textContent = '❚❚';
-  radar.timer = setInterval(() => { radar.idx = (radar.idx + 1) % radar.frames.length; $('rslider').value = radar.idx; drawRadar(); }, 450);
+  radar.timer = setInterval(() => { radar.idx = (radar.idx + 1) % radar.frames.length; $('rslider').value = radar.idx; drawRadar(); }, 650);
 });
 
 async function loadNowcast() {
@@ -1229,12 +1416,12 @@ function setLang(k) {
   applyStatic(); buildChips(); buildLayers(); buildCfg(); buildRoadUI(); buildStrip();
   renderHero(); renderDaily(lastW); renderH24(); renderToday(); renderMoon(); renderAcc(); renderWarnings(); renderNowcast();
   renderSea(); renderPollen(); renderRoad(); drawHourly(); draw(); drawRadar(); notifStatus(); syncState(); tick();
+  if (typeof renderDrive === 'function') { renderDrive(); fillVoices(); }
 }
 
 /* ---------- LIVE: тик раз в секунду ---------- */
 function tick() {
   const now = Date.now();
-  $('clock').textContent = new Date(now).toLocaleTimeString(LOC, {timeZone:TZ, hour12:false});
   if (live && gridBase) { pos = posNow(); $('slider').value = pos; }
   draw(); updateNowLine();
   if (hourlyData && lastW) { const ix = clamp(Math.floor((now - hourlyData.base)/36e5), 0, lastW.hourly.time.length - 25); if (ix !== h24Idx) { renderH24(); renderToday(); } }
@@ -1255,8 +1442,7 @@ function tick() {
   $('dot').classList.toggle('off', offline);
   if (offline) $('upd').textContent = t('offline');
   else if (lastW) {
-    const left = Math.max(0, Math.ceil((stamp.current + REFRESH.current - now)/1000));
-    $('upd').textContent = t('dataAt', {t:lastW.current.time.slice(11), s:left});
+    $('upd').textContent = t('updatedAt', {t:hhmm(stamp.current)});
   }
 }
 function start() {

@@ -354,3 +354,64 @@ Object.assign(I18N.en, {
   precipBand:'Chance of precipitation', tempScale:'line colour shows temperature',
   hourTip2:'{d} {h}: {t} · precip. {p}%, {mm} mm', skyAria:'Sky animation for the current weather'
 });
+
+/* карты и строка обновления */
+Object.assign(I18N.ru, {
+  updatedAt:'обновлено в {t}', ml:{clouds:'Облака', precip:'Осадки', temp:'Температура', wind:'Ветер'}, mmh:'мм/ч',
+  windLines:'линии — ветер', meanPrecip:'осадки в среднем {v} мм/ч, ', meanTemp:'в среднем {v}, ',
+  mapTitle:'Карта погоды на 3 дня',
+  mapNote:'Нажмите на город или любую точку карты, чтобы открыть прогноз. Красная рамка — опасная погода в выбранный час, цветная линия — ваш маршрут. Слои — прогноз модели, а не снимок со спутника. На телефоне карту можно двигать после приближения двумя пальцами.'
+});
+Object.assign(I18N.lv, {
+  updatedAt:'atjaunināts {t}', ml:{clouds:'Mākoņi', precip:'Nokrišņi', temp:'Temperatūra', wind:'Vējš'}, mmh:'mm/h',
+  windLines:'līnijas — vējš', meanPrecip:'nokrišņi vidēji {v} mm/h, ', meanTemp:'vidēji {v}, ',
+  mapTitle:'Laikapstākļu karte 3 dienām',
+  mapNote:'Pieskarieties pilsētai vai jebkuram kartes punktam, lai atvērtu prognozi. Sarkans rāmis — bīstami laikapstākļi izvēlētajā stundā, krāsaina līnija — jūsu maršruts. Slāņi ir modeļa prognoze, nevis satelīta attēls. Tālrunī karti var pārvietot pēc pietuvināšanas ar diviem pirkstiem.'
+});
+Object.assign(I18N.en, {
+  updatedAt:'updated {t}', ml:{clouds:'Clouds', precip:'Precipitation', temp:'Temperature', wind:'Wind'}, mmh:'mm/h',
+  windLines:'lines show wind', meanPrecip:'avg. precipitation {v} mm/h, ', meanTemp:'average {v}, ',
+  mapTitle:'Weather map, 3 days',
+  mapNote:'Tap a town or any point on the map to open its forecast. A red frame means dangerous weather at the selected hour, the coloured line is your route. Layers are a model forecast, not a satellite image. On a phone, pinch to zoom in before panning.'
+});
+
+/* режим в пути */
+Object.assign(I18N.ru, {
+  driveTitle:'Режим в пути', driveOn:'🚗 Включить', driveOff:'⏹ Выключить', dVoice:'Голосовые предупреждения', dEco:'Экономия батареи',
+  dTest:'🔊 Проверить голос', dDark:'🌑 Тёмный экран', voiceAuto:'Голос: автоматически', kmh:'км/ч',
+  driveNote:'Приложение следит за погодой здесь и впереди по ходу движения (10, 25 и 50 км) и предупреждает голосом о гололёде, снеге, тумане, ветре и грозе. Работает, пока приложение открыто: экран не гаснет. «Экономия батареи» — менее точный GPS и проверка раз в 5 минут или 5 км. Координаты не сохраняются.',
+  dIdle:'Выключено. Включите перед поездкой и оставьте приложение открытым.', dWaiting:'Определяю местоположение…',
+  dDenied:'Нет доступа к местоположению. Разрешите его для этого сайта: значок замка в адресной строке → Разрешения → Местоположение.',
+  dNoGeo:'Это устройство не сообщает местоположение.', dNoFix:'GPS пока не отвечает, жду сигнал.', dNet:'Не удалось получить прогноз, повторю позже.',
+  dHere:'Здесь', dAhead:'Через {d} километров', dHereCap:'Здесь', dAheadCap:'Через {d} км', dEta:'≈ {m} мин', dOk:'без опасностей',
+  dRoad:'дорога {v}', dAcc:'точность {a} м', dChecked:'проверено {t}', dStationary:'Вы стоите или едете медленно — показываю погоду на месте.',
+  driveAlert:'Опасно в пути', voiceHello:'Режим в пути включён. Я предупрежу об опасной погоде на дороге.',
+  voiceWarn:'Внимание! {where}: {what}. Будьте осторожны.', voiceTest:'Внимание! Через двадцать пять километров возможна гололедица. Будьте осторожны.',
+  dDarkHint:'Коснитесь экрана, чтобы вернуться'
+});
+Object.assign(I18N.lv, {
+  driveTitle:'Ceļā', driveOn:'🚗 Ieslēgt', driveOff:'⏹ Izslēgt', dVoice:'Balss brīdinājumi', dEco:'Akumulatora taupīšana',
+  dTest:'🔊 Pārbaudīt balsi', dDark:'🌑 Tumšs ekrāns', voiceAuto:'Balss: automātiski', kmh:'km/h',
+  driveNote:'Lietotne seko laikapstākļiem šeit un priekšā braukšanas virzienā (10, 25 un 50 km) un ar balsi brīdina par apledojumu, sniegu, miglu, vēju un pērkona negaisu. Darbojas, kamēr lietotne ir atvērta: ekrāns neizslēdzas. «Akumulatora taupīšana» — mazāk precīzs GPS un pārbaude reizi 5 minūtēs vai 5 km. Koordinātas netiek saglabātas.',
+  dIdle:'Izslēgts. Ieslēdziet pirms brauciena un atstājiet lietotni atvērtu.', dWaiting:'Nosaku atrašanās vietu…',
+  dDenied:'Nav piekļuves atrašanās vietai. Atļaujiet to šai vietnei: slēdzenes ikona adreses joslā → Atļaujas → Atrašanās vieta.',
+  dNoGeo:'Šī ierīce nesniedz atrašanās vietu.', dNoFix:'GPS vēl neatbild, gaidu signālu.', dNet:'Neizdevās iegūt prognozi, mēģināšu vēlāk.',
+  dHere:'Šeit', dAhead:'Pēc {d} kilometriem', dHereCap:'Šeit', dAheadCap:'Pēc {d} km', dEta:'≈ {m} min', dOk:'bez briesmām',
+  dRoad:'ceļš {v}', dAcc:'precizitāte {a} m', dChecked:'pārbaudīts {t}', dStationary:'Jūs stāvat vai braucat lēni — rādu laikapstākļus uz vietas.',
+  driveAlert:'Bīstami ceļā', voiceHello:'Režīms ceļā ieslēgts. Es brīdināšu par bīstamiem laikapstākļiem uz ceļa.',
+  voiceWarn:'Uzmanību! {where}: {what}. Esiet uzmanīgi.', voiceTest:'Uzmanību! Pēc divdesmit pieciem kilometriem iespējams apledojums. Esiet uzmanīgi.',
+  dDarkHint:'Pieskarieties ekrānam, lai atgrieztos'
+});
+Object.assign(I18N.en, {
+  driveTitle:'Drive mode', driveOn:'🚗 Turn on', driveOff:'⏹ Turn off', dVoice:'Voice warnings', dEco:'Battery saver',
+  dTest:'🔊 Test voice', dDark:'🌑 Dark screen', voiceAuto:'Voice: automatic', kmh:'km/h',
+  driveNote:'The app watches the weather here and ahead in your direction of travel (10, 25 and 50 km) and gives voice warnings about ice, snow, fog, wind and thunderstorms. It works while the app is open: the screen stays on. Battery saver uses less precise GPS and checks every 5 minutes or 5 km. Your location is not stored.',
+  dIdle:'Off. Turn it on before you drive and keep the app open.', dWaiting:'Finding your location…',
+  dDenied:'No access to location. Allow it for this site: lock icon in the address bar → Permissions → Location.',
+  dNoGeo:'This device does not provide location.', dNoFix:'No GPS fix yet, waiting for a signal.', dNet:'Could not get the forecast, will retry.',
+  dHere:'Here', dAhead:'In {d} kilometres', dHereCap:'Here', dAheadCap:'In {d} km', dEta:'≈ {m} min', dOk:'no hazards',
+  dRoad:'road {v}', dAcc:'accuracy {a} m', dChecked:'checked {t}', dStationary:'You are stopped or moving slowly — showing the weather where you are.',
+  driveAlert:'Danger on the road', voiceHello:'Drive mode is on. I will warn you about dangerous weather on the road.',
+  voiceWarn:'Attention! {where}: {what}. Please drive carefully.', voiceTest:'Attention! In twenty five kilometres there may be ice on the road. Please drive carefully.',
+  dDarkHint:'Tap the screen to return'
+});

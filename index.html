@@ -4,11 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Meteo LV: погода и радар Латвии</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.rainviewer.com; connect-src 'self' https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://marine-api.open-meteo.com https://api.rainviewer.com https://feeds.meteoalarm.org; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.rainviewer.com https://*.basemaps.cartocdn.com; connect-src 'self' https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://marine-api.open-meteo.com https://api.rainviewer.com https://feeds.meteoalarm.org; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="leaflet.css">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
@@ -59,8 +60,8 @@
   button:focus-visible,input:focus-visible,select:focus-visible,canvas:focus-visible,summary:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
 
   .grid{display:grid;gap:14px;grid-template-columns:minmax(0,5fr) minmax(0,7fr);
-    grid-template-areas:"hero map" "today map" "h24 map" "warn map" "radar daily" "road road" "sea pollen" "moon acc" "hourly hourly"}
-  @media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "today" "h24" "warn" "map" "radar" "road" "daily" "sea" "pollen" "moon" "acc" "hourly"}}
+    grid-template-areas:"hero map" "today map" "h24 map" "warn map" "drive radar" "drive daily" "road road" "sea pollen" "moon acc" "hourly hourly"}
+  @media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "today" "h24" "warn" "drive" "map" "radar" "road" "daily" "sea" "pollen" "moon" "acc" "hourly"}}
   .card{background:var(--glass);border:1px solid var(--edge);border-radius:20px;padding:18px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
   .hero{grid-area:hero}.h24{grid-area:h24}.warn{grid-area:warn}.mapc{grid-area:map;padding:0;overflow:hidden;align-self:start}
   .radarc{grid-area:radar;align-self:start}.daily{grid-area:daily;align-self:start}.moon{grid-area:moon;align-self:start}.acc{grid-area:acc;align-self:start}.hourly{grid-area:hourly}
@@ -128,8 +129,79 @@
   .seg{display:flex;background:rgba(255,255,255,.07);border-radius:99px;padding:3px}
   .seg button{font:inherit;font-size:.78rem;color:var(--muted);background:transparent;border:0;padding:5px 11px;border-radius:99px;cursor:pointer}
   .seg button[aria-pressed=true]{background:var(--text);color:#0a1522;font-weight:500}
-  #map,#radar{display:block;width:100%;cursor:pointer;touch-action:manipulation}
-  #radar{border-radius:12px}
+  /* ===== карты ===== */
+  .lmap{width:100%;height:clamp(260px,64vw,470px);background:#0b1622;border-top:1px solid var(--edge);border-bottom:1px solid var(--edge);z-index:0}
+  .rmap{height:clamp(240px,58vw,380px);border:1px solid var(--edge);border-radius:16px;overflow:hidden}
+  .leaflet-container{font:inherit;background:#0b1622;outline:0}
+  .basemap{filter:brightness(1.35) contrast(1.08) saturate(.9)}
+  .leaflet-bar{border:1px solid var(--edge)!important;border-radius:12px!important;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.35)!important}
+  .leaflet-bar a{background:rgba(10,21,34,.86)!important;color:var(--text)!important;border-bottom-color:var(--edge)!important;width:34px!important;height:34px!important;line-height:34px!important}
+  .leaflet-bar a:hover{background:rgba(30,50,72,.95)!important}
+  .leaflet-control-attribution{background:rgba(10,21,34,.72)!important;color:var(--muted)!important;font-size:10px!important;border-radius:8px 0 0 0}
+  .leaflet-control-attribution a{color:#9ad7ff!important}
+  .wxc{position:absolute;left:0;top:0;pointer-events:none;transition:opacity .25s}
+  .zooming .wxc{opacity:0}
+  .rvl{transition:opacity .45s ease}
+  .cmw{background:none!important;border:0!important}
+  .cm{position:relative;transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:3px;padding:2px 9px 2px 3px;border-radius:99px;white-space:nowrap;
+    background:rgba(10,21,34,.8);border:1px solid rgba(255,255,255,.18);box-shadow:0 6px 18px rgba(0,0,0,.4);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    cursor:pointer;color:var(--text);transition:transform .2s,box-shadow .2s;animation:cmin .45s cubic-bezier(.2,.8,.2,1) both}
+  .cm:hover{transform:translate(-50%,-50%) scale(1.07)}
+  .cm.cm-l{transform:translate(-14px,-50%)}.cm.cm-l:hover{transform:translate(-14px,-50%) scale(1.07)}
+  .cm.cm-r{transform:translate(calc(-100% + 14px),-50%)}.cm.cm-r:hover{transform:translate(calc(-100% + 14px),-50%) scale(1.07)}
+  .cm.gone{display:none}
+  .cm .cm-i{line-height:0;width:24px;height:24px}
+  .cm b{font-size:.88rem;font-weight:700}
+  .cm small{font-size:.68rem;color:var(--muted);margin-left:2px}
+  .cm.mini{padding:2px 7px 2px 5px;gap:4px;background:rgba(10,21,34,.68)}
+  .cm.mini i{display:block;width:8px;height:8px;border-radius:50%}
+  .cm.mini b{font-size:.75rem;font-weight:600}
+  .cm.sel{border-color:var(--sun);box-shadow:0 0 0 3px rgba(255,181,71,.28),0 6px 18px rgba(0,0,0,.4)}
+  .cm.warn{border-color:#ff6b4a;animation:cmin .45s both,warnpulse 1.8s ease-in-out .5s infinite}
+  @keyframes cmin{from{opacity:0;transform:translate(-50%,-30%) scale(.9)}}
+  @keyframes warnpulse{50%{box-shadow:0 0 0 6px rgba(255,107,74,.25),0 6px 18px rgba(0,0,0,.4)}}
+  .pin{width:16px;height:16px;border-radius:50%;background:var(--sun);border:3px solid #0a1522;transform:translate(-50%,-50%);animation:pinpulse 1.8s ease-out infinite}
+  @keyframes pinpulse{0%{box-shadow:0 0 0 0 rgba(255,181,71,.7)}100%{box-shadow:0 0 0 18px rgba(255,181,71,0)}}
+  .rdot{transform:translate(-6px,-50%);display:flex;align-items:center;gap:5px;font-size:.72rem;color:#d5e2ee;white-space:nowrap;cursor:pointer;
+    text-shadow:0 1px 3px #000,0 0 6px #000}
+  .rdot i{width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px rgba(10,21,34,.8)}
+  .rdot.sel i{background:var(--sun);box-shadow:0 0 0 3px rgba(255,181,71,.35)}
+  .route-seg{filter:drop-shadow(0 0 4px rgba(0,0,0,.6))}
+  .mleg{display:flex;align-items:center;gap:8px;padding:10px 18px 0;font-size:.75rem;color:var(--muted);flex-wrap:wrap}
+  .mleg i{flex:0 0 130px;height:7px;border-radius:4px}
+  .mleg em{font-style:normal;margin-left:auto;color:#cfe6f7}
+  .seg .tog{border-left:1px solid var(--edge);border-radius:99px}
+  .seg .tog[aria-pressed=true]{background:rgba(92,200,255,.18);color:#9ad7ff}
+  @media(prefers-reduced-motion:reduce){.cm,.pin,.rvl{animation:none!important;transition:none!important}}
+
+  /* ===== режим в пути ===== */
+  .drive{grid-area:drive;align-self:start}
+  .dbtn{font-weight:600;color:var(--text);border-color:rgba(92,200,255,.5);background:rgba(92,200,255,.12)}
+  .dbtn.on{background:rgba(255,107,74,.16);border-color:rgba(255,107,74,.55);color:#ffc2b3}
+  .dopts{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:12px;font-size:.86rem}
+  .dopts label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  .dopts input{accent-color:var(--sky);width:16px;height:16px}
+  .dopts select{font:inherit;font-size:.8rem;color:var(--text);background:rgba(255,255,255,.07);border:1px solid var(--edge);border-radius:99px;padding:5px 10px;max-width:220px}
+  .dopts select option{color:#000}
+  .dstat{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .dstat b{font-size:2.4rem;font-weight:300;line-height:1;letter-spacing:-.03em}
+  .dstat small{color:var(--muted)}
+  .dstat em{font-style:normal;font-size:.76rem;color:var(--muted);flex-basis:100%}
+  .dlist{display:grid;gap:6px}
+  .drow{display:grid;grid-template-columns:10px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--edge)}
+  .drow>i{width:10px;height:10px;border-radius:50%;background:var(--live)}
+  .drow.lv1>i{background:var(--sun)}.drow.lv2>i{background:var(--alert);box-shadow:0 0 0 4px rgba(255,107,74,.2)}
+  .drow.lv2{border-color:rgba(255,107,74,.45);background:rgba(255,107,74,.08)}
+  .drow b{font-weight:500}.drow small{display:block;font-size:.76rem;color:var(--muted)}
+  .drow>span{text-align:right;font-weight:600}.drow>span small{font-weight:400}
+  .me{width:18px;height:18px;border-radius:50%;background:#5cc8ff;border:3px solid #fff;transform:translate(-50%,-50%);box-shadow:0 0 0 6px rgba(92,200,255,.25),0 4px 12px rgba(0,0,0,.5);position:relative}
+  .me i{position:absolute;left:50%;top:50%;width:0;height:0;margin:-19px 0 0 -6px;border:6px solid transparent;border-bottom:10px solid #5cc8ff;transform-origin:6px 19px}
+  .darkscr{position:fixed;inset:0;z-index:100;background:#000;color:#e6edf3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;cursor:pointer}
+  .darkscr .dk-sp{font-size:6rem;font-weight:200;line-height:1}
+  .darkscr .dk-u{color:#6b7c8c;font-size:1rem}
+  .darkscr .dk-msg{font-size:1.25rem;max-width:520px;margin-top:18px;color:#7fd99a}
+  .darkscr.lv1 .dk-msg{color:#ffc46b}.darkscr.lv2 .dk-msg{color:#ff8a70;font-weight:600}
+  .darkscr .dk-hint{position:absolute;bottom:28px;font-size:.8rem;color:#4b5966}
   .ctrl{padding:12px 18px 6px}
   .prow{display:flex;gap:12px;align-items:center}
   .play{flex:none;width:42px;height:42px;border-radius:50%;border:0;background:var(--sun);color:#0a1522;font-size:.95rem;cursor:pointer}
@@ -349,7 +421,7 @@
       <span class="logo-word"><b>Meteo</b><span class="logo-lv">LV<i></i></span></span>
     </a></h1>
     <div class="seg langs" id="langs" role="group" data-i18n-aria="langAria" aria-label="Язык"></div>
-    <div class="live"><span class="dot" id="dot"></span><b id="clock">--:--:--</b><span id="upd" data-i18n="loading">загрузка…</span></div>
+    <div class="live"><span class="dot" id="dot"></span><span id="upd" data-i18n="loading">загрузка…</span></div>
     <button class="install" id="installBtn" data-i18n="install">📲 Установить</button>
     <div class="search">
       <input id="q" type="search" placeholder="Найти город или посёлок в Латвии…" data-i18n-ph="searchPh" autocomplete="off" aria-label="Поиск населённого пункта" data-i18n-aria="searchAria">
@@ -386,13 +458,29 @@
       <div class="nst" id="nst"></div>
     </section>
 
+    <section class="card drive" id="driveCard">
+      <div class="whead">
+        <h2 data-i18n="driveTitle">Режим в пути</h2>
+        <div class="wbtns"><button class="wbtn dbtn" id="driveBtn">🚗 Включить</button></div>
+      </div>
+      <div id="driveOut"></div>
+      <div class="dopts">
+        <label><input type="checkbox" id="dVoice" checked> <span data-i18n="dVoice">Голосовые предупреждения</span></label>
+        <label><input type="checkbox" id="dEco" checked> <span data-i18n="dEco">Экономия батареи</span></label>
+        <select id="dVoiceSel" aria-label="Voice"></select>
+        <button class="wbtn" id="dTest" data-i18n="dTest">🔊 Проверить голос</button>
+        <button class="wbtn" id="dDark" data-i18n="dDark">🌑 Тёмный экран</button>
+      </div>
+      <p class="nst" data-i18n="driveNote"></p>
+    </section>
+
     <section class="card mapc">
       <div class="mhead">
         <h2 data-i18n="mapTitle">Погода в городах и облачность на 3 дня</h2>
         <div class="seg" id="layers" role="group" aria-label="Слой облачности" data-i18n-aria="layersAria"></div>
       </div>
-      <canvas id="map" tabindex="0" aria-label="" data-i18n-aria="mapAria"></canvas>
-      <div class="legend"><span data-i18n="clear">ясно</span><i></i><span data-i18n="overcast">сплошные облака</span></div>
+      <div id="map" class="lmap" role="region" aria-label="" data-i18n-aria="mapAria"></div>
+      <div class="mleg" id="mlegend"></div>
       <div class="ctrl">
         <div class="prow">
           <button class="play" id="play" aria-label="" data-i18n-aria="play">▶</button>
@@ -409,7 +497,7 @@
     <section class="card radarc">
       <h2 data-i18n="radarTitle">Радар осадков и дождь в ближайшие часы</h2>
       <div class="nowc"><div class="t" id="nowt" data-i18n="computing">Считаю…</div><div class="nc" id="nowbars" aria-hidden="true"></div></div>
-      <canvas id="radar" tabindex="0" aria-label="" data-i18n-aria="radarAria"></canvas>
+      <div id="radar" class="lmap rmap" role="region" aria-label="" data-i18n-aria="radarAria"></div>
       <div class="rcard-ctrl prow">
         <button class="play" id="rplay" aria-label="" data-i18n-aria="radarPlay">▶</button>
         <input type="range" id="rslider" min="0" max="0" step="1" value="0" aria-label="" data-i18n-aria="radarFrame">
@@ -457,7 +545,9 @@
 </div>
 
 <script src="i18n.js"></script>
+<script src="leaflet.js"></script>
 <script src="viz.js"></script>
 <script src="app.js"></script>
+<script src="drive.js"></script>
 </body>
 </html>
