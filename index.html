@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meteo LV: погода и радар Латвии</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.rainviewer.com; connect-src 'self' https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://marine-api.open-meteo.com https://api.rainviewer.com https://feeds.meteoalarm.org; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
+<meta name="theme-color" content="#0a1522">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#0a1522; --text:#eaf2f8; --muted:#8fa6ba; --sun:#ffb547; --sky:#5cc8ff; --live:#4ade80; --alert:#ff6b4a;
+    --glass:rgba(255,255,255,.055); --edge:rgba(255,255,255,.1);
+  }
+  *{box-sizing:border-box;margin:0}
+  html{background:var(--bg)}
+  body{
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--text);line-height:1.4;min-height:100vh;
+    background:radial-gradient(900px 520px at 85% -8%,#1f4a70 0%,transparent 62%),radial-gradient(700px 420px at -5% 30%,#143150 0%,transparent 60%),var(--bg);
+    padding:max(18px,env(safe-area-inset-top)) 14px 40px;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+  header{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:14px}
+  h1{font-size:1.35rem;font-weight:500;letter-spacing:-.01em;margin-right:auto}
+  h1 small{font-size:.75rem;font-weight:400;color:var(--muted);margin-left:8px;letter-spacing:0}
+  .live{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--muted)}
+  .live b{font-size:1.15rem;font-weight:500;color:var(--text);font-variant-numeric:tabular-nums}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 rgba(74,222,128,.6);animation:pulse 2s infinite}
+  .dot.off{background:#ff7a5a;animation:none}
+  @keyframes pulse{70%{box-shadow:0 0 0 8px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+  @media(prefers-reduced-motion:reduce){.dot{animation:none}}
+  .install{display:none;font:inherit;font-size:.8rem;padding:6px 12px;border-radius:99px;border:1px solid var(--sun);background:transparent;color:var(--sun);cursor:pointer}
+  .search{position:relative;flex:1 1 100%;max-width:440px}
+  .search input{width:100%;font:inherit;font-size:.9rem;color:var(--text);background:rgba(255,255,255,.07);border:1px solid var(--edge);border-radius:99px;padding:8px 14px}
+  .search input::placeholder{color:var(--muted)}
+  .qres{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#12263a;border:1px solid var(--edge);border-radius:14px;overflow:hidden;z-index:40;display:none}
+  .qres button{display:block;width:100%;text-align:left;font:inherit;font-size:.88rem;color:var(--text);background:transparent;border:0;padding:10px 14px;cursor:pointer}
+  .qres button small{color:var(--muted)}
+  .qres button:hover,.qres button:focus-visible{background:rgba(255,255,255,.08)}
+  .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1 1 100%}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;font:inherit;font-size:.85rem;color:var(--muted);background:transparent;border:1px solid var(--edge);padding:6px 13px;border-radius:99px;cursor:pointer}
+  .chip:hover{color:var(--text)}
+  .chip[aria-pressed=true]{background:var(--text);color:#0a1522;border-color:var(--text);font-weight:500}
+  button:focus-visible,input:focus-visible,select:focus-visible,canvas:focus-visible,summary:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+
+  .grid{display:grid;gap:14px;grid-template-columns:minmax(0,5fr) minmax(0,7fr);
+    grid-template-areas:"hero map" "today map" "h24 map" "warn map" "radar daily" "road road" "sea pollen" "moon acc" "hourly hourly"}
+  @media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "today" "h24" "warn" "map" "radar" "road" "daily" "sea" "pollen" "moon" "acc" "hourly"}}
+  .card{background:var(--glass);border:1px solid var(--edge);border-radius:20px;padding:18px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .hero{grid-area:hero}.h24{grid-area:h24}.warn{grid-area:warn}.mapc{grid-area:map;padding:0;overflow:hidden;align-self:start}
+  .radarc{grid-area:radar;align-self:start}.daily{grid-area:daily;align-self:start}.moon{grid-area:moon;align-self:start}.acc{grid-area:acc;align-self:start}.hourly{grid-area:hourly}
+  .today{grid-area:today}.road{grid-area:road}.sea{grid-area:sea;align-self:start}.pollen{grid-area:pollen;align-self:start}
+  h2{font-size:.95rem;font-weight:500;color:var(--muted);margin-bottom:12px}
+  .hint{font-weight:400;font-size:.76rem;opacity:.85}
+
+  .place{color:var(--muted);font-size:.9rem}
+  .star{font:inherit;font-size:1.15rem;background:transparent;border:0;color:var(--sun);cursor:pointer;padding:0 4px;vertical-align:middle}
+  .trow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 4px}
+  .big{font-size:5.6rem;font-weight:200;line-height:1;letter-spacing:-.04em}
+  .ico{font-size:4rem;line-height:1}
+  .cond{font-size:1.15rem;font-weight:500}
+  .sub{color:var(--muted);font-size:.9rem;margin-top:2px}
+  .facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+  .fact{background:rgba(255,255,255,.05);border-radius:12px;padding:10px 12px}
+  .fact small{display:block;color:var(--muted);font-size:.75rem}
+  .fact b{font-weight:500;font-size:1.02rem}
+  .state{color:var(--muted);padding:30px 0}
+
+  .h24{padding:14px 12px 10px}
+  .h24 h2{padding-left:6px}
+  #h24{display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin;padding-bottom:6px}
+  .hc{flex:0 0 58px;display:grid;justify-items:center;gap:2px;padding:8px 0;border-radius:12px;background:rgba(255,255,255,.04)}
+  .hc small{color:var(--muted);font-size:.74rem}
+  .hc .hi{font-size:1.4rem;line-height:1.2}
+  .hc b{font-weight:500}
+  .hc em{font-style:normal;font-size:.72rem;color:var(--sky);min-height:1em}
+
+  .whead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .whead h2{margin:0}
+  .wbtns{display:flex;gap:6px}
+  .wbtn{font:inherit;font-size:.78rem;padding:6px 12px;border-radius:99px;border:1px solid var(--edge);background:transparent;color:var(--muted);cursor:pointer}
+  .wbtn.on{background:rgba(74,222,128,.16);border-color:rgba(74,222,128,.5);color:var(--live)}
+  .wl{display:grid;gap:8px}
+  .wi{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;background:rgba(255,107,74,.1);border:1px solid rgba(255,107,74,.35);border-radius:12px;padding:10px 12px}
+  .wi .wic{font-size:1.5rem;line-height:1.2}
+  .wi b{font-weight:500}
+  .wi small{display:block;color:#ffc2b3;font-size:.82rem}
+  .ok{color:var(--muted);font-size:.9rem;padding:4px 0}
+  .nst{font-size:.74rem;color:var(--muted);margin-top:10px}
+  .cfg{margin-top:12px;border-top:1px solid var(--edge);padding-top:10px;font-size:.86rem}
+  .cfg summary{cursor:pointer;color:var(--muted)}
+  .cr{display:grid;grid-template-columns:22px 1fr 72px 44px;gap:8px;align-items:center;padding:5px 0}
+  .cr input[type=number],.cr select{width:100%;font:inherit;font-size:.85rem;color:var(--text);background:rgba(255,255,255,.07);border:1px solid var(--edge);border-radius:8px;padding:4px 6px}
+  .cr select option{color:#000}
+  .cr em{font-style:normal;color:var(--muted);font-size:.78rem}
+  .cfg .wbtn{margin-top:8px}
+
+  .row{display:grid;grid-template-columns:78px 30px 58px 1fr 52px;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--edge)}
+  .row:first-of-type{border-top:0}
+  .row .nm{font-weight:500;text-transform:capitalize}
+  .row .nm small{display:block;font-weight:400;font-size:.75rem;color:var(--muted);text-transform:none}
+  .row .ic{font-size:1.4rem;text-align:center}
+  .row .mm{font-size:.82rem;color:var(--sky)}
+  .rg{display:grid;grid-template-columns:30px 1fr 30px;gap:8px;align-items:center;font-size:.9rem}
+  .rg span:first-child{text-align:right;color:var(--muted)}
+  .tr{height:6px;border-radius:3px;background:rgba(255,255,255,.1);position:relative}
+  .tr i{position:absolute;top:0;bottom:0;border-radius:3px;background:linear-gradient(90deg,var(--sky),var(--sun))}
+  .cf{display:flex;align-items:center;gap:5px;font-size:.74rem;color:var(--muted);justify-content:flex-end;white-space:nowrap}
+  .cf i{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+  .mhead{display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:space-between;align-items:center;padding:16px 18px 10px}
+  .mhead h2{margin:0}
+  .seg{display:flex;background:rgba(255,255,255,.07);border-radius:99px;padding:3px}
+  .seg button{font:inherit;font-size:.78rem;color:var(--muted);background:transparent;border:0;padding:5px 11px;border-radius:99px;cursor:pointer}
+  .seg button[aria-pressed=true]{background:var(--text);color:#0a1522;font-weight:500}
+  #map,#radar{display:block;width:100%;cursor:pointer;touch-action:manipulation}
+  #radar{border-radius:12px}
+  .ctrl{padding:12px 18px 6px}
+  .prow{display:flex;gap:12px;align-items:center}
+  .play{flex:none;width:42px;height:42px;border-radius:50%;border:0;background:var(--sun);color:#0a1522;font-size:.95rem;cursor:pointer}
+  input[type=range]{flex:1;min-width:0;accent-color:var(--sun)}
+  .nowbtn{flex:none;font:inherit;font-size:.8rem;padding:7px 12px;border-radius:99px;border:1px solid var(--edge);background:transparent;color:var(--muted);cursor:pointer}
+  .nowbtn[aria-pressed=true]{background:rgba(74,222,128,.16);border-color:rgba(74,222,128,.5);color:var(--live)}
+  .when{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px;margin-top:10px;font-weight:500;font-variant-numeric:tabular-nums}
+  .when span:last-child{font-weight:400;color:var(--muted)}
+  .strip{display:grid;gap:1px;align-items:end;height:40px;margin-top:10px}
+  .strip i{display:block;min-height:2px;background:rgba(255,255,255,.2);border-radius:1px}
+  .strip i.on{background:var(--sun)}
+  .d3{display:flex;font-size:.75rem;color:var(--muted);margin-top:4px}
+  .d3 span{flex:1;border-left:1px solid var(--edge);padding-left:6px}
+  .legend{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--muted);padding:10px 18px 0}
+  .legend i{flex:0 0 110px;height:7px;border-radius:4px;background:linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.95))}
+  .note{font-size:.74rem;color:var(--muted);padding:8px 18px 16px}
+
+  .nowc{display:flex;gap:14px;align-items:flex-end;margin-bottom:12px}
+  .nowc .t{flex:1;font-size:.95rem}
+  .nc{display:flex;gap:2px;align-items:flex-end;height:36px;flex:0 0 120px}
+  .nc i{flex:1;background:var(--sky);border-radius:2px;min-height:2px;opacity:.85}
+  .rcard-ctrl{margin-top:12px}
+  .rleg{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--muted);margin-top:10px;flex-wrap:wrap}
+  .rleg i{flex:0 0 100px;height:7px;border-radius:4px;background:linear-gradient(90deg,#9ad7ff,#2f7fe0,#3b3bd6,#a02bd1)}
+
+  .mrow{display:flex;gap:16px;align-items:center}
+  .mt b{font-size:1.15rem;font-weight:500;display:block}
+  .mn{display:grid;gap:2px;margin-top:8px;font-size:.84rem;color:var(--muted)}
+  .sky{margin-top:14px;background:rgba(255,255,255,.05);border-radius:12px;padding:10px 12px;font-size:.9rem}
+  .sky small{display:block;color:var(--muted);font-size:.78rem;margin-top:2px}
+
+  .ar{display:grid;grid-template-columns:150px 1fr 54px;gap:10px;align-items:center;padding:6px 0;font-size:.88rem}
+  .ar .bar{height:8px;border-radius:4px;background:rgba(255,255,255,.1);position:relative}
+  .ar .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--sky)}
+  .ar.best .bar i{background:var(--live)}
+  .ar b{font-weight:500;text-align:right}
+  @media(max-width:420px){.ar{grid-template-columns:110px 1fr 50px}}
+
+  #hourly{display:block;width:100%;touch-action:pan-y}
+  .err{display:none;background:rgba(255,120,90,.12);border:1px solid rgba(255,120,90,.4);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:.9rem}
+  .err button{font:inherit;margin-left:10px;padding:4px 12px;border-radius:99px;border:1px solid var(--edge);background:var(--text);color:#0a1522;cursor:pointer}
+  footer{margin-top:14px;color:var(--muted);font-size:.75rem}
+  footer a{color:inherit}
+
+  .toasts{position:fixed;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;z-index:50;display:grid;gap:8px;max-width:520px;margin:0 auto;pointer-events:none}
+  .toast{pointer-events:auto;display:grid;grid-template-columns:36px 1fr 28px;gap:10px;align-items:start;background:#2a1612;border:1px solid var(--alert);border-radius:16px;padding:12px 12px 12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:in .25s ease-out}
+  @keyframes in{from{transform:translateY(-14px);opacity:0}}
+  @media(prefers-reduced-motion:reduce){.toast{animation:none}}
+  .toast.info{background:#10263a;border-color:var(--sky)}
+  .toast.info b{color:#d8efff}
+  .toast.info span{color:#b9d6ea}
+  .toast .t-ic{font-size:1.8rem;line-height:1.1}
+  .toast b{display:block;font-weight:700;color:#ffd7cc}
+  .toast span{font-size:.88rem;color:#f3c4b6}
+  .toast button{background:transparent;border:0;color:#f3c4b6;font-size:1.2rem;cursor:pointer;line-height:1;padding:2px}
+
+  .langs{flex:none}
+  .tline{font-size:.95rem;margin-bottom:10px}
+  .tl{display:grid;gap:8px}
+  .ti{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:start;font-size:.92rem}
+  .ti span:first-child{font-size:1.2rem;line-height:1.25}
+
+  .subh{font-size:.8rem;color:var(--muted);margin:14px 0 6px}
+  .subh:first-child{margin-top:0}
+  .oi{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;border-radius:12px;padding:10px 12px;border:1px solid;border-left-width:5px}
+  .oi + .oi{margin-top:8px}
+  .oi.yellow{background:rgba(255,210,63,.08);border-color:rgba(255,210,63,.6)}
+  .oi.orange{background:rgba(255,140,26,.1);border-color:rgba(255,140,26,.7)}
+  .oi.red{background:rgba(255,59,48,.13);border-color:rgba(255,59,48,.8)}
+  .oi .wic{font-size:1.4rem;line-height:1.2}
+  .oi b{font-weight:600}
+  .oi small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
+  .oi .here{color:var(--sun)}
+  .oi details{margin-top:4px;font-size:.8rem;color:#c9d8e4}
+  .oi summary{cursor:pointer;color:var(--muted)}
+  .src{font-size:.72rem;color:var(--muted);margin-top:6px}
+  .src a,.ok a,.nst a{color:inherit}
+
+  .sr{display:grid;grid-template-columns:minmax(0,1fr) 64px minmax(0,1.3fr);gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--edge)}
+  .sr:first-of-type{border-top:0}
+  .sr .nm{font-weight:500}
+  .sr .nm small{display:block;font-weight:400;color:var(--muted);font-size:.75rem}
+  .sr .wt{font-size:1.35rem;font-weight:300;text-align:center}
+  .sr .wv{font-size:.88rem}
+  .sr .wv small{display:block;color:var(--muted);font-size:.76rem}
+
+  .pr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) 112px;gap:10px;align-items:center;padding:6px 0;font-size:.88rem}
+  .pr .bar{height:8px;border-radius:4px;background:rgba(255,255,255,.1);position:relative;overflow:hidden}
+  .pr .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+  .pr b{font-weight:500;text-align:right;font-size:.82rem}
+
+  .rsel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+  .rsel label{display:grid;gap:4px;font-size:.76rem;color:var(--muted)}
+  .rsel select{font:inherit;font-size:.9rem;color:var(--text);background:rgba(255,255,255,.07);border:1px solid var(--edge);border-radius:10px;padding:7px 8px;width:100%}
+  .rsel select option{color:#000}
+  @media(max-width:520px){.rsel{grid-template-columns:1fr 1fr}.rsel label:last-child{grid-column:1/-1}}
+  .rsum{font-size:.95rem;margin-bottom:10px}
+  .rsum small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
+  .rbar{display:flex;gap:2px;height:8px;margin-bottom:10px}
+  .rbar i{flex:1;border-radius:2px}
+  .rp{display:grid;grid-template-columns:12px minmax(0,1.3fr) 52px 30px minmax(0,1.3fr) minmax(0,1.6fr);gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--edge);font-size:.86rem}
+  .rp:first-child{border-top:0}
+  .rp .d{width:10px;height:10px;border-radius:50%}
+  .rp small{color:var(--muted);font-size:.76rem}
+  .rp .why{font-size:.78rem;color:#ffc2b3}
+  @media(max-width:600px){.rp{grid-template-columns:12px minmax(0,1fr) 46px 26px minmax(0,1fr)}.rp .why{grid-column:2/-1}}
+</style>
+</head>
+<body>
+<div class="toasts" id="toasts" aria-live="assertive"></div>
+<noscript><p style="padding:20px;color:#eaf2f8">JavaScript is required · Nepieciešams JavaScript · Нужен JavaScript.</p></noscript>
+<div class="wrap">
+  <header>
+    <h1>Meteo LV <small data-i18n="tagline">погода · радар · Латвия</small></h1>
+    <div class="seg langs" id="langs" role="group" data-i18n-aria="langAria" aria-label="Язык"></div>
+    <div class="live"><span class="dot" id="dot"></span><b id="clock">--:--:--</b><span id="upd" data-i18n="loading">загрузка…</span></div>
+    <button class="install" id="installBtn" data-i18n="install">📲 Установить</button>
+    <div class="search">
+      <input id="q" type="search" placeholder="Найти город или посёлок в Латвии…" data-i18n-ph="searchPh" autocomplete="off" aria-label="Поиск населённого пункта" data-i18n-aria="searchAria">
+      <div class="qres" id="qres"></div>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Места" data-i18n-aria="placesAria"></div>
+  </header>
+  <div class="err" id="err" role="alert"><span id="errt"></span><button id="retry" data-i18n="retry">Повторить</button></div>
+
+  <main class="grid">
+    <section class="card hero" id="hero"><div class="state" data-i18n="loadingWeather">Загружаю погоду…</div></section>
+
+    <section class="card today" id="today"><div class="state" data-i18n="loadingShort">Загружаю…</div></section>
+
+    <section class="card h24">
+      <h2 data-i18n="h24Title">Ближайшие 24 часа</h2>
+      <div id="h24"><div class="state" data-i18n="loadingShort">Загружаю…</div></div>
+    </section>
+
+    <section class="card warn">
+      <div class="whead">
+        <h2 data-i18n="warnTitle">Предупреждения</h2>
+        <div class="wbtns">
+          <button class="wbtn" id="notifBtn">🔔</button>
+          <button class="wbtn" id="testBtn" data-i18n="test">Проверить</button>
+        </div>
+      </div>
+      <div id="wl"><div class="ok" data-i18n="checking">Проверяю прогноз по всем местам…</div></div>
+      <details class="cfg">
+        <summary data-i18n="cfgSummary">⚙️ Настроить пороги</summary>
+        <div id="cfgbox"></div>
+        <button class="wbtn" id="cfgReset" data-i18n="cfgReset">Сбросить по умолчанию</button>
+      </details>
+      <div class="nst" id="nst"></div>
+    </section>
+
+    <section class="card mapc">
+      <div class="mhead">
+        <h2 data-i18n="mapTitle">Погода в городах и облачность на 3 дня</h2>
+        <div class="seg" id="layers" role="group" aria-label="Слой облачности" data-i18n-aria="layersAria"></div>
+      </div>
+      <canvas id="map" tabindex="0" aria-label="" data-i18n-aria="mapAria"></canvas>
+      <div class="legend"><span data-i18n="clear">ясно</span><i></i><span data-i18n="overcast">сплошные облака</span></div>
+      <div class="ctrl">
+        <div class="prow">
+          <button class="play" id="play" aria-label="" data-i18n-aria="play">▶</button>
+          <input type="range" id="slider" min="0" max="71" step="any" value="0" aria-label="" data-i18n-aria="sliderAria">
+          <button class="nowbtn" id="nowbtn" aria-pressed="true" data-i18n="nowBtn">● Сейчас</button>
+        </div>
+        <div class="when"><span id="when">—</span><span id="mean"></span></div>
+        <div class="strip" id="strip" aria-hidden="true"></div>
+        <div class="d3" id="d3" aria-hidden="true"></div>
+      </div>
+      <p class="note" data-i18n="mapNote"></p>
+    </section>
+
+    <section class="card radarc">
+      <h2 data-i18n="radarTitle">Радар осадков и дождь в ближайшие часы</h2>
+      <div class="nowc"><div class="t" id="nowt" data-i18n="computing">Считаю…</div><div class="nc" id="nowbars" aria-hidden="true"></div></div>
+      <canvas id="radar" tabindex="0" aria-label="" data-i18n-aria="radarAria"></canvas>
+      <div class="rcard-ctrl prow">
+        <button class="play" id="rplay" aria-label="" data-i18n-aria="radarPlay">▶</button>
+        <input type="range" id="rslider" min="0" max="0" step="1" value="0" aria-label="" data-i18n-aria="radarFrame">
+      </div>
+      <div class="when"><span id="rwhen">—</span><span data-i18n="last2h">последние 2 часа</span></div>
+      <div class="rleg"><span data-i18n="weaker">слабее</span><i></i><span data-i18n="stronger">сильнее</span><span data-i18n="radarSrc">Радар: RainViewer</span></div>
+    </section>
+
+    <section class="card road">
+      <h2 data-i18n="roadTitle">Погода на дороге</h2>
+      <div class="rsel">
+        <label><span data-i18n="roadFrom">Откуда</span><select id="rFrom"></select></label>
+        <label><span data-i18n="roadTo">Куда</span><select id="rTo"></select></label>
+        <label><span data-i18n="roadDepart">Выезд</span><select id="rDep"></select></label>
+      </div>
+      <div id="roadOut"><div class="ok" data-i18n="roadLoading">Считаю маршрут…</div></div>
+    </section>
+
+    <section class="card daily">
+      <h2><span data-i18n="dailyTitle">Прогноз на 5 дней</span> <span class="hint" data-i18n="dailyHint"></span></h2>
+      <div id="daily"><div class="state" data-i18n="loadingShort">Загружаю…</div></div>
+    </section>
+
+    <section class="card sea">
+      <h2 data-i18n="seaTitle">Море и волны</h2>
+      <div id="seaOut"><div class="state" data-i18n="loadingShort">Загружаю…</div></div>
+    </section>
+
+    <section class="card pollen">
+      <h2 data-i18n="pollenTitle">Пыльца</h2>
+      <div id="pollenOut"><div class="state" data-i18n="loadingShort">Загружаю…</div></div>
+    </section>
+
+    <section class="card moon" id="moon"><div class="state" data-i18n="moonLoading">Считаю фазу Луны…</div></section>
+
+    <section class="card acc" id="acc"><div class="state" data-i18n="accLoading">Учёт точности…</div></section>
+
+    <section class="card hourly">
+      <h2 data-i18n="hourlyTitle">Температура и осадки по часам</h2>
+      <svg id="hourly" role="img" aria-label="" data-i18n-aria="hourlyAria"></svg>
+    </section>
+  </main>
+  <footer id="footer"></footer>
+</div>
+
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
