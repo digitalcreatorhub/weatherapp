@@ -25,8 +25,18 @@
   }
   .wrap{max-width:1180px;margin:0 auto}
   header{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:14px}
-  h1{font-size:1.35rem;font-weight:500;letter-spacing:-.01em;margin-right:auto}
-  h1 small{font-size:.75rem;font-weight:400;color:var(--muted);margin-left:8px;letter-spacing:0}
+  h1{margin-right:auto;font-size:inherit;font-weight:inherit;line-height:1}
+  .logo{display:inline-flex;align-items:center;gap:11px;text-decoration:none;color:inherit}
+  .logo-mark{flex:none;display:block;filter:drop-shadow(0 6px 16px rgba(31,111,184,.45))}
+  .logo-mark .rays{transform-origin:18px 18px;animation:wxspin 24s linear infinite}
+  .logo-mark .cl{animation:wxdrift 6s ease-in-out infinite alternate}
+  .logo-word{display:flex;align-items:center;gap:7px}
+  .logo-word b{font-size:1.6rem;font-weight:800;letter-spacing:-.035em;line-height:1;
+    background:linear-gradient(100deg,#ffffff 0%,#d8efff 55%,#8fd0ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .logo-lv{display:inline-flex;flex-direction:column;align-items:stretch;gap:3px;font-size:.72rem;font-weight:800;letter-spacing:.14em;
+    color:var(--text);padding:4px 6px 3px 8px;border-radius:7px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);line-height:1}
+  .logo-lv i{display:block;height:3px;border-radius:2px;margin-right:2px;background:linear-gradient(180deg,#a4343a 0 40%,#fff 40% 60%,#a4343a 60%)}
+  @media(prefers-reduced-motion:reduce){.logo-mark .rays,.logo-mark .cl{animation:none}}
   .live{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--muted)}
   .live b{font-size:1.15rem;font-weight:500;color:var(--text);font-variant-numeric:tabular-nums}
   .dot{width:9px;height:9px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 rgba(74,222,128,.6);animation:pulse 2s infinite}
@@ -324,7 +334,20 @@
 <noscript><p style="padding:20px;color:#eaf2f8">JavaScript is required · Nepieciešams JavaScript · Нужен JavaScript.</p></noscript>
 <div class="wrap">
   <header>
-    <h1>Meteo LV <small data-i18n="tagline">погода · радар · Латвия</small></h1>
+    <h1><a class="logo" href="./" aria-label="Meteo LV">
+      <svg class="logo-mark" viewBox="0 0 48 48" width="42" height="42" aria-hidden="true">
+        <defs><linearGradient id="lg-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f86d6"/><stop offset="1" stop-color="#0f2f55"/></linearGradient></defs>
+        <rect width="48" height="48" rx="13" fill="url(#lg-sky)"/>
+        <rect x=".5" y=".5" width="47" height="47" rx="12.5" fill="none" stroke="rgba(255,255,255,.18)"/>
+        <g class="rays" stroke="#ffd27a" stroke-width="2.4" stroke-linecap="round">
+          <line x1="18" y1="5" x2="18" y2="8.5"/><line x1="18" y1="27.5" x2="18" y2="31"/><line x1="5" y1="18" x2="8.5" y2="18"/><line x1="27.5" y1="18" x2="31" y2="18"/>
+          <line x1="8.8" y1="8.8" x2="11.3" y2="11.3"/><line x1="24.7" y1="24.7" x2="27.2" y2="27.2"/><line x1="8.8" y1="27.2" x2="11.3" y2="24.7"/><line x1="24.7" y1="11.3" x2="27.2" y2="8.8"/>
+        </g>
+        <circle cx="18" cy="18" r="7" fill="#ffb547"/>
+        <g class="cl"><path d="M17,40H36A7,7 0 0 0 36,26A10,10 0 0 0 17.4,23.6A8.3,8.3 0 0 0 17,40Z" fill="#f3f8fd"/></g>
+      </svg>
+      <span class="logo-word"><b>Meteo</b><span class="logo-lv">LV<i></i></span></span>
+    </a></h1>
     <div class="seg langs" id="langs" role="group" data-i18n-aria="langAria" aria-label="Язык"></div>
     <div class="live"><span class="dot" id="dot"></span><b id="clock">--:--:--</b><span id="upd" data-i18n="loading">загрузка…</span></div>
     <button class="install" id="installBtn" data-i18n="install">📲 Установить</button>
