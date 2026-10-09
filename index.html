@@ -20,7 +20,7 @@
   html{background:var(--bg)}
   body{
     font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--text);line-height:1.4;min-height:100vh;
-    background:radial-gradient(900px 520px at 85% -8%,#1f4a70 0%,transparent 62%),radial-gradient(700px 420px at -5% 30%,#143150 0%,transparent 60%),var(--bg);
+    background:radial-gradient(900px 520px at 85% -8%,var(--skyA,#1f4a70) 0%,transparent 62%),radial-gradient(700px 420px at -5% 30%,#143150 0%,transparent 60%),var(--bg);
     padding:max(18px,env(safe-area-inset-top)) 14px 40px;
   }
   .wrap{max-width:1180px;margin:0 auto}
@@ -100,7 +100,7 @@
   .cr em{font-style:normal;color:var(--muted);font-size:.78rem}
   .cfg .wbtn{margin-top:8px}
 
-  .row{display:grid;grid-template-columns:78px 30px 58px 1fr 52px;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--edge)}
+  .row{display:grid;grid-template-columns:minmax(92px,1fr) 40px minmax(0,2.4fr) 56px;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--edge)}
   .row:first-of-type{border-top:0}
   .row .nm{font-weight:500;text-transform:capitalize}
   .row .nm small{display:block;font-weight:400;font-size:.75rem;color:var(--muted);text-transform:none}
@@ -226,6 +226,97 @@
   .rp small{color:var(--muted);font-size:.76rem}
   .rp .why{font-size:.78rem;color:#ffc2b3}
   @media(max-width:600px){.rp{grid-template-columns:12px minmax(0,1fr) 46px 26px minmax(0,1fr)}.rp .why{grid-column:2/-1}}
+  /* ===== визуализации и движение ===== */
+  .card{transition:border-color .25s}
+  .card:hover{border-color:rgba(255,255,255,.16)}
+  .grid>.card{animation:cardin .7s cubic-bezier(.2,.8,.2,1) both}
+  .grid>.card:nth-child(2){animation-delay:.05s}.grid>.card:nth-child(3){animation-delay:.1s}.grid>.card:nth-child(4){animation-delay:.15s}
+  .grid>.card:nth-child(5){animation-delay:.2s}.grid>.card:nth-child(6){animation-delay:.25s}.grid>.card:nth-child(7){animation-delay:.3s}
+  .grid>.card:nth-child(n+8){animation-delay:.35s}
+  @keyframes cardin{from{opacity:0;transform:translateY(14px) scale(.985)}}
+  .state{border-radius:12px;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.07) 50%,transparent 70%);background-size:220% 100%;animation:shimmer 1.6s linear infinite;padding-left:12px}
+  @keyframes shimmer{from{background-position:120% 0}to{background-position:-100% 0}}
+
+  /* живое небо */
+  .hero{position:relative;overflow:hidden;isolation:isolate;padding:0;min-height:280px}
+  #sky{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
+  .hero::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:linear-gradient(180deg,rgba(10,21,34,0) 0%,rgba(10,21,34,.1) 30%,rgba(10,21,34,.62) 58%,rgba(10,21,34,.88) 100%)}
+  #hero{position:relative;z-index:1;padding:18px}
+  .hero .place{color:rgba(234,242,248,.88)}
+  .hero .sub{color:rgba(234,242,248,.82)}
+  .hero .big,.hero .cond{text-shadow:0 2px 18px rgba(0,0,0,.4)}
+  .ico .wx{filter:drop-shadow(0 8px 20px rgba(0,0,0,.3))}
+
+  /* приборы */
+  .gauges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:16px}
+  .gauge{background:rgba(10,21,34,.58);border:1px solid var(--edge);border-radius:16px;padding:8px 6px 9px;text-align:center;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:transform .25s,border-color .25s}
+  .gauge:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.2)}
+  .gauge svg{display:block;width:100%;height:auto;max-height:92px}
+  .gauge svg text{font-family:inherit}
+  .gauge .gl{font-size:.72rem;color:var(--muted)}
+  .gauge .gv{font-size:.74rem;line-height:1.25;opacity:.9;min-height:2.5em;display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;padding:0 2px}
+  .dirc{display:inline-block;min-width:1.6em;padding:0 5px;border:1px solid rgba(92,200,255,.5);border-radius:6px;color:var(--sky);font-weight:700;font-size:.7rem;line-height:1.5}
+  .gauges.anim .gf{stroke-dasharray:1 1;animation:gdraw 1.2s cubic-bezier(.2,.8,.2,1) .25s both}
+  .gauges.anim .needle{animation:needle 1.4s cubic-bezier(.25,1.4,.4,1) .25s both}
+  .vane{animation:vane 3.4s ease-in-out infinite alternate}
+  .sunglow{transform-box:fill-box;transform-origin:center;animation:wxglow 2.6s ease-in-out infinite alternate}
+  @keyframes gdraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+  @keyframes needle{from{transform:rotate(-120deg)}}
+  @keyframes vane{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
+
+  /* анимированные значки погоды */
+  .wx{display:inline-block;vertical-align:middle;overflow:visible}
+  .wx .spin{animation:wxspin 18s linear infinite}
+  .wx .glow{transform-box:fill-box;transform-origin:center;animation:wxglow 3s ease-in-out infinite alternate}
+  .wx .glow2{animation:wxfade 4s ease-in-out infinite alternate}
+  .wx .drift{animation:wxdrift 5s ease-in-out infinite alternate}
+  .wx .drift2{animation:wxdrift 7s ease-in-out infinite alternate-reverse}
+  .wx .drop{animation:wxdrop 1.1s linear infinite}
+  .wx .flake{animation:wxflake 2.8s linear infinite}
+  .wx .bolt{animation:wxbolt 2.6s infinite}
+  .wx .fogl{animation:wxfog 3.5s ease-in-out infinite alternate}.wx .f2{animation-delay:-1.7s}
+  @keyframes wxspin{to{transform:rotate(360deg)}}
+  @keyframes wxglow{from{transform:scale(.9);opacity:.2}to{transform:scale(1.15);opacity:.4}}
+  @keyframes wxfade{from{opacity:.45}to{opacity:1}}
+  @keyframes wxdrift{from{transform:translateX(-2.5px)}to{transform:translateX(2.5px)}}
+  @keyframes wxdrop{0%{transform:translateY(-6px);opacity:0}25%{opacity:1}100%{transform:translateY(8px);opacity:0}}
+  @keyframes wxflake{0%{transform:translate(0,-8px);opacity:0}20%{opacity:1}50%{transform:translate(2px,0)}100%{transform:translate(-1px,8px);opacity:0}}
+  @keyframes wxbolt{0%,54%,61%,100%{opacity:.2}57%,65%{opacity:1}}
+  @keyframes wxfog{from{transform:translateX(-3px)}to{transform:translateX(3px)}}
+
+  /* лента 24 часа */
+  #h24{scroll-snap-type:x proximity;scroll-behavior:smooth}
+  .hc{scroll-snap-align:start;transition:background .2s,transform .2s}
+  .hc:hover{transform:translateY(-2px);background:rgba(255,255,255,.08)}
+  .hc.nt{background:rgba(0,0,0,.2)}
+  .hc.now{background:rgba(255,255,255,.11);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+  .hc .hi{display:block;line-height:0;height:34px;width:34px;margin:2px 0}
+  .hc .tk{display:block;width:22px;height:3px;border-radius:2px}
+  .hc .wd{font-size:.7rem;color:var(--muted);display:flex;align-items:center;gap:2px}
+  .hc .wd i{font-style:normal;display:inline-block;color:var(--sky);font-weight:700}
+  .hc .pb{display:block;width:6px;height:18px;border-radius:3px;background:rgba(92,200,255,.12);position:relative;overflow:hidden}
+  .hc .pb i{position:absolute;left:0;right:0;bottom:0;background:var(--sky);border-radius:3px}
+
+  /* 5 дней и почасовой график */
+  .row .ic{line-height:0}.row .ic .wx,.hc .hi .wx{display:block;margin:0 auto}
+  .row .dn{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .nm small .mm{color:var(--sky);font-size:inherit}
+  .tr i{transform-origin:left center;animation:barin .9s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes barin{from{transform:scaleX(0);opacity:.3}}
+  .draw{stroke-dasharray:1 1;stroke-dashoffset:1;animation:draw 1.8s cubic-bezier(.3,.7,.2,1) .2s forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .pbar{transform-box:fill-box;transform-origin:center bottom;animation:pgrow .6s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes pgrow{from{transform:scaleY(0)}}
+  .tscale{display:flex;align-items:center;gap:8px;font-size:.74rem;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+  .tscale i{flex:0 0 140px;height:6px;border-radius:3px}
+  .tscale em{font-style:normal}
+
+  @media(prefers-reduced-motion:reduce){
+    .grid>.card,.state,.wx *,.gauges *,.vane,.sunglow,.tr i,.pbar,.hc{animation:none!important;transition:none!important}
+    .draw{animation:none;stroke-dashoffset:0}
+  }
 </style>
 </head>
 <body>
@@ -246,7 +337,7 @@
   <div class="err" id="err" role="alert"><span id="errt"></span><button id="retry" data-i18n="retry">Повторить</button></div>
 
   <main class="grid">
-    <section class="card hero" id="hero"><div class="state" data-i18n="loadingWeather">Загружаю погоду…</div></section>
+    <section class="card hero" id="heroBox"><canvas id="sky" role="img" aria-label=""></canvas><div id="hero"><div class="state" data-i18n="loadingWeather">Загружаю погоду…</div></div></section>
 
     <section class="card today" id="today"><div class="state" data-i18n="loadingShort">Загружаю…</div></section>
 
@@ -336,12 +427,14 @@
     <section class="card hourly">
       <h2 data-i18n="hourlyTitle">Температура и осадки по часам</h2>
       <svg id="hourly" role="img" aria-label="" data-i18n-aria="hourlyAria"></svg>
+      <div class="tscale" id="tscale"></div>
     </section>
   </main>
   <footer id="footer"></footer>
 </div>
 
 <script src="i18n.js"></script>
+<script src="viz.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

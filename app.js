@@ -33,6 +33,23 @@ function t(key, vars) {
 }
 const fmt = n => (Math.round(n) < 0 ? '−' : '') + Math.abs(Math.round(n)) + '°';
 const dFmt = (s, o) => new Date(s).toLocaleDateString(LOC, o);
+/* семантическая шкала температуры: холодно — синий, около нуля — светло-голубой, тепло — жёлтый → оранжевый → красный */
+const TSTOPS = [[-25,'#3657c9'],[-10,'#4f8fe8'],[0,'#8fd0ff'],[10,'#d9efc4'],[18,'#ffd27a'],[25,'#ffa040'],[32,'#ff5a3c']];
+function tempColor(v) {
+  if (!Number.isFinite(v)) return '#8fa6ba';
+  if (v <= TSTOPS[0][0]) return TSTOPS[0][1];
+  for (let i = 1; i < TSTOPS.length; i++) {
+    const [b, cb] = TSTOPS[i], [a, ca] = TSTOPS[i - 1];
+    if (v <= b) {
+      const f = (v - a)/(b - a), A = parseInt(ca.slice(1), 16), B = parseInt(cb.slice(1), 16);
+      const ch = sh => Math.round(((A >> sh) & 255) + ((((B >> sh) & 255) - ((A >> sh) & 255))*f));
+      return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+    }
+  }
+  return TSTOPS[TSTOPS.length - 1][1];
+}
+const hasViz = () => typeof wxIcon === 'function';
+const wxI = (code, isDay, size, fallback) => hasViz() ? wxIcon(code, isDay, size) : (fallback || icon(code, isDay));
 const hhmm = ms => new Date(ms).toLocaleTimeString(LOC, {timeZone:TZ, hour:'2-digit', minute:'2-digit', hour12:false});
 const dtFmt = ms => new Date(ms).toLocaleString(LOC, {timeZone:TZ, weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hour12:false});
 const WICON = {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',56:'🌧️',57:'🌧️',61:'🌦️',63:'🌧️',65:'🌧️',66:'🌧️',67:'🌧️',
@@ -142,7 +159,7 @@ function guarded(name, fn) {
 /* ---------- прогноз по выбранной точке ---------- */
 async function loadPoint() {
   const key = selKey();
-  const url = `${API}?${pointQS()}&current=${CUR}&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,is_day,cloud_cover,wind_gusts_10m`
+  const url = `${API}?${pointQS()}&current=${CUR}&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,is_day,cloud_cover,wind_gusts_10m,wind_speed_10m,wind_direction_10m,pressure_msl`
     + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset,uv_index_max&forecast_days=5`;
   try {
     const w = await getJSON(url);
@@ -165,28 +182,31 @@ async function loadCurrent() {
     lastW.current = j.current; stamp.current = Date.now(); offline = false; renderHero();
   } catch (e) { offline = true; }
 }
+let heroKey = '';
 function renderHero() {
   if (!lastW) return;
-  const w = lastW, c = w.current, d = w.daily, [txt] = wmo(c.weather_code), ic = icon(c.weather_code, c.is_day);
-  const dir = c.wind_direction_10m ?? 0, dl = (Date.parse(d.sunset[0]) - Date.parse(d.sunrise[0]))/6e4, uv = c.uv_index;
+  const w = lastW, c = w.current, d = w.daily, [txt] = wmo(c.weather_code);
   const fav = favs.some(f => samePlace(f, sel));
   const star = sel.id ? '' : `<button class="star" data-act="star" aria-pressed="${fav}" aria-label="${esc(fav ? t('favRemove') : t('favAdd'))}">${fav ? '★' : '☆'}</button>`;
+  const fresh = heroKey !== selKey(); heroKey = selKey();
+  const dir = c.wind_direction_10m ?? 0, dl = (Date.parse(d.sunset[0]) - Date.parse(d.sunrise[0]))/6e4, uv = c.uv_index;
   const airTxt = air === null ? '…' : air ? Math.round(air.european_aqi) + ', ' + aqiLabel(air.european_aqi) : '—';
-  $('hero').innerHTML = `
-    <div class="place">${esc(placeName(sel))}${star}</div>
-    <div class="trow"><div class="big">${fmt(c.temperature_2m)}</div><div class="ico">${ic}</div></div>
-    <div class="cond">${esc(txt)}</div>
-    <div class="sub">${t('feels', {f:fmt(c.apparent_temperature), lo:fmt(d.temperature_2m_min[0]), hi:fmt(d.temperature_2m_max[0])})}</div>
-    <div class="facts">
+  let gz = ''; if (hasViz()) { try { gz = gaugesHTML(); } catch (e) { console.warn('gauges', e); } }
+  const panel = gz ? `<div class="gauges${fresh ? ' anim' : ''}" id="gauges">${gz}</div>` : `<div class="facts">
       <div class="fact"><small>${t('wind')}</small><b><span style="display:inline-block;transform:rotate(${dir + 180}deg)">↑</span> ${compass(dir)} ${Math.round(c.wind_speed_10m)} ${t('ms')}</b></div>
       <div class="fact"><small>${t('humidity')}</small><b>${c.relative_humidity_2m}%</b></div>
-      <div class="fact"><small>${t('clouds')}</small><b>${c.cloud_cover}%</b></div>
       <div class="fact"><small>${t('pressure')}</small><b>${Math.round(c.pressure_msl)} ${t('hpa')}</b></div>
       <div class="fact"><small>${t('uvToday', {n:Math.round(d.uv_index_max[0] ?? 0)})}</small><b>${uv != null ? uv.toFixed(1) + ', ' + uvLabel(uv) : '—'}</b></div>
       <div class="fact"><small>${t('air')}</small><b>${airTxt}</b></div>
-      <div class="fact"><small>${t('sun')}</small><b>${t('sunVal', {a:d.sunrise[0].slice(11), b:d.sunset[0].slice(11)})}</b></div>
       <div class="fact"><small>${t('daylen')}</small><b>${t('daylenVal', {h:Math.floor(dl/60), m:Math.round(dl % 60)})}</b></div>
     </div>`;
+  $('hero').innerHTML = `
+    <div class="place">${esc(placeName(sel))}${star}</div>
+    <div class="trow"><div class="big" id="bigT">${fmt(c.temperature_2m)}</div><div class="ico">${wxI(c.weather_code, c.is_day, 92)}</div></div>
+    <div class="cond">${esc(txt)}</div>
+    <div class="sub">${t('feels', {f:fmt(c.apparent_temperature), lo:fmt(d.temperature_2m_min[0]), hi:fmt(d.temperature_2m_max[0])})}</div>
+    ${panel}`;
+  if (hasViz()) { try { vzCountUp($('bigT'), c.temperature_2m); skyUpdate(); } catch (e) { console.warn('viz', e); } }
 }
 $('hero').addEventListener('click', e => { if (e.target.closest('[data-act=star]')) toggleFav(); });
 function renderDaily(w) {
@@ -197,9 +217,9 @@ function renderDaily(w) {
     const nm = i === 0 ? t('today') : i === 1 ? t('tomorrow') : dFmt(day, {weekday:'long'});
     const mm = d.precipitation_sum[i] > 0.1 ? d.precipitation_sum[i].toFixed(1) + ' ' + t('mm') : '';
     const [wt, wi] = wmo(d.weather_code[i]);
-    return `<div class="row"><div class="nm">${nm}<small>${dFmt(day, {day:'numeric', month:'short'})}</small></div>
-      <div class="ic" title="${esc(wt)}">${wi}</div><div class="mm">${mm}</div>
-      <div class="rg"><span>${fmt(d.temperature_2m_min[i])}</span><div class="tr"><i style="left:${l}%;width:${wd}%"></i></div><span>${fmt(d.temperature_2m_max[i])}</span></div>${confCell(i)}</div>`;
+    return `<div class="row"><div class="nm"><span class="dn">${nm}</span><small>${dFmt(day, {day:'numeric', month:'short'})}${mm ? `<span class="mm"> · ${mm}</span>` : ''}</small></div>
+      <div class="ic" title="${esc(wt)}">${wxI(d.weather_code[i], 1, 36, wi)}</div>
+      <div class="rg"><span>${fmt(d.temperature_2m_min[i])}</span><div class="tr"><i style="left:${l}%;width:${wd}%;background:linear-gradient(90deg,${tempColor(d.temperature_2m_min[i])},${tempColor(d.temperature_2m_max[i])});animation-delay:${i*80}ms"></i></div><span>${fmt(d.temperature_2m_max[i])}</span></div>${confCell(i)}</div>`;
   }).join('');
 }
 
@@ -351,9 +371,13 @@ function renderH24() {
   const h = lastW.hourly, i0 = clamp(Math.floor((Date.now() - hourlyData.base)/36e5), 0, h.time.length - 25);
   h24Idx = i0; let out = '';
   for (let i = i0; i < i0 + 24; i++) {
-    const hh = h.time[i].slice(11, 13), pp = h.precipitation_probability[i] ?? 0;
+    const hh = h.time[i].slice(11, 13), pp = h.precipitation_probability[i] ?? 0, T = h.temperature_2m[i];
     const lab = i === i0 ? t('nowLbl') : hh === '00' ? dFmt(h.time[i], {weekday:'short'}) : hh + ':00';
-    out += `<div class="hc"><small>${lab}</small><span class="hi">${icon(h.weather_code[i], h.is_day[i])}</span><b>${fmt(h.temperature_2m[i])}</b><em>${pp >= 20 ? pp + '%' : ''}</em></div>`;
+    const wd = h.wind_direction_10m ? h.wind_direction_10m[i] : null, ws = h.wind_speed_10m ? h.wind_speed_10m[i] : null;
+    const wind = wd != null && ws != null ? `<span class="wd"><i style="transform:rotate(${Math.round(wd + 180)}deg)">↑</i>${Math.round(ws)}</span>` : '';
+    out += `<div class="hc${i === i0 ? ' now' : ''}${h.is_day[i] === 0 ? ' nt' : ''}"><small>${lab}</small><span class="hi">${wxI(h.weather_code[i], h.is_day[i], 34)}</span>`
+      + `<b>${fmt(T)}</b><i class="tk" style="background:${tempColor(T)}"></i>${wind}`
+      + `<span class="pb" title="${pp}%"><i style="height:${Math.max(pp, 2)}%;opacity:${pp >= 20 ? 1 : .35}"></i></span><em>${pp >= 20 ? pp + '%' : ''}</em></div>`;
   }
   $('h24').innerHTML = out;
 }
@@ -687,7 +711,7 @@ function renderSea() {
     const dir = c.wave_direction;
     return `<div class="sr"><div class="nm">${townName(id)}<small>${t('seaWater')}</small></div>
       <div class="wt">${c.sea_surface_temperature != null ? fmt(c.sea_surface_temperature) : '—'}</div>
-      <div class="wv">🌊 ${hw != null ? hw.toFixed(1) + ' m' : '—'} ${dir != null ? `<span style="display:inline-block;transform:rotate(${dir + 180}deg)">↑</span>` : ''} ${st}
+      <div class="wv">🌊 ${hw != null ? t('visM', {v:hw.toFixed(1)}) : '—'} ${dir != null ? `<span style="display:inline-block;transform:rotate(${dir + 180}deg)">↑</span>` : ''} ${st}
         <small>${[mx != null ? t('seaMax', {v:mx.toFixed(1)}) : '', c.wave_period != null ? t('seaPeriod', {s:Math.round(c.wave_period)}) : ''].filter(Boolean).join(', ')}</small></div></div>`;
   }).join('') + `<div class="nst">${t('seaNote')}</div>`;
 }
@@ -771,7 +795,7 @@ function roadEval(h, i) {
   else if (Ts <= 0 && Td != null && T - Td <= 1) up(1, t('rFrost'));
   if (sn >= 1) up(2, t('rSnowHeavy')); else if (sn > 0) up(1, t('rSnow'));
   if (vis != null && vis < 200) up(2, t('rFog', {v:visFmt(vis)}));
-  else if ((vis != null && vis < 1000) || c === 45 || c === 48) up(1, t('rFog', {v:vis != null ? visFmt(vis) : '< 1 km'}));
+  else if ((vis != null && vis < 1000) || (vis == null && (c === 45 || c === 48))) up(1, t('rFog', {v:vis != null ? visFmt(vis) : t('visKm', {v:'< 1'})}));
   if (pr >= 4 && sn === 0) up(1, t('rRain'));
   if (g >= 22) up(2, t('rWind', {g:Math.round(g)})); else if (g >= 17) up(1, t('rWind', {g:Math.round(g)}));
   return {lvl, r, T, Ts, vis, c};
@@ -822,8 +846,7 @@ function parseMA(j) {
     const lg = x => String(x.language || '').toLowerCase();
     const pick = infos.find(i => lg(i).startsWith(lang)) || infos.find(i => lg(i).startsWith(lang === 'ru' ? 'lv' : 'en')) || infos.find(i => lg(i).startsWith('en')) || infos[0];
     const par = {}; (pick.parameter || []).forEach(p => { if (p && p.valueName) par[p.valueName] = String(p.value || ''); });
-    let lv = (par.awareness_level.split(';')[1] || '').trim().toLowerCase();
-    if (!lv && par.awareness_level === undefined) lv = '';
+    let lv = (String(par.awareness_level || '').split(';')[1] || '').trim().toLowerCase();
     if (!['yellow', 'orange', 'red'].includes(lv)) lv = ({Moderate:'yellow', Severe:'orange', Extreme:'red'})[pick.severity] || '';
     if (!lv) return;
     const typeN = parseInt(String(par.awareness_type || '').split(';')[0], 10);
@@ -1054,32 +1077,81 @@ window.addEventListener('appinstalled', () => { $('installBtn').style.display = 
 $('installBtn').onclick = async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) {} installEvt = null; $('installBtn').style.display = 'none'; };
 
 /* ---------- график по часам ---------- */
+let hourlyKey = '';
+function smoothPath(pts) {
+  if (pts.length < 3) return pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join('');
+  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    const c1 = [p1[0] + (p2[0] - p0[0])/6, p1[1] + (p2[1] - p0[1])/6], c2 = [p2[0] - (p3[0] - p1[0])/6, p2[1] - (p3[1] - p1[1])/6];
+    d += `C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+  }
+  return d;
+}
 function drawHourly() {
-  if (!hourlyData) return;
-  const svg = $('hourly'), W = svg.clientWidth || 600, H = 190, pt = 26, pb = 26, {t:tm, T, P, days, n} = hourlyData;
+  if (!hourlyData || !lastW) return;
+  const svg = $('hourly'), W = svg.clientWidth || 600, {t:tm, T, P, days, n} = hourlyData, h = lastW.hourly, PR = h.precipitation || [];
+  const fresh = hourlyKey !== selKey(); hourlyKey = selKey();
+  const pt = 28, tH = 150, gap = 18, pH = 34, ax = 22, tB = pt + tH, p0 = tB + gap, pB = p0 + pH, H = pB + ax;
   hourlyData.W = W;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('height', H);
   const lo = Math.floor(Math.min(...T)) - 1, hi = Math.ceil(Math.max(...T)) + 1;
-  const X = i => i/(n-1)*W, Y = v => pt + (hi - v)/(hi - lo)*(H - pt - pb), base = H - pb;
-  const line = T.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join('');
-  const bars = P.map((p, i) => `<rect x="${(X(i) - W/n/2 + .5).toFixed(1)}" y="${base - (p ?? 0)*.42}" width="${Math.max(W/n - 1, 1)}" height="${(p ?? 0)*.42}" fill="#5cc8ff" opacity=".32"/>`).join('');
-  const seps = days.map((d, k) => `<line x1="${X(k*24)}" x2="${X(k*24)}" y1="${pt - 8}" y2="${base}" stroke="rgba(255,255,255,.12)"/><text x="${X(k*24) + 6}" y="${H - 8}" fill="#8fa6ba" font-size="11" font-family="system-ui,Roboto,sans-serif">${dFmt(d, {weekday:'short', day:'numeric'})}</text>`).join('');
-  const zero = lo < 0 && hi > 0 ? `<line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="rgba(255,255,255,.25)" stroke-dasharray="3 4"/>` : '';
+  const X = i => clamp(i/(n - 1)*W, 0, W), Y = v => pt + (hi - v)/(hi - lo)*tH;
+  const F = 'font-family="system-ui,Roboto,sans-serif"';
+  /* ночь — затенённые полосы */
+  let night = '';
+  for (let i = 0; i < n;) {
+    if (h.is_day[i] === 0) { let j = i; while (j < n && h.is_day[j] === 0) j++; const a = X(i - .5), b = X(j - .5);
+      night += `<rect x="${a.toFixed(1)}" y="${pt - 6}" width="${(b - a).toFixed(1)}" height="${pB - pt + 6}" fill="rgba(2,8,20,.34)"/>`; i = j; }
+    else i++;
+  }
+  /* сетка: тонкие сплошные линии, подписи слева */
+  const step = hi - lo > 24 ? 10 : 5; let grid = '';
+  for (let v = Math.ceil(lo/step)*step; v <= hi; v += step) {
+    const y = Y(v); if (y < pt + 6 || y > tB - 4) continue;
+    grid += `<line x1="0" x2="${W}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,${v === 0 ? .22 : .07})"/>`
+      + `<text x="4" y="${(y - 4).toFixed(1)}" fill="#8fa6ba" font-size="10" ${F}>${fmt(v)}</text>`;
+  }
+  /* градиент по температуре */
+  let stops = '';
+  for (let k = 0; k <= 12; k++) { const v = hi - (hi - lo)*k/12; stops += `<stop offset="${(k/12).toFixed(3)}" stop-color="${tempColor(v)}"/>`; }
+  const pts = T.map((v, i) => [X(i), Y(v)]), line = smoothPath(pts);
   const iMax = T.indexOf(Math.max(...T)), iMin = T.indexOf(Math.min(...T));
-  const lab = (i, dy) => `<circle cx="${X(i)}" cy="${Y(T[i])}" r="3.5" fill="#ffb547"/><text x="${clamp(X(i), 18, W - 18)}" y="${Y(T[i]) + dy}" fill="#eaf2f8" font-size="12" font-weight="500" text-anchor="middle" font-family="system-ui,Roboto,sans-serif">${fmt(T[i])}</text>`;
-  svg.innerHTML = `<defs><linearGradient id="ar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb547" stop-opacity=".28"/><stop offset="1" stop-color="#ffb547" stop-opacity="0"/></linearGradient></defs>`
-    + seps + zero + bars + `<path d="${line}L${W},${base}L0,${base}Z" fill="url(#ar)"/><path d="${line}" fill="none" stroke="#ffb547" stroke-width="2.4" stroke-linejoin="round"/>`
-    + lab(iMax, -9) + (iMin !== iMax ? lab(iMin, 18) : '')
-    + `<line id="nw" y1="${pt - 8}" y2="${base}" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="4 3"/>`
-    + `<g id="tip" opacity="0"><line id="tl" y1="${pt - 8}" y2="${base}" stroke="#fff" stroke-opacity=".5"/><circle id="tc" r="4.5" fill="#fff"/><text id="tt" y="14" fill="#fff" font-size="12" font-family="system-ui,Roboto,sans-serif"></text></g>`;
+  const mark = (i, dy) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(T[i]).toFixed(1)}" r="4.5" fill="${tempColor(T[i])}" stroke="#0a1522" stroke-width="2"/>`
+    + `<text x="${clamp(X(i), 18, W - 18).toFixed(1)}" y="${(Y(T[i]) + dy).toFixed(1)}" fill="#eaf2f8" font-size="12" font-weight="600" text-anchor="middle" ${F}>${fmt(T[i])}</text>`;
+  /* полоса осадков: своя шкала 0–100 %, без второй оси на графике температуры */
+  const bw = Math.min(Math.max(W/n - 2, 1), 24);
+  const bars = P.map((p, i) => { const v = p ?? 0; if (v < 1) return ''; const bh = Math.max(1.5, v/100*pH);
+    return `<rect class="pbar" style="animation-delay:${fresh ? Math.round(i*6) : 0}ms" x="${(X(i) - bw/2).toFixed(1)}" y="${(pB - bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="${Math.min(2, bw/2).toFixed(1)}" fill="#5cc8ff" opacity="${v >= 50 ? .95 : .55}"/>`; }).join('');
+  const seps = days.map((d, k) => `<line x1="${X(k*24).toFixed(1)}" x2="${X(k*24).toFixed(1)}" y1="${pt - 6}" y2="${pB}" stroke="rgba(255,255,255,.1)"/>`
+    + `<text x="${(X(k*24) + 6).toFixed(1)}" y="${H - 7}" fill="#8fa6ba" font-size="11" ${F}>${esc(dFmt(d, {weekday:'short', day:'numeric'}))}</text>`).join('');
+  svg.innerHTML = `<defs><linearGradient id="tg" gradientUnits="userSpaceOnUse" x1="0" y1="${Y(hi).toFixed(1)}" x2="0" y2="${Y(lo).toFixed(1)}">${stops}</linearGradient></defs>`
+    + night + grid + seps
+    + `<path d="${line}L${W},${tB}L0,${tB}Z" fill="url(#tg)" opacity=".13"/>`
+    + `<path class="${fresh ? 'draw' : ''}" pathLength="1" d="${line}" fill="none" stroke="url(#tg)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`
+    + mark(iMax, -10) + (iMin !== iMax ? mark(iMin, 20) : '')
+    + `<text x="4" y="${p0 - 5}" fill="#8fa6ba" font-size="10" ${F}>${esc(t('precipBand'))}</text>`
+    + `<line x1="0" x2="${W}" y1="${pB}" y2="${pB}" stroke="rgba(255,255,255,.12)"/>` + bars
+    + `<line id="nw" y1="${pt - 6}" y2="${pB}" stroke="#4ade80" stroke-width="1.5"/>`
+    + `<g id="tip" opacity="0" pointer-events="none"><line id="tl" y1="${pt - 6}" y2="${pB}" stroke="#fff" stroke-opacity=".45"/>`
+    + `<circle id="tc" r="5" fill="#fff" stroke="#0a1522" stroke-width="2"/><rect id="tr" y="2" height="20" rx="10" fill="rgba(10,21,34,.92)" stroke="rgba(255,255,255,.15)"/>`
+    + `<text id="tt" y="16" fill="#eaf2f8" font-size="12" font-weight="500" ${F}></text></g>`;
   const move = e => {
-    const r = svg.getBoundingClientRect(), i = clamp(Math.round((e.clientX - r.left)/r.width*(n-1)), 0, n-1), x = X(i);
+    const r = svg.getBoundingClientRect(), i = clamp(Math.round((e.clientX - r.left)/r.width*(n - 1)), 0, n - 1), x = X(i);
     $('tl').setAttribute('x1', x); $('tl').setAttribute('x2', x); $('tc').setAttribute('cx', x); $('tc').setAttribute('cy', Y(T[i]));
-    const tt = $('tt'); tt.setAttribute('x', x); tt.setAttribute('text-anchor', x < 150 ? 'start' : x > W - 150 ? 'end' : 'middle');
-    tt.textContent = t('hourTip', {d:dFmt(tm[i], {weekday:'short'}), h:tm[i].slice(11), t:fmt(T[i]), p:P[i] ?? 0});
+    const tt = $('tt');
+    tt.textContent = t('hourTip2', {d:dFmt(tm[i], {weekday:'short'}), h:tm[i].slice(11), t:fmt(T[i]), p:P[i] ?? 0, mm:(PR[i] ?? 0).toFixed(1)});
+    let tw = 180; try { tw = tt.getComputedTextLength(); } catch (er) {}
+    const bx = clamp(x - tw/2 - 10, 0, W - tw - 20);
+    tt.setAttribute('x', bx + 10); $('tr').setAttribute('x', bx); $('tr').setAttribute('width', tw + 20);
     $('tip').setAttribute('opacity', 1);
   };
   svg.onpointermove = move; svg.onpointerdown = move; svg.onpointerleave = () => $('tip') && $('tip').setAttribute('opacity', 0);
+  const sc = $('tscale');
+  if (sc) {
+    const a = TSTOPS[0][0], b = TSTOPS[TSTOPS.length - 1][0];
+    sc.innerHTML = `<span>${fmt(a)}</span><i style="background:linear-gradient(90deg,${TSTOPS.map(([v, c]) => `${c} ${((v - a)/(b - a)*100).toFixed(1)}%`).join(',')})"></i><span>+${b}°</span><em>${esc(t('tempScale'))}</em>`;
+  }
   updateNowLine();
 }
 function updateNowLine() {
@@ -1166,7 +1238,7 @@ function tick() {
   if (live && gridBase) { pos = posNow(); $('slider').value = pos; }
   draw(); updateNowLine();
   if (hourlyData && lastW) { const ix = clamp(Math.floor((now - hourlyData.base)/36e5), 0, lastW.hourly.time.length - 25); if (ix !== h24Idx) { renderH24(); renderToday(); } }
-  if (now - stamp.moon >= 60e3) { stamp.moon = now; renderMoon(); }
+  if (now - stamp.moon >= 60e3) { stamp.moon = now; renderMoon(); if (hasViz()) { try { refreshGauges(); } catch (e) {} } }
 
   if (!document.hidden) {
     if (now - stamp.current >= REFRESH.current && lastW) { stamp.current = now - REFRESH.current + 5000; guarded('cur', loadCurrent); }
