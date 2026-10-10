@@ -697,3 +697,6 @@ Object.assign(I18N.en, {h24Tab24:'24 hours', h24Tab5:'5 days', h5Title:'5 days, 
 Object.assign(I18N.ru, {h5Title:'Прогноз на 5 дней', d5Hint:'±° справа — насколько сходятся модели ECMWF, ICON и GFS: зелёная точка — прогноз надёжный, жёлтая — возможны отклонения, красная — прогноз неуверенный.'});
 Object.assign(I18N.lv, {h5Title:'Prognoze 5 dienām', d5Hint:'±° labajā pusē — cik vienisprātis ir modeļi ECMWF, ICON un GFS: zaļš punkts — prognoze droša, dzeltens — iespējamas novirzes, sarkans — prognoze nedroša.'});
 Object.assign(I18N.en, {h5Title:'5-day forecast', d5Hint:'±° on the right shows how closely the ECMWF, ICON and GFS models agree: green — reliable, yellow — some deviation possible, red — uncertain.'});
+Object.assign(I18N.ru, {rgCities:'Крупные города', rgFav:'Избранное', rgSmall:'Небольшие города и посёлки'});
+Object.assign(I18N.lv, {rgCities:'Lielākās pilsētas', rgFav:'Izlase', rgSmall:'Mazākas pilsētas un ciemi'});
+Object.assign(I18N.en, {rgCities:'Main towns', rgFav:'Favourites', rgSmall:'Smaller towns and villages'});

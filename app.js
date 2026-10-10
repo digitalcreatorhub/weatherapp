@@ -1063,22 +1063,53 @@ function renderSea() {
 const SPEED = 75;
 let road = Object.assign({from:'riga', to:'daugavpils', dep:0}, store.get('wx_road', {}));
 let roadRes = null, roadState = 'idle';
-const placeKey = p => p.id ? p.id : `${p.lat.toFixed(4)},${p.lon.toFixed(4)}`;
-const placeByKey = k => PLACES.find(p => placeKey(p) === k) || null;
+const placeKey = p => p.id ? p.id : p.sid ? 's:' + p.sid : p.geo ? 'geo' : `${p.lat.toFixed(4)},${p.lon.toFixed(4)}`;
+/* место для «Погоды на дороге»: города, избранное, небольшие города и «Где я» */
+function geoPlace() {
+  if (sel.geo) return {geo:true, name:sel.name, lat:sel.lat, lon:sel.lon};
+  const g = store.get('wx_geo_last', null);
+  return g && Number.isFinite(g.lat) && Number.isFinite(g.lon) ? {geo:true, name:g.name || '', lat:g.lat, lon:g.lon} : null;
+}
+function placeByKey(k) {
+  if (!k) return null;
+  if (k === 'geo') return geoPlace();
+  if (TOWNS[k]) return {id:k, lat:TOWNS[k].lat, lon:TOWNS[k].lon};
+  if (k.startsWith('s:') && SMALL[k.slice(2)]) { const id = k.slice(2), S = SMALL[id]; return {sid:id, lat:S.lat, lon:S.lon}; }
+  return PLACES.find(p => placeKey(p) === k) || null;
+}
+const ROUTE_IDS = [...new Set(ROUTES.flat())];
+function routeDist(seq) { let d = 0; for (let i = 1; i < seq.length; i++) d += hav(TOWNS[seq[i - 1]], TOWNS[seq[i]]); return d; }
+function routeSeq(a, b) {   /* последовательность городов по трассе между двумя городами трасс */
+  for (const r of ROUTES) { const i = r.indexOf(a), j = r.indexOf(b); if (i >= 0 && j >= 0) return i < j ? r.slice(i, j + 1) : r.slice(j, i + 1).reverse(); }
+  for (const r1 of ROUTES) for (const r2 of ROUTES) {   /* через Ригу: все трассы сходятся там */
+    const i = r1.indexOf(a), j = r2.indexOf(b);
+    if (i >= 0 && j >= 0 && r1[0] === 'riga' && r2[0] === 'riga') return r1.slice(0, i + 1).reverse().concat(r2.slice(1, j + 1));
+  }
+  return null;
+}
 function hav(a, b) {
   const dLa = (b.lat - a.lat)*RAD, dLo = (b.lon - a.lon)*RAD;
   const x = Math.sin(dLa/2)**2 + Math.cos(a.lat*RAD)*Math.cos(b.lat*RAD)*Math.sin(dLo/2)**2;
   return 6371*2*Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 function routeLine(a, b) {
-  if (a.id && b.id) for (const r of ROUTES) {
-    const i = r.indexOf(a.id), j = r.indexOf(b.id);
-    if (i >= 0 && j >= 0) {
-      const seq = i < j ? r.slice(i, j + 1) : r.slice(j, i + 1).reverse();
-      return {pts:seq.map(id => ({lat:TOWNS[id].lat, lon:TOWNS[id].lon, id})), straight:false};
-    }
+  const end = p => ({lat:p.lat, lon:p.lon, id:p.id, sid:p.sid, name:p.geo ? placeName(p) : p.name});
+  const direct = hav(a, b);
+  /* небольшой город или точка вне трасс: подъезжаем по трассе к ближайшему подходящему городу, если это не крюк */
+  const ends = p => p.id && ROUTE_IDS.includes(p.id) ? [[p.id, 0]] : ROUTE_IDS.map(id => [id, hav(p, TOWNS[id])]).filter(x => x[1] < 60);
+  let best = null;
+  for (const [ia, da] of ends(a)) for (const [ib, db] of ends(b)) {
+    if (ia === ib) continue;
+    const seq = routeSeq(ia, ib); if (!seq) continue;
+    const len = da + routeDist(seq) + db;
+    if (len <= direct*1.3 && (!best || len < best.len)) best = {seq, len};
   }
-  return {pts:[{lat:a.lat, lon:a.lon, id:a.id, name:a.name}, {lat:b.lat, lon:b.lon, id:b.id, name:b.name}], straight:true};
+  if (best) {
+    const mid = best.seq.map(id => ({lat:TOWNS[id].lat, lon:TOWNS[id].lon, id}));
+    const pts = (mid[0].id === a.id ? [] : [end(a)]).concat(mid, mid[mid.length - 1].id === b.id ? [] : [end(b)]);
+    if (pts.length >= 2) return {pts, straight:false};
+  }
+  return {pts:[end(a), end(b)], straight:true};
 }
 function densify(pts, factor) {
   const out = [Object.assign({}, pts[0], {km:0})]; let acc = 0;
@@ -1092,10 +1123,15 @@ function densify(pts, factor) {
   }
   if (out.length <= 16) return out;
   const step = Math.ceil(out.length/14);
-  return out.filter((p, i) => i === 0 || i === out.length - 1 || p.id || p.name || i % step === 0);
+  return out.filter((p, i) => i === 0 || i === out.length - 1 || p.id || p.sid || p.name || i % step === 0);
 }
 function buildRoadUI() {
-  const opts = PLACES.map(p => `<option value="${esc(placeKey(p))}">${esc((p.fav ? '★ ' : '') + placeName(p))}</option>`).join('');
+  const o = (k, l) => `<option value="${esc(k)}">${esc(l)}</option>`, g = geoPlace(), coll = new Intl.Collator(LOC);
+  const small = Object.keys(SMALL).map(id => [TOWNS[id] ? id : 's:' + id, smallName(id)]).sort((x, y) => coll.compare(x[1], y[1]));
+  const opts = (g ? o('geo', '📍 ' + t('geoHere') + (g.name ? ' — ' + g.name : '')) : '')
+    + `<optgroup label="${esc(t('rgCities'))}">${PLACES.filter(p => !p.fav).map(p => o(placeKey(p), placeName(p))).join('')}</optgroup>`
+    + (favs.length ? `<optgroup label="${esc(t('rgFav'))}">${PLACES.filter(p => p.fav).map(p => o(placeKey(p), '★ ' + placeName(p))).join('')}</optgroup>` : '')
+    + `<optgroup label="${esc(t('rgSmall'))}">${small.map(([k, n]) => o(k, n)).join('')}</optgroup>`;
   if (!placeByKey(road.from)) road.from = 'riga';
   if (!placeByKey(road.to)) road.to = 'daugavpils';
   $('rFrom').innerHTML = opts; $('rTo').innerHTML = opts;
@@ -1132,7 +1168,7 @@ async function nameRoad(R) {
   R.naming = true; const lg = lang;
   const ends = [placeName(R.a), placeName(R.b)];
   for (const p of R.pts) {
-    if (p.id || p.name) continue;
+    if (p.id || p.sid || p.name) continue;
     const nm = await geoTown(p.lat, p.lon);
     if (roadRes !== R || lang !== lg) { R.naming = false; if (roadRes === R) renderRoad(); return; }
     const same = ends.includes(nm) || R.pts.some(q => q !== p && (q.near === nm || (q.id && townName(q.id) === nm)));
@@ -1172,7 +1208,7 @@ function renderRoad() {
   const last = R.pts[R.pts.length - 1], totalKm = Math.round(last.km), mins = Math.round(last.km/SPEED*60);
   const worst = Math.max(...R.evals.map(e => e.lvl));
   if (R.nearLang !== lang && !R.naming) nameRoad(R);
-  const label = p => p.id ? townName(p.id) : p.name ? p.name : p.near || `${t('km')} ${Math.round(p.km)}`;
+  const label = p => p.id ? townName(p.id) : p.sid ? smallName(p.sid) : p.name ? p.name : p.near || `${t('km')} ${Math.round(p.km)}`;
   const reasons = [];
   R.evals.forEach((e, k) => e.r.forEach(x => { const base = x.split(',')[0]; if (!reasons.some(y => y.b === base)) reasons.push({b:base, s:`${x} (${label(R.pts[k])})`}); }));
   const verdict = worst === 0 ? t('roadOK') : t(worst === 2 ? 'roadDanger' : 'roadWarn', {r:reasons.slice(0, 4).map(x => x.s).join('; ')});
@@ -1181,7 +1217,7 @@ function renderRoad() {
     <div class="ok" style="margin-bottom:8px">${esc(verdict)}</div>
     <div class="rbar">${R.evals.map(e => `<i style="background:${LV_COL[e.lvl]}"></i>`).join('')}</div>
     <div class="rpts">${R.evals.map((e, k) => `<div class="rp"><span class="d" style="background:${LV_COL[e.lvl]}"></span>
-      <span>${esc(label(R.pts[k]))}<br><small>${Math.round(R.pts[k].km)} ${t('km')}${R.pts[k].near && !R.pts[k].id && !R.pts[k].name ? ' · ' + esc(t('roadNear')) : ''}</small></span>
+      <span>${esc(label(R.pts[k]))}<br><small>${Math.round(R.pts[k].km)} ${t('km')}${R.pts[k].near && !R.pts[k].id && !R.pts[k].sid && !R.pts[k].name ? ' · ' + esc(t('roadNear')) : ''}</small></span>
       <span>${hhmm(e.eta)}</span><span>${wmo(e.c)[1]}</span>
       <span>${fmt(e.T)} <small>${t('roadAir')}</small><br>${fmt(e.Ts)} <small>${t('roadSurf')}</small></span>
       <span class="why">${e.r.length ? esc(e.r.join(', ')) : `<small>${t('roadOkShort')}${e.vis != null ? ', ' + t('roadVis') + ' ' + visFmt(e.vis) : ''}</small>`}</span></div>`).join('')}</div>
@@ -1580,7 +1616,7 @@ async function nameSel(s) {
   if (!nm || sel !== s) return;
   s.name = nm;
   if (s.geo) store.set('wx_geo_last', {lat:+s.lat.toFixed(3), lon:+s.lon.toFixed(3), name:nm});
-  buildChips(); renderHero(); renderToday(); renderAcc(); draw();
+  buildChips(); buildRoadUI(); renderHero(); renderToday(); renderAcc(); draw();
   if (typeof renderPlan === 'function') renderPlan();
 }
 function locateMe(user) {
@@ -1597,7 +1633,7 @@ function locateMe(user) {
     const same = sel.geo && distKm(sel, {lat, lon}) < 0.8;
     newSel({geo:true, name:same ? sel.name : '', lat, lon, acc});
     store.set('wx_geo_last', {lat:+lat.toFixed(3), lon:+lon.toFixed(3), name:same ? sel.name : ''});
-    buildChips();
+    buildChips(); buildRoadUI();
   }, e => {
     GEO.busy = false; markChips();
     if (user) toast('📍', t('geoNoTitle'), t(e.code === 1 ? 'geoDenied' : 'geoFail'), 'info');
