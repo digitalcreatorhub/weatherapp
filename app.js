@@ -596,10 +596,10 @@ let windOn = store.get('wx_wind', true) !== false;
 const hasL = () => typeof L !== 'undefined' && !!L.map;
 const reducedMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
 
-function makeMap(el) {
+function makeMap(el, oneFinger) {
   if (!hasL() || !el) return null;
   const mobile = !!(L.Browser && L.Browser.mobile);
-  const map = L.map(el, {zoomSnap:.25, zoomDelta:.5, minZoom:5.5, maxZoom:10, scrollWheelZoom:false, dragging:!mobile, tap:false,
+  const map = L.map(el, {zoomSnap:.25, zoomDelta:.5, minZoom:5.5, maxZoom:10, scrollWheelZoom:false, dragging:!mobile || !!oneFinger, tap:false,
     maxBounds:[[53.4, 17], [60.4, 32.5]], maxBoundsViscosity:.9, attributionControl:true, zoomControl:true, fadeAnimation:true});
   map.attributionControl.setPrefix(false);
   L.tileLayer(BASE_URL, {maxNativeZoom:16, maxZoom:12, attribution:BASE_ATTR, className:'basemap'}).addTo(map);
@@ -616,7 +616,7 @@ function makeMap(el) {
   map._fitLV = () => { map.invalidateSize(); map.fitBounds(LV_BOUNDS, {padding:[4, 4], animate:false}); map._fitZ = map.getZoom(); };
   map._fitLV();
   /* на телефоне карта не перехватывает прокрутку страницы: двигать можно после приближения двумя пальцами */
-  if (mobile) map.on('zoomend', () => { const on = map.getZoom() > (map._fitZ ?? 0) + .2; on ? map.dragging.enable() : map.dragging.disable(); });
+  if (mobile && !oneFinger) map.on('zoomend', () => { const on = map.getZoom() > (map._fitZ ?? 0) + .2; on ? map.dragging.enable() : map.dragging.disable(); });
   map.on('click', e => newSel({pt:true, lat:e.latlng.lat, lon:e.latlng.lng}));
   let touched = false; map.on('zoomstart dragstart', () => { touched = true; });
   try { new ResizeObserver(() => { if (!touched) map._fitLV(); else map.invalidateSize(); }).observe(el); } catch (e) {}
@@ -660,7 +660,7 @@ WM.img.width = WM.nimg.width = 180; WM.img.height = WM.nimg.height = 120;
 
 function wmInit() {
   if (WM.map) return true;
-  const map = makeMap($('map')); if (!map) return false;
+  const map = makeMap($('map'), true); if (!map) return false;   /* карту погоды двигаем одним пальцем — чтобы смотреть соседние страны */
   WM.map = map;
   const pane = map.createPane('wx'); pane.style.zIndex = 350; pane.style.pointerEvents = 'none'; WM.pane = pane;
   WM.fc = document.createElement('canvas'); WM.pc = document.createElement('canvas');

@@ -360,19 +360,19 @@ Object.assign(I18N.ru, {
   updatedAt:'обновлено в {t}', ml:{clouds:'Облака', precip:'Осадки', temp:'Температура', wind:'Ветер'}, mmh:'мм/ч',
   windLines:'линии — ветер', meanPrecip:'осадки в среднем {v} мм/ч, ', meanTemp:'в среднем {v}, ',
   mapTitle:'Карта погоды на 3 дня',
-  mapNote:'Нажмите на город или любую точку карты, чтобы открыть прогноз. Красная рамка — опасная погода в выбранный час, цветная линия — ваш маршрут. Слои — прогноз модели, а не снимок со спутника. На телефоне карту можно двигать после приближения двумя пальцами.'
+  mapNote:'Нажмите на город или любую точку карты, чтобы открыть прогноз. Красная рамка — опасная погода в выбранный час, цветная линия — ваш маршрут. Слои — прогноз модели, а не снимок со спутника. Карту погоды можно двигать одним пальцем — например, к Эстонии или Литве, а приближать двумя. Чтобы листать страницу, ведите пальцем за пределами карты.'
 });
 Object.assign(I18N.lv, {
   updatedAt:'atjaunināts {t}', ml:{clouds:'Mākoņi', precip:'Nokrišņi', temp:'Temperatūra', wind:'Vējš'}, mmh:'mm/h',
   windLines:'līnijas — vējš', meanPrecip:'nokrišņi vidēji {v} mm/h, ', meanTemp:'vidēji {v}, ',
   mapTitle:'Laikapstākļu karte 3 dienām',
-  mapNote:'Pieskarieties pilsētai vai jebkuram kartes punktam, lai atvērtu prognozi. Sarkans rāmis — bīstami laikapstākļi izvēlētajā stundā, krāsaina līnija — jūsu maršruts. Slāņi ir modeļa prognoze, nevis satelīta attēls. Tālrunī karti var pārvietot pēc pietuvināšanas ar diviem pirkstiem.'
+  mapNote:'Pieskarieties pilsētai vai jebkuram kartes punktam, lai atvērtu prognozi. Sarkans rāmis — bīstami laikapstākļi izvēlētajā stundā, krāsaina līnija — jūsu maršruts. Slāņi ir modeļa prognoze, nevis satelīta attēls. Laikapstākļu karti var pārvietot ar vienu pirkstu — piemēram, uz Igauniju vai Lietuvu, bet pietuvināt ar diviem. Lai ritinātu lapu, velciet ārpus kartes.'
 });
 Object.assign(I18N.en, {
   updatedAt:'updated {t}', ml:{clouds:'Clouds', precip:'Precipitation', temp:'Temperature', wind:'Wind'}, mmh:'mm/h',
   windLines:'lines show wind', meanPrecip:'avg. precipitation {v} mm/h, ', meanTemp:'average {v}, ',
   mapTitle:'Weather map, 3 days',
-  mapNote:'Tap a town or any point on the map to open its forecast. A red frame means dangerous weather at the selected hour, the coloured line is your route. Layers are a model forecast, not a satellite image. On a phone, pinch to zoom in before panning.'
+  mapNote:'Tap a town or any point on the map to open its forecast. A red frame means dangerous weather at the selected hour, the coloured line is your route. Layers are a model forecast, not a satellite image. Drag the weather map with one finger — e.g. to Estonia or Lithuania — and pinch to zoom. To scroll the page, swipe outside the map.'
 });
 
 /* режим в пути */
