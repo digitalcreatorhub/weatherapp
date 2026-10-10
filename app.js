@@ -312,7 +312,14 @@ function renderPollen() {
   const el = $('pollenOut');
   if (pollen === null) return;
   if (pollen === false) { el.innerHTML = `<div class="ok">${t('pollenNA')}</div>`; return; }
-  if (pollen === 'off') { el.innerHTML = `<div class="ok">🌿 ${t('pollenOff')}</div>`; return; }
+  const vals = POLLEN.map(([k]) => pollen[k]).filter(v => v !== undefined);
+  if (pollen === 'off' || !vals.some(v => v >= 1)) {   /* всё по нулям: вне сезона — объясняем, когда он начнётся */
+    const m = new Date().getMonth(), off = m >= 9 || m === 0;   /* октябрь — январь */
+    el.innerHTML = `<div class="poff"><span aria-hidden="true">${off ? '🍂' : '🌿'}</span><div><b>${esc(t(off ? 'pollenEndT' : 'pollenNoneT'))}</b>`
+      + `<p>${esc(t(off ? 'pollenEnd' : 'pollenNone'))}</p></div></div>`
+      + `<div class="pseason">${t('pollenSeason').map(([n, p, c]) => `<div><i style="background:${c}"></i><span>${esc(n)}</span><small>${esc(p)}</small></div>`).join('')}</div>`;
+    return;
+  }
   el.innerHTML = POLLEN.filter(([k]) => pollen[k] !== undefined).map(([k, th]) => {
     const v = pollen[k], lv = v < 1 ? 0 : v < th[0] ? 1 : v < th[1] ? 2 : v < th[2] ? 3 : 4;
     const w = lv === 0 ? 0 : Math.min(100, 12 + lv*22);

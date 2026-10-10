@@ -9,7 +9,7 @@
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="leaflet.css?v=29">
+<link rel="stylesheet" href="leaflet.css?v=30">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -370,6 +370,14 @@
   .ico .wx{filter:drop-shadow(0 8px 20px rgba(0,0,0,.3))}
 
   /* приборы */
+  .poff{display:flex;gap:12px;align-items:flex-start;padding:4px 0 10px}
+  .poff>span{font-size:1.8rem;line-height:1}
+  .poff b{display:block;font-weight:600;margin-bottom:3px}
+  .poff p{margin:0;font-size:.86rem;color:var(--muted);line-height:1.45}
+  .pseason{display:grid;gap:5px;border-top:1px solid var(--edge);padding-top:10px}
+  .pseason div{display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center;font-size:.84rem}
+  .pseason i{width:10px;height:10px;border-radius:50%}
+  .pseason small{color:var(--muted)}
   .gauges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:16px}
   .gauge{background:rgba(10,21,34,.58);border:1px solid var(--edge);border-radius:16px;padding:8px 6px 9px;text-align:center;
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:transform .25s,border-color .25s}
@@ -641,13 +649,13 @@
   <footer id="footer"></footer>
 </div>
 
-<script src="i18n.js?v=29"></script>
-<script src="leaflet.js?v=29"></script>
-<script src="viz.js?v=29"></script>
-<script src="borders.js?v=29"></script>
-<script src="app.js?v=29"></script>
-<script src="drive.js?v=29"></script>
-<script src="plan.js?v=29"></script>
-<script src="info.js?v=29"></script>
+<script src="i18n.js?v=30"></script>
+<script src="leaflet.js?v=30"></script>
+<script src="viz.js?v=30"></script>
+<script src="borders.js?v=30"></script>
+<script src="app.js?v=30"></script>
+<script src="drive.js?v=30"></script>
+<script src="plan.js?v=30"></script>
+<script src="info.js?v=30"></script>
 </body>
 </html>

@@ -700,3 +700,12 @@ Object.assign(I18N.en, {h5Title:'5-day forecast', d5Hint:'±° on the right show
 Object.assign(I18N.ru, {rgCities:'Крупные города', rgFav:'Избранное', rgSmall:'Небольшие города и посёлки'});
 Object.assign(I18N.lv, {rgCities:'Lielākās pilsētas', rgFav:'Izlase', rgSmall:'Mazākas pilsētas un ciemi'});
 Object.assign(I18N.en, {rgCities:'Main towns', rgFav:'Favourites', rgSmall:'Smaller towns and villages'});
+Object.assign(I18N.ru, {pollenEndT:'Сезон пыльцы закончился', pollenEnd:'Всё отцвело, в воздухе пыльцы почти нет. Следующий сезон начнётся примерно в феврале–марте: первыми зацветут ольха и лещина. Тогда здесь снова появятся уровни.',
+  pollenNoneT:'Сейчас пыльцы в воздухе нет', pollenNone:'По данным CAMS, ни одно растение сейчас заметно не пылит. Как только появится пыльца, здесь будут уровни.',
+  pollenSeason:[['Ольха и лещина','февраль – апрель','#9ad7ff'],['Берёза','апрель – май','#ffd23f'],['Злаки (травы)','июнь – июль','#4ade80'],['Полынь и амброзия','июль – сентябрь','#ff8c1a']]});
+Object.assign(I18N.lv, {pollenEndT:'Ziedputekšņu sezona beigusies', pollenEnd:'Viss noziedējis, gaisā ziedputekšņu gandrīz nav. Nākamā sezona sāksies aptuveni februārī–martā: pirmie zied alksnis un lazda. Tad šeit atkal būs līmeņi.',
+  pollenNoneT:'Pašlaik gaisā nav ziedputekšņu', pollenNone:'Pēc CAMS datiem neviens augs pašlaik manāmi neput. Tiklīdz parādīsies ziedputekšņi, šeit būs līmeņi.',
+  pollenSeason:[['Alksnis un lazda','februāris – aprīlis','#9ad7ff'],['Bērzs','aprīlis – maijs','#ffd23f'],['Graudzāles','jūnijs – jūlijs','#4ade80'],['Vībotne un ambrozija','jūlijs – septembris','#ff8c1a']]});
+Object.assign(I18N.en, {pollenEndT:'Pollen season is over', pollenEnd:'Everything has finished flowering and there is almost no pollen in the air. The next season starts around February–March with alder and hazel. Levels will show here again then.',
+  pollenNoneT:'No pollen in the air right now', pollenNone:'According to CAMS no plant is releasing noticeable pollen right now. Levels will show here as soon as it appears.',
+  pollenSeason:[['Alder and hazel','February – April','#9ad7ff'],['Birch','April – May','#ffd23f'],['Grasses','June – July','#4ade80'],['Mugwort and ragweed','July – September','#ff8c1a']]});
