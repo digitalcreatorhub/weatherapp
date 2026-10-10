@@ -1,7 +1,7 @@
 {
-  "name": "Meteo LV",
-  "short_name": "Meteo LV",
-  "description": "Погода в Латвии: прогноз, радар осадков, облачность, Луна и предупреждения",
+  "name": "Laiks: погода и лучшее время",
+  "short_name": "Laiks",
+  "description": "Погода в Латвии и лучшее время для всего: прогноз, радар, дороги, закат, советы на день и предупреждения",
   "lang": "ru",
   "start_url": "./",
   "scope": "./",
@@ -31,6 +31,8 @@
   ],
   "id": "./",
   "categories": [
-    "weather"
+    "weather",
+    "lifestyle",
+    "travel"
   ]
 }

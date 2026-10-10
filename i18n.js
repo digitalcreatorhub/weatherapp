@@ -2,7 +2,7 @@
 // (файл подключается и в странице, и в сервис-воркере).
 const I18N = {
 ru: {
-  title:'Meteo LV: погода и радар Латвии', tagline:'погода · радар · Латвия', metaDesc:'Погода, радар осадков, облачность, море, пыльца, дороги и предупреждения для Латвии',
+  title:'Laiks: погода и лучшее время · Латвия', tagline:'погода · радар · Латвия', metaDesc:'Погода, радар осадков, облачность, море, пыльца, дороги и предупреждения для Латвии',
   loading:'загрузка…', install:'📲 Установить', searchPh:'Найти город или посёлок в Латвии…', searchAria:'Поиск населённого пункта',
   placesAria:'Места', langAria:'Язык', retry:'Повторить', loadingWeather:'Загружаю погоду…', loadingShort:'Загружаю…',
   todayTitle:'Сегодня коротко', tomorrowTitle:'Завтра коротко', h24Title:'Ближайшие 24 часа', warnTitle:'Предупреждения',
@@ -64,8 +64,8 @@ ru: {
   bgInstall:'Для предупреждений при закрытом приложении установите его: меню ⋮ в Chrome, «Установить приложение», и открывайте с значка.',
   bgOn:'Фоновая проверка включена: Chrome запускает её сам, обычно раз в несколько часов.',
   howBrowser:'Chrome: нажмите значок замка или настроек слева от адреса → «Разрешения» → «Уведомления» → «Разрешить». Или ⋮ → Настройки → Настройки сайтов → Уведомления.',
-  howApp:'Долго нажмите на значок Meteo LV на экране телефона → «О приложении» (ⓘ) → «Уведомления» → включите.',
-  howOS:'Проверьте также Настройки Android → Приложения → Chrome (или Meteo LV) → Уведомления: они должны быть включены, а режим «Не беспокоить» выключен.',
+  howApp:'Долго нажмите на значок Laiks на экране телефона → «О приложении» (ⓘ) → «Уведомления» → включите.',
+  howOS:'Проверьте также Настройки Android → Приложения → Chrome (или Laiks) → Уведомления: они должны быть включены, а режим «Не беспокоить» выключен.',
   stUnsupported:'Системные уведомления здесь недоступны. Откройте адрес приложения в Chrome. Всплывающие окна на странице и вибрация работают.',
   stGranted:'Разрешение на уведомления выдано. Нажмите «Проверить»: должно прийти уведомление в шторку Android.',
   stDenied:'Уведомления запрещены. ', stDefault:'Нажмите «Включить уведомления» и выберите «Разрешить».',
@@ -113,7 +113,7 @@ ru: {
 },
 
 lv: {
-  title:'Meteo LV: laikapstākļi un radars Latvijā', tagline:'laiks · radars · Latvija', metaDesc:'Laikapstākļi, nokrišņu radars, mākoņainība, jūra, ziedputekšņi, ceļi un brīdinājumi Latvijā',
+  title:'Laiks: laikapstākļi un labākais laiks · Latvija', tagline:'laiks · radars · Latvija', metaDesc:'Laikapstākļi, nokrišņu radars, mākoņainība, jūra, ziedputekšņi, ceļi un brīdinājumi Latvijā',
   loading:'ielāde…', install:'📲 Instalēt', searchPh:'Meklēt pilsētu vai ciemu Latvijā…', searchAria:'Vietas meklēšana',
   placesAria:'Vietas', langAria:'Valoda', retry:'Mēģināt vēlreiz', loadingWeather:'Ielādēju laikapstākļus…', loadingShort:'Ielādēju…',
   todayTitle:'Šodien īsumā', tomorrowTitle:'Rīt īsumā', h24Title:'Tuvākās 24 stundas', warnTitle:'Brīdinājumi',
@@ -175,8 +175,8 @@ lv: {
   bgInstall:'Lai saņemtu brīdinājumus ar aizvērtu lietotni, instalējiet to: Chrome izvēlne ⋮, «Instalēt lietotni», un atveriet to no ikonas.',
   bgOn:'Fona pārbaude ieslēgta: Chrome to palaiž pats, parasti reizi dažās stundās.',
   howBrowser:'Chrome: pieskarieties slēdzenes vai iestatījumu ikonai pa kreisi no adreses → «Atļaujas» → «Paziņojumi» → «Atļaut». Vai ⋮ → Iestatījumi → Vietņu iestatījumi → Paziņojumi.',
-  howApp:'Turiet nospiestu Meteo LV ikonu tālruņa ekrānā → «Informācija par lietotni» (ⓘ) → «Paziņojumi» → ieslēdziet.',
-  howOS:'Pārbaudiet arī Android Iestatījumi → Lietotnes → Chrome (vai Meteo LV) → Paziņojumi: tiem jābūt ieslēgtiem, bet režīmam «Netraucēt» izslēgtam.',
+  howApp:'Turiet nospiestu Laiks ikonu tālruņa ekrānā → «Informācija par lietotni» (ⓘ) → «Paziņojumi» → ieslēdziet.',
+  howOS:'Pārbaudiet arī Android Iestatījumi → Lietotnes → Chrome (vai Laiks) → Paziņojumi: tiem jābūt ieslēgtiem, bet režīmam «Netraucēt» izslēgtam.',
   stUnsupported:'Sistēmas paziņojumi šeit nav pieejami. Atveriet lietotnes adresi pārlūkā Chrome. Uznirstošie logi lapā un vibrācija darbojas.',
   stGranted:'Atļauja paziņojumiem dota. Nospiediet «Pārbaudīt»: Android paziņojumu joslā jāparādās paziņojumam.',
   stDenied:'Paziņojumi ir aizliegti. ', stDefault:'Nospiediet «Ieslēgt paziņojumus» un izvēlieties «Atļaut».',
@@ -224,7 +224,7 @@ lv: {
 },
 
 en: {
-  title:'Meteo LV: Latvia weather and radar', tagline:'weather · radar · Latvia', metaDesc:'Weather, precipitation radar, cloud cover, sea, pollen, roads and warnings for Latvia',
+  title:'Laiks: Latvia weather and the best time for everything', tagline:'weather · radar · Latvia', metaDesc:'Weather, precipitation radar, cloud cover, sea, pollen, roads and warnings for Latvia',
   loading:'loading…', install:'📲 Install', searchPh:'Find a town or village in Latvia…', searchAria:'Search for a place',
   placesAria:'Places', langAria:'Language', retry:'Retry', loadingWeather:'Loading weather…', loadingShort:'Loading…',
   todayTitle:'Today at a glance', tomorrowTitle:'Tomorrow at a glance', h24Title:'Next 24 hours', warnTitle:'Warnings',
@@ -286,8 +286,8 @@ en: {
   bgInstall:'To get warnings while the app is closed, install it: Chrome menu ⋮, “Install app”, and open it from the icon.',
   bgOn:'Background check is on: Chrome runs it on its own, usually every few hours.',
   howBrowser:'Chrome: tap the lock or settings icon left of the address → “Permissions” → “Notifications” → “Allow”. Or ⋮ → Settings → Site settings → Notifications.',
-  howApp:'Long-press the Meteo LV icon on your home screen → “App info” (ⓘ) → “Notifications” → turn on.',
-  howOS:'Also check Android Settings → Apps → Chrome (or Meteo LV) → Notifications: they must be on, and Do Not Disturb must be off.',
+  howApp:'Long-press the Laiks icon on your home screen → “App info” (ⓘ) → “Notifications” → turn on.',
+  howOS:'Also check Android Settings → Apps → Chrome (or Laiks) → Notifications: they must be on, and Do Not Disturb must be off.',
   stUnsupported:'System notifications are not available here. Open the app address in Chrome. On-page pop-ups and vibration still work.',
   stGranted:'Notification permission granted. Tap “Test”: a notification should appear in the Android notification shade.',
   stDenied:'Notifications are blocked. ', stDefault:'Tap “Enable notifications” and choose “Allow”.',

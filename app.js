@@ -1,5 +1,5 @@
 'use strict';
-/* Meteo LV — погода, радар, море, пыльца, дороги и предупреждения для Латвии.
+/* Laiks — погода, радар, море, пыльца, дороги и предупреждения для Латвии.
    Тексты интерфейса лежат в i18n.js (ru / lv / en). */
 const API = 'https://api.open-meteo.com/v1/forecast';
 const AQ_API = 'https://air-quality-api.open-meteo.com/v1/air-quality';
