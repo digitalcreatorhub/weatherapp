@@ -9,7 +9,7 @@
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="leaflet.css?v=26">
+<link rel="stylesheet" href="leaflet.css?v=27">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -64,11 +64,11 @@
   button:focus-visible,input:focus-visible,select:focus-visible,canvas:focus-visible,summary:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
 
   .grid{display:grid;gap:14px;grid-template-columns:minmax(0,5fr) minmax(0,7fr);
-    grid-template-areas:"hero map" "today map" "h24 map" "daily radar" "plan plan" "road road" "drive sea" "hourly hourly" "warn acc" "pollen moon"}
-  @media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "today" "plan" "h24" "map" "radar" "road" "drive" "daily" "sea" "hourly" "warn" "acc" "pollen" "moon"}}
+    grid-template-areas:"hero map" "today map" "h24 radar" "plan plan" "road road" "drive sea" "hourly hourly" "warn acc" "pollen moon"}
+  @media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "today" "plan" "h24" "map" "radar" "road" "drive" "sea" "hourly" "warn" "acc" "pollen" "moon"}}
   .card{background:var(--glass);border:1px solid var(--edge);border-radius:20px;padding:18px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
   .hero{grid-area:hero}.h24{grid-area:h24}.warn{grid-area:warn}.mapc{grid-area:map;padding:0;overflow:hidden;align-self:start}
-  .radarc{grid-area:radar;align-self:start}.daily{grid-area:daily;align-self:start}.moon{grid-area:moon;align-self:start}.acc{grid-area:acc;align-self:start}.hourly{grid-area:hourly}
+  .radarc{grid-area:radar;align-self:start}.moon{grid-area:moon;align-self:start}.acc{grid-area:acc;align-self:start}.hourly{grid-area:hourly}
   .today{grid-area:today}.road{grid-area:road}.sea{grid-area:sea;align-self:start}.pollen{grid-area:pollen;align-self:start}
   h2{font-size:.95rem;font-weight:500;color:var(--muted);margin-bottom:12px}
   .hint{font-weight:400;font-size:.76rem;opacity:.85}
@@ -450,14 +450,8 @@
   .h24head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px}
   .h24head h2{margin:0}
   .h24tabs button{padding:5px 12px;font-size:.8rem}
-  .hday{flex:0 0 66px;display:grid;justify-items:center;align-content:start;gap:1px;padding:8px 0;border-radius:12px;scroll-snap-align:start;
-    background:linear-gradient(180deg,rgba(255,210,122,.14),rgba(255,210,122,.04));box-shadow:inset 0 0 0 1px rgba(255,210,122,.22)}
-  .hday b{font-size:.82rem;text-transform:capitalize}
-  .hday small{color:var(--muted);font-size:.68rem}
-  .hday .hdi{display:block;line-height:0;margin:3px 0}
-  .hday .hmx{font-weight:700;font-size:1rem}
-  .hday .hmn{color:var(--muted);font-size:.82rem}
-  .hday em{font-style:normal;font-size:.68rem;color:var(--sky);min-height:1em;margin-top:2px}
+  .dlist{flex:1 0 100%;min-width:0;padding:0 6px}
+  .dhint{font-size:.74rem;color:var(--muted);margin:6px 0 2px;line-height:1.4}
   .hc{scroll-snap-align:start;transition:background .2s,transform .2s}
   .hc:hover{transform:translateY(-2px);background:rgba(255,255,255,.08)}
   .hc.nt{background:rgba(0,0,0,.2)}
@@ -623,10 +617,6 @@
       <div id="roadOut"><div class="ok" data-i18n="roadLoading">Считаю маршрут…</div></div>
     </section>
 
-    <section class="card daily">
-      <h2><span data-i18n="dailyTitle">Прогноз на 5 дней</span> <span class="hint" data-i18n="dailyHint"></span></h2>
-      <div id="daily"><div class="state" data-i18n="loadingShort">Загружаю…</div></div>
-    </section>
 
     <section class="card sea">
       <h2 data-i18n="seaTitle">Море и волны</h2>
@@ -651,13 +641,13 @@
   <footer id="footer"></footer>
 </div>
 
-<script src="i18n.js?v=26"></script>
-<script src="leaflet.js?v=26"></script>
-<script src="viz.js?v=26"></script>
-<script src="borders.js?v=26"></script>
-<script src="app.js?v=26"></script>
-<script src="drive.js?v=26"></script>
-<script src="plan.js?v=26"></script>
-<script src="info.js?v=26"></script>
+<script src="i18n.js?v=27"></script>
+<script src="leaflet.js?v=27"></script>
+<script src="viz.js?v=27"></script>
+<script src="borders.js?v=27"></script>
+<script src="app.js?v=27"></script>
+<script src="drive.js?v=27"></script>
+<script src="plan.js?v=27"></script>
+<script src="info.js?v=27"></script>
 </body>
 </html>

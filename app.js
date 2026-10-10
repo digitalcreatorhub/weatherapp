@@ -237,10 +237,11 @@ function renderHero() {
   if (hasViz()) { try { vzCountUp($('bigT'), c.temperature_2m); skyUpdate(); } catch (e) { console.warn('viz', e); } }
 }
 $('hero').addEventListener('click', e => { if (e.target.closest('[data-act=star]')) toggleFav(); });
-function renderDaily(w) {
-  if (!w) return;
+/* прогноз по дням теперь во вкладке «5 дней» карточки «Ближайшие 24 часа» */
+function renderDaily(w) { if (w && h24Tab === '5') renderH24(); }
+function dailyHTML(w) {
   const d = w.daily, lo = Math.min(...d.temperature_2m_min), hi = Math.max(...d.temperature_2m_max), span = Math.max(hi - lo, 1);
-  $('daily').innerHTML = d.time.map((day, i) => {
+  return `<div class="dlist">` + d.time.map((day, i) => {
     const l = (d.temperature_2m_min[i] - lo)/span*100, wd = Math.max((d.temperature_2m_max[i] - d.temperature_2m_min[i])/span*100, 8);
     const nm = i === 0 ? t('today') : i === 1 ? t('tomorrow') : dFmt(day, {weekday:'long'});
     const mm = d.precipitation_sum[i] > 0.1 ? d.precipitation_sum[i].toFixed(1) + ' ' + t('mm') : '';
@@ -248,7 +249,7 @@ function renderDaily(w) {
     return `<div class="row"><div class="nm"><span class="dn">${nm}</span><small>${dFmt(day, {day:'numeric', month:'short'})}${mm ? `<span class="mm"> · ${mm}</span>` : ''}</small></div>
       <div class="ic" title="${esc(wt)}">${wxI(d.weather_code[i], 1, 36, wi)}</div>
       <div class="rg"><span>${fmt(d.temperature_2m_min[i])}</span><div class="tr"><i style="left:${l}%;width:${wd}%;background:linear-gradient(90deg,${tempColor(d.temperature_2m_min[i])},${tempColor(d.temperature_2m_max[i])});animation-delay:${i*80}ms"></i></div><span>${fmt(d.temperature_2m_max[i])}</span></div>${confCell(i)}</div>`;
-  }).join('');
+  }).join('') + `<p class="dhint">${esc(t('d5Hint'))}</p></div>`;
 }
 
 /* ---------- «Сегодня коротко»: одежда, зонт, ветер, УФ, гололедица ---------- */
@@ -404,38 +405,12 @@ document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('#h24tabs [data-h]'); if (!b || b.dataset.h === h24Tab) return;
   h24Tab = b.dataset.h; store.set('wx_h24tab', h24Tab); h24Tabs(); renderH24(); $('h24').scrollLeft = 0;
 });
-/* 5 дней шагом 3 часа: перед каждым днём — карточка дня с максимумом, минимумом и осадками */
-function renderH5(h, i0) {
-  const d = lastW.daily; let out = '', day = '';
-  for (let i = i0; i < h.time.length; i++) {
-    const hh = +h.time[i].slice(11, 13);
-    if (i !== i0 && hh % 3) continue;
-    const ds = h.time[i].slice(0, 10);
-    if (ds !== day) {
-      day = ds; const k = d.time.indexOf(ds);
-      if (k >= 0) {
-        const ps = d.precipitation_sum[k] ?? 0, pp = d.precipitation_probability_max ? d.precipitation_probability_max[k] ?? 0 : 0;
-        out += `<div class="hday"><b>${esc(k === 0 ? t('today') : dFmt(ds + 'T12:00', {weekday:'short'}))}</b><small>${esc(dFmt(ds + 'T12:00', {day:'numeric', month:'short'}))}</small>`
-          + `<span class="hdi">${wxI(d.weather_code[k], 1, 30)}</span><span class="hmx" style="color:${tempColor(d.temperature_2m_max[k])}">${fmt(d.temperature_2m_max[k])}</span>`
-          + `<span class="hmn">${fmt(d.temperature_2m_min[k])}</span><em>${ps >= 0.1 ? ps.toFixed(ps < 10 ? 1 : 0) + ' ' + esc(t('mm')) : pp >= 20 ? pp + '%' : ''}</em></div>`;
-      }
-    }
-    const j = Math.min(i + 3, h.time.length), T = h.temperature_2m[i];
-    let pp = 0; for (let x = i; x < j; x++) pp = Math.max(pp, h.precipitation_probability[x] ?? 0);
-    const wd = h.wind_direction_10m ? h.wind_direction_10m[i] : null, ws = h.wind_speed_10m ? h.wind_speed_10m[i] : null;
-    const wind = wd != null && ws != null ? `<span class="wd"><i style="transform:rotate(${Math.round(wd + 180)}deg)">↑</i>${Math.round(ws)}</span>` : '';
-    out += `<div class="hc${i === i0 ? ' now' : ''}${h.is_day[i] === 0 ? ' nt' : ''}"><small>${i === i0 ? t('nowLbl') : String(hh).padStart(2, '0') + ':00'}</small><span class="hi">${wxI(h.weather_code[i], h.is_day[i], 34)}</span>`
-      + `<b>${fmt(T)}</b><i class="tk" style="background:${tempColor(T)}"></i>${wind}`
-      + `<span class="pb" title="${pp}%"><i style="height:${Math.max(pp, 2)}%;opacity:${pp >= 20 ? 1 : .35}"></i></span><em>${pp >= 20 ? pp + '%' : ''}</em></div>`;
-  }
-  return out;
-}
 function renderH24() {
   if (!lastW || !hourlyData) return;
   const h = lastW.hourly, i0 = clamp(Math.floor((Date.now() - hourlyData.base)/36e5), 0, h.time.length - 25);
   h24Idx = i0; let out = '';
   h24Tabs();
-  if (h24Tab === '5') { $('h24').innerHTML = renderH5(h, i0); return; }
+  if (h24Tab === '5') { $('h24').innerHTML = dailyHTML(lastW); return; }
   for (let i = i0; i < i0 + 24; i++) {
     const hh = h.time[i].slice(11, 13), pp = h.precipitation_probability[i] ?? 0, T = h.temperature_2m[i];
     const lab = i === i0 ? t('nowLbl') : hh === '00' ? dFmt(h.time[i], {weekday:'short'}) : hh + ':00';
