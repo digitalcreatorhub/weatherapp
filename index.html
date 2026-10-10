@@ -9,7 +9,7 @@
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="leaflet.css?v=34">
+<link rel="stylesheet" href="leaflet.css?v=35">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -188,6 +188,14 @@
   /* ===== советы на сегодня ===== */
   .plan{grid-area:plan}
   .util{grid-area:util}.ticks{grid-area:ticks}
+  .ph2{font-size:.78rem;color:var(--muted);margin-bottom:-4px}
+  .ptire{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--edge);padding-top:10px}
+  .ptire .ph{margin-bottom:-2px}
+  .pwarn{font-size:.8rem;line-height:1.45;color:#d8ecff;background:rgba(92,200,255,.1);border:1px solid rgba(92,200,255,.25);border-radius:10px;padding:7px 10px}
+  .pwarn.hi{background:rgba(120,150,255,.16);border-color:rgba(140,170,255,.45)}
+  .xhl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+  .xhl li{display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start}
+  .xhl li>span{font-size:1.2rem;line-height:1.2}.xhl b{display:block;font-weight:600;font-size:.9rem}.xhl small{display:block;color:var(--muted);font-size:.76rem}
   .ticks:empty{display:none}
   .pgrid.pg2{grid-template-columns:repeat(2,minmax(0,1fr))}
   .tkgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:12px 22px;align-items:start}
@@ -676,14 +684,14 @@
   <footer id="footer"></footer>
 </div>
 
-<script src="i18n.js?v=34"></script>
-<script src="leaflet.js?v=34"></script>
-<script src="viz.js?v=34"></script>
-<script src="borders.js?v=34"></script>
-<script src="app.js?v=34"></script>
-<script src="drive.js?v=34"></script>
-<script src="plan.js?v=34"></script>
-<script src="info.js?v=34"></script>
-<script src="extra.js?v=34"></script>
+<script src="i18n.js?v=35"></script>
+<script src="leaflet.js?v=35"></script>
+<script src="viz.js?v=35"></script>
+<script src="borders.js?v=35"></script>
+<script src="app.js?v=35"></script>
+<script src="drive.js?v=35"></script>
+<script src="plan.js?v=35"></script>
+<script src="info.js?v=35"></script>
+<script src="extra.js?v=35"></script>
 </body>
 </html>

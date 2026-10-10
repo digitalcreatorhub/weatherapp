@@ -804,3 +804,21 @@ Object.assign(I18N.en, {xt:{
 Object.assign(I18N.ru, {rateErr:'Open-Meteo временно ограничил запросы с вашего интернета (слишком много обращений). Обычно это проходит само за несколько минут — до часа. Можно также переключиться между Wi-Fi и мобильным интернетом.'});
 Object.assign(I18N.lv, {rateErr:'Open-Meteo īslaicīgi ierobežoja pieprasījumus no jūsu interneta (pārāk daudz pieprasījumu). Parasti tas pāriet pats dažu minūšu līdz stundas laikā. Var arī pārslēgties starp Wi-Fi un mobilo internetu.'});
 Object.assign(I18N.en, {rateErr:'Open-Meteo has temporarily limited requests from your connection (too many requests). This usually clears by itself within minutes to an hour. You can also switch between Wi-Fi and mobile data.'});
+Object.assign(I18N.ru, {carTitle:'Машина: мойка и резина', washTitle:'Мойка',
+  washHardHead:'В сильный мороз лучше не мыть', washHardWhy:'Ближайшие дни днём ниже −5°: дождитесь оттепели.',
+  washHard:'Днём до {t}: вода замерзает прямо на кузове, двери, замки и уплотнители могут примёрзнуть, на открытых самомойках — ледяная корка. Если мыть — только в тёплом боксе с сушкой.',
+  washFrost:'После мойки будет мороз (до {t}): протрите уплотнители дверей и багажника, продуйте замки и зеркала, просушите щётки дворников — иначе всё примёрзнет к утру.',
+  washHardSoon:'Впереди сильный мороз ({d}): если нужно помыть машину, лучше успеть до него.'});
+Object.assign(I18N.lv, {carTitle:'Auto: mazgāšana un riepas', washTitle:'Mazgāšana',
+  washHardHead:'Stiprā salā labāk nemazgāt', washHardWhy:'Tuvākās dienās dienā zem −5°: sagaidiet atkusni.',
+  washHard:'Dienā līdz {t}: ūdens sasalst uz virsbūves, durvis, slēdzenes un blīves var piesalt, atklātās pašapkalpošanās mazgātavās — ledus kārta. Ja mazgāt, tad tikai siltā boksā ar žāvēšanu.',
+  washFrost:'Pēc mazgāšanas būs sals (līdz {t}): noslaukiet durvju un bagāžnieka blīves, izpūtiet slēdzenes un spoguļus, nosusiniet tīrītāju slotiņas — citādi līdz rītam viss piesals.',
+  washHardSoon:'Priekšā stiprs sals ({d}): ja vajag nomazgāt auto, labāk paspēt pirms tā.'});
+Object.assign(I18N.en, {carTitle:'Car: wash and tyres', washTitle:'Car wash',
+  washHardHead:'Better not to wash in hard frost', washHardWhy:'Days below −5° ahead: wait for a thaw.',
+  washHard:'Daytime down to {t}: water freezes on the body, doors, locks and seals can freeze shut, open self-service washes get icy. If you must, use a heated bay with drying.',
+  washFrost:'Frost after washing (down to {t}): wipe the door and boot seals, blow out locks and mirrors, dry the wiper blades — or they will freeze by morning.',
+  washHardSoon:'Hard frost ahead ({d}): if the car needs washing, better do it before then.'});
+Object.assign(I18N.ru.xt.hol, {usualShort:'обычно {a}…{b}'});
+Object.assign(I18N.lv.xt.hol, {usualShort:'parasti {a}…{b}'});
+Object.assign(I18N.en.xt.hol, {usualShort:'usually {a}…{b}'});

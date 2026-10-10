@@ -122,10 +122,12 @@ function tiresHtml() {
     else { ico = '✅'; head = X.notYet; why = xfill(X.whyWarm, {t:fmt(lo)}); }
     legal = xfill(X.mandatoryIn, {n:dTo(12, 1, y)}) + ' ' + (md >= 1001 ? X.studsOk : xfill(X.studsFrom, {n:dTo(10, 1, y)}));
   }
-  return `<div class="pb"><div class="ph">🛞 ${esc(X.title)}</div>
+  return `<div class="ptire"><div class="ph">🛞 ${esc(X.title)}</div>
     <div class="pv"><span class="pi">${ico}</span><div><b>${esc(head)}</b><small>${esc(why)}</small></div></div>
     ${legal ? `<div class="xlegal">⚖️ ${esc(legal)}</div>` : ''}</div>`;
 }
+/* резина показывается в блоке «Машина» карточки «Советы на сегодня», рядом с мойкой */
+function tiresInline() { try { return lastW ? tiresHtml() : ''; } catch (e) { return ''; } }
 
 /* ---------- 🕷️ активность клещей: по дневной температуре и влажности ---------- */
 function ticksHtml() {
@@ -198,15 +200,19 @@ function holidayHtml() {
     const N = normFor(d);
     fc = `<div class="xfc"><span class="xfi">🌡️</span><div>${N ? `<b>${esc(xfill(X.usual, {a:fmt(N.mn).replace('°', ''), b:fmt(N.mx)}))}</b>` : ''}<small>${esc(n <= 16 ? X.loading : X.later)}</small></div></div>`;
   }
-  const nx = list[1] ? `<small class="xnext">${esc(X.next)}: ${X.names[list[1][0]][0]} ${esc(X.names[list[1][0]][1])} — ${esc(new Date(utcDay(list[1][1]) + 12*36e5).toLocaleDateString(LOC, {timeZone:'UTC', day:'numeric', month:'long'}))}</small>` : '';
-  return `<div class="pb"><div class="ph">🎉 ${esc(X.title)}</div>
-    <div class="pv"><span class="pi">${ic}</span><div><b>${esc(name)}</b><small>${esc(date)} · ${esc(when)}</small></div></div>${fc}${nx}</div>`;
+  const nx = list.slice(1, 5).map(([k2, d2]) => {
+    const n2 = dBetween(today, d2), N2 = normFor(d2);
+    return `<li><span>${X.names[k2][0]}</span><div><b>${esc(X.names[k2][1])}</b><small>${esc(new Date(utcDay(d2) + 12*36e5).toLocaleDateString(LOC, {timeZone:'UTC', day:'numeric', month:'long'}))} · ${esc(xfill(X.inDays, {n:n2}))}${N2 ? ' · ' + esc(xfill(X.usualShort, {a:fmt(N2.mn).replace('°', ''), b:fmt(N2.mx)})) : ''}</small></div></li>`;
+  }).join('');
+  return `<h2>🎉 ${esc(X.title)} · ${esc(placeName(sel))}</h2><div class="tkgrid">
+    <div class="tkmain"><div class="pv"><span class="pi">${ic}</span><div><b>${esc(name)}</b><small>${esc(date)} · ${esc(when)}</small></div></div>${fc}</div>
+    <div class="tkside"><div class="ph">${esc(X.next)}</div><ul class="xhl">${nx}</ul></div></div>`;
 }
 
 function renderUtil() {
   const el = $('util'); if (!el || !lastW || !hourlyData) return;
-  try { el.innerHTML = `<h2>${esc(XT().title)} · ${esc(placeName(sel))}</h2><div class="pgrid pg2">${tiresHtml()}${holidayHtml()}</div>`; }
-  catch (e) { console.warn('util', e); }
+  try { el.innerHTML = holidayHtml(); } catch (e) { console.warn('util', e); }
+  if (typeof renderPlan === 'function') renderPlan();
   renderTicks();
   loadNormals();
 }

@@ -728,6 +728,7 @@ function wmFrame(ts) {
   const w = WM.wmean || {u:3, v:0}, sp = layer === 'clouds' ? 2.2 : 3;
   T.ox -= w.u*sp*dt; T.oy += w.v*sp*dt; T.ox2 -= w.u*sp*1.6*dt; T.oy2 += w.v*sp*1.6*dt;
   const tc = WM.tmp; if (tc.width !== WM.fc.width || tc.height !== WM.fc.height) { tc.width = WM.fc.width; tc.height = WM.fc.height; }
+  if (!tc.width || !tc.height) return;   /* карта ещё не получила размер (вкладка скрыта или идёт перестройка) */
   const t = tc.getContext('2d'); t.setTransform(WM.dpr, 0, 0, WM.dpr, 0, 0);
   t.globalCompositeOperation = 'source-over'; t.clearRect(0, 0, WM.W, WM.H);
   t.imageSmoothingEnabled = true; t.filter = `blur(${layer === 'precip' ? 6 : 3}px)`; t.drawImage(WM.img, r.x, r.y, r.w, r.h); t.filter = 'none';

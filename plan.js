@@ -24,32 +24,46 @@ function washPlan() {
     const i0 = hIdx(at), i1 = Math.min(n - 1, i0 + 48);
     if (i1 - i0 < 30) break;                                     /* мало данных вперёд */
     let mm = 0, maxP = 0, snow = false, salt = false, cold = h.temperature_2m[i0] ?? 5;
+    /* мороз: днём в часы мойки (4 часа) и ночью после неё */
+    let tDay = -99, tNight = 99;
+    for (let i = i0; i <= Math.min(n - 1, i0 + 4); i++) tDay = Math.max(tDay, h.temperature_2m[i] ?? 5);
+    for (let i = i0; i <= Math.min(n - 1, i0 + 20); i++) tNight = Math.min(tNight, h.temperature_2m[i] ?? 5);
     for (let i = i0; i <= i1; i++) {
       const pr = h.precipitation[i] ?? 0, T = h.temperature_2m[i] ?? 5;
       mm += pr; maxP = Math.max(maxP, h.precipitation_probability[i] ?? 0);
       if (SNOWC.includes(h.weather_code[i])) snow = true;
       if (T <= 1 && pr > 0.1) salt = true;
     }
-    const lvl = (mm < .3 && maxP < 35 && !snow && !salt) ? 2 : (mm < 1.5 && maxP < 60 && !snow) ? 1 : 0;
-    days.push({k, at, mm, maxP, snow, salt, cold, lvl});
+    const hard = tDay <= -5, frost = !hard && (tDay <= 0 || tNight <= -3);
+    let lvl = (mm < .3 && maxP < 35 && !snow && !salt) ? 2 : (mm < 1.5 && maxP < 60 && !snow) ? 1 : 0;
+    if (hard) lvl = 0; else if (frost) lvl = Math.min(lvl, 1);
+    days.push({k, at, mm, maxP, snow, salt, cold, lvl, hard, frost, tDay, tNight});
   }
   return days;
 }
 function washHtml() {
   const days = washPlan(); if (!days.length) return '';
-  const best = days.find(d => d.lvl === 2), first = days[0];
+  const best = days.find(d => d.lvl === 2), ok1 = days.find(d => d.lvl === 1 && !d.hard), first = days[0];
   let ico, head, why;
-  if (best && best.k === first.k) { ico = '✅'; head = t(first.k === 0 ? 'washToday' : 'washTomorrow'); why = t('washDry'); }
+  if (!best && days.every(d => d.hard)) { ico = '🥶'; head = t('washHardHead'); why = t('washHardWhy'); }
+  else if (!best && ok1 && ok1.frost && ok1.mm < .3 && ok1.maxP < 35 && !ok1.snow && !ok1.salt) { ico = '🧊'; head = t(ok1.k === 0 ? 'washToday' : 'washOn', {d:ok1.k === 1 ? t('tomorrowL') : wdName(ok1.at)}); why = t('washDry'); }
+  else if (best && best.k === first.k) { ico = '✅'; head = t(first.k === 0 ? 'washToday' : 'washTomorrow'); why = t('washDry'); }
   else if (best) { ico = '📅'; head = t('washOn', {d:best.k === 1 ? t('tomorrowL') : wdName(best.at)}); why = t('washDryAfter'); }
   else {
     ico = '⏳'; head = t('washWait');
     why = first.snow ? t('washSnow') : first.salt ? t('washSalt') : t('washRain', {mm:first.mm.toFixed(1)});
   }
-  const cold = (best || first).cold <= -5 ? `<small>${esc(t('washCold'))}</small>` : '';
-  const dots = days.map(d => `<span class="pd l${d.lvl}" title="${esc(d.k === 0 ? t('todayL') : wdName(d.at))}"><i></i>${esc(d.k === 0 ? t('todayL') : new Date(d.at).toLocaleDateString(LOC, {timeZone:TZ, weekday:'short'}))}</span>`).join('');
-  return `<div class="pb"><div class="ph">🚗 ${esc(t('washTitle'))}</div>
-    <div class="pv"><span class="pi">${ico}</span><div><b>${esc(head)}</b><small>${esc(why)}</small>${cold}</div></div>
-    <div class="pdays">${dots}</div></div>`;
+  /* мойка в мороз: что сделать после, а в сильный мороз — почему лучше подождать */
+  const pick = best || ok1 || first;
+  const cold = pick.hard ? `<div class="pwarn hi">🥶 ${esc(t('washHard', {t:fmt(pick.tDay)}))}</div>`
+    : pick.frost ? `<div class="pwarn">❄️ ${esc(t('washFrost', {t:fmt(Math.min(pick.tDay, pick.tNight))}))}</div>`
+    : days.some(d => d.hard) ? `<div class="pwarn">🥶 ${esc(t('washHardSoon', {d:wdName(days.find(d => d.hard).at)}))}</div>` : '';
+  const dots = days.map(d => `<span class="pd l${d.lvl}" title="${esc(d.k === 0 ? t('todayL') : wdName(d.at))}"><i></i>${d.hard || d.frost ? '❄️' : ''}${esc(d.k === 0 ? t('todayL') : new Date(d.at).toLocaleDateString(LOC, {timeZone:TZ, weekday:'short'}))}</span>`).join('');
+  return `<div class="pb"><div class="ph">🚗 ${esc(t('carTitle'))}</div>
+    <div class="ph2">🧽 ${esc(t('washTitle'))}</div>
+    <div class="pv"><span class="pi">${ico}</span><div><b>${esc(head)}</b><small>${esc(why)}</small></div></div>
+    <div class="pdays">${dots}</div>${cold}
+    ${typeof tiresInline === 'function' ? tiresInline() : ''}</div>`;
 }
 
 /* ---------- 5. лучшее окно для занятия ---------- */
