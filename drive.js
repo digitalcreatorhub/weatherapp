@@ -68,21 +68,47 @@ function startWatch() {
   const eco = ecoOn();
   DRIVE.watch = navigator.geolocation.watchPosition(onPos, onPosErr, {enableHighAccuracy:!eco, maximumAge:eco ? 60000 : 5000, timeout:60000});
 }
+/* Скорость без «дрожания» на месте. GPS-точка гуляет на 5–30 м даже когда телефон лежит,
+   и браузер честно сообщает из-за этого 1–4 км/ч. Навигаторы (Google Maps и др.) отсекают это
+   датчиками телефона; в браузере их нет, поэтому делаем то же по самим точкам:
+   — пока вы стоите, есть «якорь»; уход от него меньше погрешности GPS считается шумом;
+   — поехали — только если сдвинулись дальше погрешности И скорость держится 2 замера подряд;
+   — остановились — если 3 замера подряд почти нет скорости; тогда показываем ровно 0. */
+const MOVE_ON = 2.2, MOVE_OFF = 1.2;          /* м/с: ≈ 8 км/ч, чтобы тронуться; ≈ 4 км/ч, чтобы встать */
 function onPos(p) {
-  const c = p.coords, now = Date.now(), pos = {lat:c.latitude, lon:c.longitude};
-  DRIVE.err = ''; DRIVE.acc = c.accuracy || 0;
-  if (DRIVE.prev) {
-    const km = hav(DRIVE.prev, pos), dt = (now - DRIVE.prevAt)/1000;
-    if (km > .15 && dt > 0) {
-      const v = km*1000/dt;   /* скачки GPS (больше 70 м/с ≈ 250 км/ч) не считаем скоростью */
-      if ((c.speed == null || Number.isNaN(c.speed)) && v < 70) DRIVE.speed = v;
-      if (c.heading == null || Number.isNaN(c.heading)) DRIVE.heading = bearing(DRIVE.prev, pos);
-      DRIVE.prev = pos; DRIVE.prevAt = now;
-    } else if (dt > 180) { if (c.speed == null) DRIVE.speed = 0; DRIVE.prev = pos; DRIVE.prevAt = now; }
+  const c = p.coords, now = Date.now(), pos = {lat:c.latitude, lon:c.longitude}, acc = c.accuracy || 50;
+  DRIVE.err = ''; DRIVE.acc = acc;
+  const S = DRIVE.st || (DRIVE.st = {moving:false, anchor:null, hist:[], up:0, down:0, v:0});
+  if (acc > 120 && DRIVE.pos) { renderDrive(); return; }   /* очень грубая точка (по вышкам) — скорость по ней не считаем */
+  S.hist.push({pos, at:now, acc}); while (S.hist.length > 12) S.hist.shift();
+  /* «сырая» скорость: от телефона, а если её нет — по точке не младше 5 с, только если сдвиг больше погрешности */
+  let raw = c.speed != null && !Number.isNaN(c.speed) ? c.speed : null;
+  if (raw == null) {
+    const old = S.hist.slice().reverse().find(h => now - h.at >= 5000 && now - h.at <= 30000);
+    if (old) { const m = hav(old.pos, pos)*1000, dt = (now - old.at)/1000; raw = m > old.acc + acc ? Math.min(m/dt, 70) : 0; }
+    else raw = S.moving ? S.v : 0;
+  }
+  if (!S.anchor) S.anchor = pos;
+  const away = hav(S.anchor, pos)*1000, noise = Math.max(25, acc*1.5);
+  if (!S.moving) {
+    S.up = raw >= MOVE_ON && away > noise || away > noise*2.5 ? S.up + 1 : 0;
+    if (S.up >= 2) { S.moving = true; S.down = 0; S.v = raw; }
+    else {   /* стоим: якорь медленно подтягивается к среднему положению */
+      S.anchor = {lat:S.anchor.lat*.85 + pos.lat*.15, lon:S.anchor.lon*.85 + pos.lon*.15};
+    }
+  } else {
+    S.down = raw < MOVE_OFF ? S.down + 1 : 0;
+    if (S.down >= 3) { S.moving = false; S.up = 0; S.v = 0; S.anchor = pos; }
+    else { S.v = S.v*.5 + raw*.5; S.anchor = pos; }
+  }
+  DRIVE.speed = S.moving ? S.v : 0;
+  /* направление — только в движении */
+  if (S.moving) {
+    if (c.heading != null && !Number.isNaN(c.heading) && raw > 1.5) DRIVE.heading = c.heading;
+    else if (DRIVE.prev && hav(DRIVE.prev, pos)*1000 > noise) DRIVE.heading = bearing(DRIVE.prev, pos);
+    if (!DRIVE.prev || hav(DRIVE.prev, pos)*1000 > noise) { DRIVE.prev = pos; DRIVE.prevAt = now; }
   } else { DRIVE.prev = pos; DRIVE.prevAt = now; }
-  if (c.speed != null && !Number.isNaN(c.speed)) DRIVE.speed = c.speed;
-  if (c.heading != null && !Number.isNaN(c.heading) && (c.speed ?? DRIVE.speed) > 1.5) DRIVE.heading = c.heading;
-  DRIVE.pos = pos;
+  DRIVE.pos = S.moving ? pos : (DRIVE.pos && hav(DRIVE.pos, pos)*1000 < noise ? DRIVE.pos : pos);
   driveMapMark(); renderDrive(); driveCheck(false);
 }
 function onPosErr(e) {
@@ -187,7 +213,7 @@ function openDark() {
 /* --- включение / выключение --- */
 function driveStart() {
   if (!('geolocation' in navigator)) { DRIVE.on = true; DRIVE.err = 'dNoGeo'; renderDrive(); return; }
-  DRIVE.on = true; DRIVE.err = ''; DRIVE.res = null; DRIVE.lastAt = 0; DRIVE.lastPt = null;
+  DRIVE.on = true; DRIVE.err = ''; DRIVE.res = null; DRIVE.lastAt = 0; DRIVE.lastPt = null; DRIVE.st = null; DRIVE.speed = 0;
   startWatch(); wakeOn(); fillVoices();
   if (voiceOn()) { const lg = speechLangPick(); speak(inLang(lg, () => t('voiceHello')), lg); }
   clearInterval(DRIVE.timer); DRIVE.timer = setInterval(() => driveCheck(false), 60e3);
@@ -196,7 +222,7 @@ function driveStart() {
 function driveStop() {
   DRIVE.on = false;
   if (DRIVE.watch !== null) { navigator.geolocation.clearWatch(DRIVE.watch); DRIVE.watch = null; }
-  clearInterval(DRIVE.timer); wakeOff(); DRIVE.pos = null; DRIVE.prev = null; DRIVE.res = null;
+  clearInterval(DRIVE.timer); wakeOff(); DRIVE.pos = null; DRIVE.prev = null; DRIVE.res = null; DRIVE.st = null; DRIVE.speed = 0;
   try { speechSynthesis.cancel(); } catch (e) {}
   if (DRIVE.dark) { DRIVE.dark.remove(); DRIVE.dark = null; }
   driveMapMark(); renderDrive();
