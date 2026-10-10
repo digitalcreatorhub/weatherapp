@@ -495,6 +495,16 @@ function makeMap(el) {
     maxBounds:[[53.4, 17], [60.4, 32.5]], maxBoundsViscosity:.9, attributionControl:true, zoomControl:true, fadeAnimation:true});
   map.attributionControl.setPrefix(false);
   L.tileLayer(BASE_URL, {maxNativeZoom:16, maxZoom:12, attribution:BASE_ATTR, className:'basemap'}).addTo(map);
+  /* границы поверх погоды: Латвия — подсвеченной линией, соседи — тонкими (Natural Earth) */
+  if (typeof LV_BORDERS !== 'undefined') {
+    const bp = map.createPane('borders'); bp.style.zIndex = 380; bp.style.pointerEvents = 'none';
+    LV_BORDERS.other.forEach(l => L.polyline(l, {pane:'borders', color:'#d5e2ee', weight:1, opacity:.5, interactive:false, lineJoin:'round'}).addTo(map));
+    LV_BORDERS.lv.forEach(r => {
+      L.polyline(r, {pane:'borders', color:'#ffb547', weight:8, opacity:.14, interactive:false, lineJoin:'round'}).addTo(map);
+      L.polyline(r, {pane:'borders', color:'#0a1522', weight:3.6, opacity:.55, interactive:false, lineJoin:'round'}).addTo(map);
+      L.polyline(r, {pane:'borders', color:'#ffd27a', weight:1.8, opacity:.95, interactive:false, lineJoin:'round'}).addTo(map);
+    });
+  }
   map._fitLV = () => { map.invalidateSize(); map.fitBounds(LV_BOUNDS, {padding:[4, 4], animate:false}); map._fitZ = map.getZoom(); };
   map._fitLV();
   /* на телефоне карта не перехватывает прокрутку страницы: двигать можно после приближения двумя пальцами */
@@ -579,11 +589,11 @@ function wmBuildField(ms) {
       const edge = Math.min(x, IW - 1 - x, y, IH - 1 - y)/(IW*0.07), fe = clamp(edge, 0, 1), feather = fe*fe*(3 - 2*fe);
       let r, g, b, a;
       let k = clamp((sunElev(sp, lat, lon) + 6)/12, 0, 1); k = k*k*(3 - 2*k);
-      if (layer === 'clouds') { const tt = clamp(v/100, 0, 1); r = 128 + 112*k; g = 142 + 104*k; b = 170 + 82*k; a = Math.pow(tt, 1.1)*.96; }
+      if (layer === 'clouds') { const tt = clamp(v/100, 0, 1); r = 128 + 112*k; g = 142 + 104*k; b = 170 + 82*k; a = Math.pow(tt, 1.15)*.8; }
       else if (layer === 'precip') { [r, g, b, a] = precipColor(v); }
       else { [r, g, b] = rgbOf(tempColor(v)); a = .5; }
       im.data[p] = r; im.data[p + 1] = g; im.data[p + 2] = b; im.data[p + 3] = Math.round(255*a*feather);
-      nm.data[p] = 0; nm.data[p + 1] = 4; nm.data[p + 2] = 22; nm.data[p + 3] = Math.round((1 - k)*110*feather);
+      nm.data[p] = 0; nm.data[p + 1] = 4; nm.data[p + 2] = 22; nm.data[p + 3] = Math.round((1 - k)*80*feather);
     }
   }
   c1.putImageData(im, 0, 0); c2.putImageData(nm, 0, 0);
