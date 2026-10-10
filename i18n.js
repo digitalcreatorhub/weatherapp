@@ -662,3 +662,29 @@ Object.assign(I18N.en, {gi:{
     tip:'In Latvia daylight lasts from under 7 hours in December to almost 18 hours in June. Golden hour and the sunset forecast are in the “Tips for today” card.'
   }
 }});
+
+/* ---------- «Где я»: погода по местоположению ---------- */
+Object.assign(I18N.ru, {
+  geoHere:'Где я', geoTitle:'Погода точно для места, где вы сейчас (по GPS), с названием района',
+  geoNoTitle:'Не удалось определить место', geoNo:'Этот браузер не умеет определять местоположение.',
+  geoDenied:'Доступ к местоположению запрещён. Разрешите его: значок замка рядом с адресом → Разрешения → Местоположение (или в настройках приложения Laiks).',
+  geoFail:'Телефон не смог определить место. Включите геолокацию и попробуйте ещё раз.',
+  geoFarTitle:'Вы за пределами Латвии', geoFar:'Приложение показывает погоду только в Латвии и рядом с ней.',
+  geoFoot:'Названия районов: © {osm}. Место определяется только на телефоне; в запросах уходит точка, округлённая до ~100 м.'
+});
+Object.assign(I18N.lv, {
+  geoHere:'Kur es esmu', geoTitle:'Laikapstākļi tieši vietai, kur esat tagad (pēc GPS), ar apkaimes nosaukumu',
+  geoNoTitle:'Neizdevās noteikt atrašanās vietu', geoNo:'Šis pārlūks nevar noteikt atrašanās vietu.',
+  geoDenied:'Piekļuve atrašanās vietai ir liegta. Atļaujiet to: slēdzenes ikona blakus adresei → Atļaujas → Atrašanās vieta (vai Laiks lietotnes iestatījumos).',
+  geoFail:'Tālrunis nevarēja noteikt vietu. Ieslēdziet ģeolokāciju un mēģiniet vēlreiz.',
+  geoFarTitle:'Jūs esat ārpus Latvijas', geoFar:'Lietotne rāda laikapstākļus tikai Latvijā un tās tuvumā.',
+  geoFoot:'Apkaimju nosaukumi: © {osm}. Vieta tiek noteikta tikai tālrunī; pieprasījumos tiek sūtīts punkts, noapaļots līdz ~100 m.'
+});
+Object.assign(I18N.en, {
+  geoHere:'Where I am', geoTitle:'Weather for exactly where you are now (GPS), with the neighbourhood name',
+  geoNoTitle:'Could not get your location', geoNo:'This browser cannot determine location.',
+  geoDenied:'Location access is blocked. Allow it: lock icon next to the address → Permissions → Location (or in the Laiks app settings).',
+  geoFail:'The phone could not determine your location. Turn on location and try again.',
+  geoFarTitle:'You are outside Latvia', geoFar:'The app only shows weather in and around Latvia.',
+  geoFoot:'Neighbourhood names: © {osm}. Location is determined on your phone only; requests carry a point rounded to ~100 m.'
+});

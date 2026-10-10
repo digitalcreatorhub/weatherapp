@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Laiks: погода и лучшее время · Латвия</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.rainviewer.com https://server.arcgisonline.com; connect-src 'self' https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://marine-api.open-meteo.com https://api.rainviewer.com https://feeds.meteoalarm.org; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.rainviewer.com https://server.arcgisonline.com; connect-src 'self' https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://marine-api.open-meteo.com https://api.rainviewer.com https://feeds.meteoalarm.org https://nominatim.openstreetmap.org; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="leaflet.css?v=22">
+<link rel="stylesheet" href="leaflet.css?v=23">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -192,6 +192,12 @@
   .pd{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;color:var(--muted);padding:3px 8px;border-radius:99px;border:1px solid var(--edge);text-transform:capitalize}
   .pd i{width:8px;height:8px;border-radius:50%;background:#ff6b4a}.pd.l1 i{background:#ffb547}.pd.l2 i{background:#4ade80}
   .pchips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip.geo{display:inline-flex;align-items:center;gap:5px;color:var(--text);border-color:rgba(92,200,255,.35);background:rgba(92,200,255,.08)}
+  .chip.geo[aria-pressed=true]{background:var(--text);color:#0a1522;border-color:var(--text)}
+  .chip.geo i{font-style:normal;font-size:.9em}
+  .chip.geo.busy i{animation:gbusy 1s ease-in-out infinite alternate}
+  @keyframes gbusy{from{opacity:.25;transform:translateY(1px)}to{opacity:1;transform:translateY(-2px)}}
+  .gpin{margin-right:4px}
   .pchips .chip{font-size:.78rem;padding:4px 10px}
   .pbars{display:grid;gap:2px;align-items:end;height:34px}
   .pbars i{display:block;border-radius:3px 3px 0 0;min-height:3px;transform-origin:bottom;animation:pgrow .6s cubic-bezier(.2,.8,.2,1) both}
@@ -627,13 +633,13 @@
   <footer id="footer"></footer>
 </div>
 
-<script src="i18n.js?v=22"></script>
-<script src="leaflet.js?v=22"></script>
-<script src="viz.js?v=22"></script>
-<script src="borders.js?v=22"></script>
-<script src="app.js?v=22"></script>
-<script src="drive.js?v=22"></script>
-<script src="plan.js?v=22"></script>
-<script src="info.js?v=22"></script>
+<script src="i18n.js?v=23"></script>
+<script src="leaflet.js?v=23"></script>
+<script src="viz.js?v=23"></script>
+<script src="borders.js?v=23"></script>
+<script src="app.js?v=23"></script>
+<script src="drive.js?v=23"></script>
+<script src="plan.js?v=23"></script>
+<script src="info.js?v=23"></script>
 </body>
 </html>

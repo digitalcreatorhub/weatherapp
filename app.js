@@ -110,8 +110,9 @@ const ROUTES = [
   ['riga','jelgava']
 ];
 const townName = id => TOWNS[id].n[lang] || TOWNS[id].n.ru;
+function inLVwide(la, lo) { return la >= 54 && la <= 59.5 && lo >= 19 && lo <= 30; }
 const samePlace = (a, b) => !!a && !!b && Math.abs(a.lat - b.lat) < 1e-3 && Math.abs(a.lon - b.lon) < 1e-3;
-const placeName = p => p.id ? townName(p.id) : p.pt ? t('pointName', {a:p.lat.toFixed(2), b:p.lon.toFixed(2)}) : p.name;
+const placeName = p => p.id ? townName(p.id) : p.geo ? (p.name || t('geoHere')) : p.pt ? (p.name || t('pointName', {a:p.lat.toFixed(2), b:p.lon.toFixed(2)})) : p.name;
 
 const CFG_DEF = {wind:17, rain:4, heat:30, frost:-15, freeze:0, hours:12, off:{freeze:true}};
 let cfg = Object.assign({}, CFG_DEF, store.get('wx_cfg', {}));
@@ -136,6 +137,10 @@ const mer = a => Math.log(Math.tan(Math.PI/4 + a*Math.PI/360));
 const M0 = mer(A1), M1 = mer(A0);
 
 let sel = {id:'riga', lat:TOWNS.riga.lat, lon:TOWNS.riga.lon};
+/* «Где я»: если в прошлый раз смотрели погоду по своему местоположению, сразу начинаем с той точки (хранится только на телефоне) */
+{ const g = store.get('wx_geo_last', null);
+  if (store.get('wx_geo', false) && g && Number.isFinite(g.lat) && Number.isFinite(g.lon) && inLVwide(g.lat, g.lon))
+    sel = {geo:true, name:String(g.name || '').slice(0, 60), lat:g.lat, lon:g.lon}; }
 const selKey = () => sel.lat.toFixed(4) + ',' + sel.lon.toFixed(4);
 let lastW = null, hourlyData = null, air = null, pollen = null, models = null, nowcast = null, h24Idx = -1;
 let grid = null, gridBase = 0, gridN = 72, layer = ['clouds','precip','temp'].includes(store.get('wx_layer', 'clouds')) ? store.get('wx_layer', 'clouds') : 'clouds';
@@ -189,7 +194,7 @@ function renderHero() {
   if (!lastW) return;
   const w = lastW, c = w.current, d = w.daily, [txt] = wmo(c.weather_code);
   const fav = favs.some(f => samePlace(f, sel));
-  const star = sel.id ? '' : `<button class="star" data-act="star" aria-pressed="${fav}" aria-label="${esc(fav ? t('favRemove') : t('favAdd'))}">${fav ? '★' : '☆'}</button>`;
+  const star = sel.id || sel.geo ? '' : `<button class="star" data-act="star" aria-pressed="${fav}" aria-label="${esc(fav ? t('favRemove') : t('favAdd'))}">${fav ? '★' : '☆'}</button>`;
   const fresh = heroKey !== selKey(); heroKey = selKey();
   const dir = c.wind_direction_10m ?? 0, dl = (Date.parse(d.sunset[0]) - Date.parse(d.sunrise[0]))/6e4, uv = c.uv_index;
   const airTxt = air === null ? '…' : air ? Math.round(air.european_aqi) + ', ' + aqiLabel(air.european_aqi) : '—';
@@ -203,7 +208,7 @@ function renderHero() {
       <div class="fact"><small>${t('daylen')}</small><b>${t('daylenVal', {h:Math.floor(dl/60), m:Math.round(dl % 60)})}</b></div>
     </div>`;
   $('hero').innerHTML = `
-    <div class="place">${esc(placeName(sel))}${star}</div>
+    <div class="place">${sel.geo ? '<span class="gpin" aria-hidden="true">📍</span>' : ''}${esc(placeName(sel))}${star}</div>
     <div class="trow"><div class="big" id="bigT">${fmt(c.temperature_2m)}</div><div class="ico">${wxI(c.weather_code, c.is_day, 92)}</div></div>
     <div class="cond">${esc(txt)}</div>
     <div class="sub">${t('feels', {f:fmt(c.apparent_temperature), lo:fmt(d.temperature_2m_min[0]), hi:fmt(d.temperature_2m_max[0])})}</div>
@@ -1423,9 +1428,15 @@ function updateNowLine() {
 }
 
 /* ---------- выбор места, избранное, поиск ---------- */
-function markChips() { document.querySelectorAll('.chip').forEach((c, n) => c.setAttribute('aria-pressed', !!PLACES[n] && samePlace(PLACES[n], sel))); }
+function markChips() {
+  document.querySelectorAll('#chips .chip:not(.geo)').forEach((c, n) => c.setAttribute('aria-pressed', !!PLACES[n] && !sel.geo && samePlace(PLACES[n], sel)));
+  const g = $('geoChip'); if (g) { g.setAttribute('aria-pressed', !!sel.geo); g.classList.toggle('busy', GEO.busy); }
+}
 function buildChips() {
   const box = $('chips'); box.innerHTML = '';
+  const g = document.createElement('button'); g.className = 'chip geo'; g.id = 'geoChip';
+  g.innerHTML = '<i aria-hidden="true">📍</i><span></span>'; g.lastChild.textContent = sel.geo && sel.name ? sel.name.split(',')[0] : t('geoHere');
+  g.title = t('geoTitle'); g.onclick = () => locateMe(true); box.appendChild(g);
   PLACES.forEach(p => {
     const b = document.createElement('button'); b.className = 'chip'; b.textContent = (p.fav ? '★ ' : '') + placeName(p);
     b.onclick = () => newSel(p.id ? {id:p.id, lat:p.lat, lon:p.lon} : {name:p.name, lat:p.lat, lon:p.lon}); box.appendChild(b);
@@ -1433,15 +1444,74 @@ function buildChips() {
   markChips();
 }
 function newSel(s) {
+  if (!s.geo) store.set('wx_geo', false);
   sel = s; lastW = null; air = null; pollen = null; models = null; nowcast = null;
   $('err').style.display = 'none'; markChips(); renderAcc(); loadPoint(); draw(); drawRadar(); renderWarnings();
+  if ((s.pt || s.geo) && !s.name) nameSel(s);
 }
+
+/* ---------- «Где я»: погода для точки, где вы сейчас, с названием района ---------- */
+const GEO = {busy:false, at:0};
+const distKm = (a, b) => Math.hypot((a.lat - b.lat)*111.2, (a.lon - b.lon)*111.2*Math.cos(a.lat*RAD));
+/* название района по координатам: OpenStreetMap Nominatim; отправляем точку, округлённую примерно до 100 м */
+async function geoName(lat, lon) {
+  const key = `${lang}:${lat.toFixed(3)},${lon.toFixed(3)}`, cache = store.get('wx_geonames', {}) || {};
+  if (cache[key]) return cache[key];
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 6000);
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}&zoom=16&addressdetails=1&accept-language=${lang}`,
+      {signal:ctl.signal, referrerPolicy:'strict-origin-when-cross-origin'});
+    if (!r.ok) return '';
+    const a = (await r.json()).address || {};
+    const area = a.suburb || a.quarter || a.neighbourhood || a.city_district || a.residential || a.village || a.hamlet || a.isolated_dwelling || '';
+    const city = a.city || a.town || a.village || a.municipality || a.county || '';
+    let nm = area && city && area !== city ? `${area}, ${city}` : (area || city);
+    nm = String(nm).slice(0, 60);
+    if (nm) { const ks = Object.keys(cache); if (ks.length > 40) delete cache[ks[0]]; cache[key] = nm; store.set('wx_geonames', cache); }
+    return nm;
+  } catch (e) { return ''; } finally { clearTimeout(to); }
+}
+async function nameSel(s) {
+  const nm = await geoName(s.lat, s.lon);
+  if (!nm || sel !== s) return;
+  s.name = nm;
+  if (s.geo) store.set('wx_geo_last', {lat:+s.lat.toFixed(3), lon:+s.lon.toFixed(3), name:nm});
+  buildChips(); renderHero(); renderToday(); renderAcc(); draw();
+  if (typeof renderPlan === 'function') renderPlan();
+}
+function locateMe(user) {
+  if (!navigator.geolocation) { if (user) toast('📍', t('geoNoTitle'), t('geoNo'), 'info'); return; }
+  if (GEO.busy) return;
+  GEO.busy = true; markChips();
+  navigator.geolocation.getCurrentPosition(p => {
+    GEO.busy = false; GEO.at = Date.now();
+    const lat = +p.coords.latitude.toFixed(3), lon = +p.coords.longitude.toFixed(3), acc = Math.round(p.coords.accuracy || 0);
+    if (!inLVwide(lat, lon)) { markChips(); if (user) toast('📍', t('geoFarTitle'), t('geoFar'), 'info'); return; }
+    store.set('wx_geo', true);
+    /* без касания пользователя не перезагружаем, если сдвинулись меньше чем на 300 м */
+    if (sel.geo && distKm(sel, {lat, lon}) < 0.3) { sel.acc = acc; markChips(); if (user) renderHero(); return; }
+    const same = sel.geo && distKm(sel, {lat, lon}) < 0.8;
+    newSel({geo:true, name:same ? sel.name : '', lat, lon, acc});
+    store.set('wx_geo_last', {lat:+lat.toFixed(3), lon:+lon.toFixed(3), name:same ? sel.name : ''});
+    buildChips();
+  }, e => {
+    GEO.busy = false; markChips();
+    if (user) toast('📍', t('geoNoTitle'), t(e.code === 1 ? 'geoDenied' : 'geoFail'), 'info');
+  }, {enableHighAccuracy:false, timeout:15000, maximumAge:120000});
+}
+/* при запуске и возвращении в приложение — обновляем точку, если разрешение уже дано */
+async function geoAuto() {
+  if (!store.get('wx_geo', false) || !navigator.geolocation) return;
+  try { const st = await navigator.permissions.query({name:'geolocation'}); if (st.state !== 'granted') return; } catch (e) {}
+  if (Date.now() - GEO.at > 10*60e3) locateMe(false);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) geoAuto(); });
 function toggleFav() {
   const i = favs.findIndex(f => samePlace(f, sel));
   if (i >= 0) favs.splice(i, 1);
   else {
     if (favs.length >= 8) { toast('⭐', t('favFull'), t('favFullTxt')); return; }
-    let name = sel.pt ? (((prompt(t('favNamePrompt'), t('favDefault')) || '').trim()) || t('favDefault')) : placeName(sel);
+    let name = sel.pt ? (((prompt(t('favNamePrompt'), (sel.name || t('favDefault')).split(',')[0]) || '').trim()) || t('favDefault')) : placeName(sel);
     name = name.slice(0, 40); favs.push({name, lat:sel.lat, lon:sel.lon}); sel = {name, lat:sel.lat, lon:sel.lon};
   }
   store.set('wx_favs', favs); rebuildPlaces(); buildChips(); buildRoadUI(); renderHero(); renderAcc(); syncState(); guarded('ct', loadCities);
@@ -1477,7 +1547,7 @@ function applyStatic() {
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.setAttribute('placeholder', t(el.dataset.i18nPh)); });
-  $('footer').innerHTML = t('footer', {om:link('https://open-meteo.com/', 'Open-Meteo'), rv:link('https://www.rainviewer.com/', 'RainViewer'), ma:link(MA_URL, 'MeteoAlarm')});
+  $('footer').innerHTML = t('footer', {om:link('https://open-meteo.com/', 'Open-Meteo'), rv:link('https://www.rainviewer.com/', 'RainViewer'), ma:link(MA_URL, 'MeteoAlarm')}) + ' ' + t('geoFoot', {osm:link('https://www.openstreetmap.org/copyright', 'OpenStreetMap')});
   const lb = $('langs'); lb.innerHTML = '';
   [['ru', 'RU'], ['lv', 'LV'], ['en', 'EN']].forEach(([k, lab]) => {
     const b = document.createElement('button'); b.textContent = lab; b.setAttribute('aria-pressed', k === lang); b.setAttribute('lang', k);
@@ -1493,6 +1563,7 @@ function setLang(k) {
   renderSea(); renderPollen(); renderRoad(); drawHourly(); draw(); drawRadar(); notifStatus(); syncState(); tick();
   if (typeof renderDrive === 'function') { renderDrive(); fillVoices(); }
   if (typeof renderPlan === 'function') renderPlan();
+  if ((sel.geo || sel.pt) && !sel.id) { sel.name = ''; buildChips(); nameSel(sel); }
 }
 
 /* ---------- LIVE: тик раз в секунду ---------- */
@@ -1530,4 +1601,5 @@ $('retry').onclick = start;
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 let rz; window.addEventListener('resize', () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { draw(); drawRadar(); drawHourly(); }); });
 applyStatic(); buildChips(); buildLayers(); buildCfg(); buildRoadUI(); notifStatus(); syncState(); renderAcc(); renderWarnings();
-draw(); drawRadar(); start(); setInterval(tick, 1000);
+draw(); drawRadar(); start(); setInterval(tick, 1000); geoAuto();
+if (sel.geo && !sel.name) nameSel(sel);
