@@ -9,7 +9,7 @@
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="leaflet.css?v=33">
+<link rel="stylesheet" href="leaflet.css?v=34">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -64,8 +64,8 @@
   button:focus-visible,input:focus-visible,select:focus-visible,canvas:focus-visible,summary:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
 
   .grid{display:grid;gap:14px;grid-template-columns:minmax(0,5fr) minmax(0,7fr);
-    grid-template-areas:"hero map" "today map" "h24 radar" "plan plan" "util util" "road road" "drive sea" "hourly hourly" "ticks ticks" "warn acc" "pollen moon"}
-  @media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "today" "plan" "h24" "util" "map" "radar" "road" "drive" "sea" "hourly" "ticks" "warn" "acc" "pollen" "moon"}}
+    grid-template-areas:"hero map" "today map" "h24 radar" "plan plan" "util util" "road road" "drive sea" "hourly hourly" "ticks ticks" "acc pollen" "moon warn"}
+  @media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "today" "plan" "h24" "util" "map" "radar" "road" "drive" "sea" "hourly" "ticks" "acc" "pollen" "moon" "warn"}}
   .card{background:var(--glass);border:1px solid var(--edge);border-radius:20px;padding:18px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
   .hero{grid-area:hero}.h24{grid-area:h24}.warn{grid-area:warn}.mapc{grid-area:map;padding:0;overflow:hidden;align-self:start}
   .radarc{grid-area:radar;align-self:start}.moon{grid-area:moon;align-self:start}.acc{grid-area:acc;align-self:start}.hourly{grid-area:hourly}
@@ -676,14 +676,14 @@
   <footer id="footer"></footer>
 </div>
 
-<script src="i18n.js?v=33"></script>
-<script src="leaflet.js?v=33"></script>
-<script src="viz.js?v=33"></script>
-<script src="borders.js?v=33"></script>
-<script src="app.js?v=33"></script>
-<script src="drive.js?v=33"></script>
-<script src="plan.js?v=33"></script>
-<script src="info.js?v=33"></script>
-<script src="extra.js?v=33"></script>
+<script src="i18n.js?v=34"></script>
+<script src="leaflet.js?v=34"></script>
+<script src="viz.js?v=34"></script>
+<script src="borders.js?v=34"></script>
+<script src="app.js?v=34"></script>
+<script src="drive.js?v=34"></script>
+<script src="plan.js?v=34"></script>
+<script src="info.js?v=34"></script>
+<script src="extra.js?v=34"></script>
 </body>
 </html>
