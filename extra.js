@@ -136,12 +136,17 @@ function ticksHtml() {
   }
   const COL = ['#4ade80', '#a3e635', '#ffb547', '#ff6b4a'];
   const bar = [1, 2, 3].map(k => `<i style="background:${k <= lv ? COL[lv] : 'rgba(255,255,255,.1)'}"></i>`).join('');
-  return `<div class="pb"><div class="ph">🕷️ ${esc(X.title)}</div>
-    <div class="pv"><span class="pi">${lv === 0 ? '😴' : lv === 3 ? '⚠️' : '🌿'}</span><div><b>${esc(X.lv[lv])}</b>
+  return `<h2>🕷️ ${esc(X.title)} · ${esc(placeName(sel))}</h2><div class="tkgrid">
+    <div class="tkmain"><div class="pv"><span class="pi">${lv === 0 ? '😴' : lv === 3 ? '⚠️' : '🌿'}</span><div><b>${esc(X.lv[lv])}</b>
       <small>${esc(xfill(X.why[lv], {t:fmt(tm), h:rh != null ? Math.round(rh) : '—'}))}</small></div></div>
-    <div class="xmeter" role="img" aria-label="${esc(X.lv[lv])}">${bar}</div>
-    ${lv ? `<ul class="xtips">${X.tips.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
-    <small class="xnote">${esc(X.note)}</small></div>`;
+    <div class="xmeter" role="img" aria-label="${esc(X.lv[lv])}">${bar}</div></div>
+    <div class="tkside">${lv ? `<ul class="xtips">${X.tips.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
+    <small class="xnote">${esc(X.note)}</small></div></div>`;
+}
+/* клещи — отдельной карточкой после графика «Температура и осадки по часам» */
+function renderTicks() {
+  const el = $('ticksCard'); if (!el || !lastW || !hourlyData) return;
+  try { el.innerHTML = ticksHtml(); } catch (e) { console.warn('ticks', e); }
 }
 
 /* ---------- 🎉 праздники Латвии: прогноз, а если далеко — норма ---------- */
@@ -191,8 +196,9 @@ function holidayHtml() {
 
 function renderUtil() {
   const el = $('util'); if (!el || !lastW || !hourlyData) return;
-  try { el.innerHTML = `<h2>${esc(XT().title)} · ${esc(placeName(sel))}</h2><div class="pgrid">${tiresHtml()}${ticksHtml()}${holidayHtml()}</div>`; }
+  try { el.innerHTML = `<h2>${esc(XT().title)} · ${esc(placeName(sel))}</h2><div class="pgrid pg2">${tiresHtml()}${holidayHtml()}</div>`; }
   catch (e) { console.warn('util', e); }
+  renderTicks();
   loadNormals();
 }
 

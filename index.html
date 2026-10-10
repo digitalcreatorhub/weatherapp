@@ -9,7 +9,7 @@
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="leaflet.css?v=31">
+<link rel="stylesheet" href="leaflet.css?v=32">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -64,8 +64,8 @@
   button:focus-visible,input:focus-visible,select:focus-visible,canvas:focus-visible,summary:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
 
   .grid{display:grid;gap:14px;grid-template-columns:minmax(0,5fr) minmax(0,7fr);
-    grid-template-areas:"hero map" "today map" "h24 radar" "plan plan" "util util" "road road" "drive sea" "hourly hourly" "warn acc" "pollen moon"}
-  @media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "today" "plan" "h24" "util" "map" "radar" "road" "drive" "sea" "hourly" "warn" "acc" "pollen" "moon"}}
+    grid-template-areas:"hero map" "today map" "h24 radar" "plan plan" "util util" "road road" "drive sea" "hourly hourly" "ticks ticks" "warn acc" "pollen moon"}
+  @media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "today" "plan" "h24" "util" "map" "radar" "road" "drive" "sea" "hourly" "ticks" "warn" "acc" "pollen" "moon"}}
   .card{background:var(--glass);border:1px solid var(--edge);border-radius:20px;padding:18px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
   .hero{grid-area:hero}.h24{grid-area:h24}.warn{grid-area:warn}.mapc{grid-area:map;padding:0;overflow:hidden;align-self:start}
   .radarc{grid-area:radar;align-self:start}.moon{grid-area:moon;align-self:start}.acc{grid-area:acc;align-self:start}.hourly{grid-area:hourly}
@@ -187,7 +187,12 @@
 
   /* ===== советы на сегодня ===== */
   .plan{grid-area:plan}
-  .util{grid-area:util}
+  .util{grid-area:util}.ticks{grid-area:ticks}
+  .ticks:empty{display:none}
+  .pgrid.pg2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tkgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:12px 22px;align-items:start}
+  .tkmain{display:flex;flex-direction:column;gap:10px}.tkside{display:flex;flex-direction:column;gap:8px}
+  @media(max-width:700px){.tkgrid{grid-template-columns:minmax(0,1fr)}}
   .xpills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
   .xpills:empty{display:none}
   .xp{font-size:.8rem;padding:4px 10px;border-radius:99px;background:rgba(10,21,34,.45);border:1px solid rgba(255,255,255,.14);color:var(--text)}
@@ -206,7 +211,7 @@
   .upw.hi{background:rgba(92,140,255,.16);border-color:rgba(120,160,255,.45)}
   @media(prefers-reduced-motion:reduce){.xp.rain.soon{animation:none}}
   .pgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-  @media(max-width:980px){.pgrid{grid-template-columns:minmax(0,1fr)}}
+  @media(max-width:980px){.pgrid,.pgrid.pg2{grid-template-columns:minmax(0,1fr)}}
   .pb{background:rgba(255,255,255,.04);border:1px solid var(--edge);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
   .ph{font-size:.82rem;color:var(--muted);font-weight:500}
   .pv{display:flex;gap:10px;align-items:flex-start}
@@ -665,18 +670,20 @@
       <svg id="hourly" role="img" aria-label="" data-i18n-aria="hourlyAria"></svg>
       <div class="tscale" id="tscale"></div>
     </section>
+
+    <section class="card ticks" id="ticksCard"></section>
   </main>
   <footer id="footer"></footer>
 </div>
 
-<script src="i18n.js?v=31"></script>
-<script src="leaflet.js?v=31"></script>
-<script src="viz.js?v=31"></script>
-<script src="borders.js?v=31"></script>
-<script src="app.js?v=31"></script>
-<script src="drive.js?v=31"></script>
-<script src="plan.js?v=31"></script>
-<script src="info.js?v=31"></script>
-<script src="extra.js?v=31"></script>
+<script src="i18n.js?v=32"></script>
+<script src="leaflet.js?v=32"></script>
+<script src="viz.js?v=32"></script>
+<script src="borders.js?v=32"></script>
+<script src="app.js?v=32"></script>
+<script src="drive.js?v=32"></script>
+<script src="plan.js?v=32"></script>
+<script src="info.js?v=32"></script>
+<script src="extra.js?v=32"></script>
 </body>
 </html>
