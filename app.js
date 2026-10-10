@@ -132,9 +132,22 @@ const SMALL = (() => {
   return o;
 })();
 const smallName = id => SMALL[id].n[lang] || SMALL[id].n.ru;
+/* крупные города Эстонии и Литвы — на карте погоды для ориентира */
+const FOREIGN = {
+  tallinn:{lat:59.437, lon:24.754, f:'🇪🇪', n:{ru:'Таллин', lv:'Tallina', en:'Tallinn'}},
+  tartu:{lat:58.378, lon:26.729, f:'🇪🇪', n:{ru:'Тарту', lv:'Tartu', en:'Tartu'}},
+  parnu:{lat:58.385, lon:24.497, f:'🇪🇪', n:{ru:'Пярну', lv:'Pērnava', en:'Pärnu'}},
+  narva:{lat:59.377, lon:28.190, f:'🇪🇪', n:{ru:'Нарва', lv:'Narva', en:'Narva'}},
+  vilnius:{lat:54.687, lon:25.280, f:'🇱🇹', n:{ru:'Вильнюс', lv:'Viļņa', en:'Vilnius'}},
+  kaunas:{lat:54.898, lon:23.904, f:'🇱🇹', n:{ru:'Каунас', lv:'Kauņa', en:'Kaunas'}},
+  klaipeda:{lat:55.703, lon:21.144, f:'🇱🇹', n:{ru:'Клайпеда', lv:'Klaipēda', en:'Klaipėda'}},
+  siauliai:{lat:55.934, lon:23.314, f:'🇱🇹', n:{ru:'Шяуляй', lv:'Šauļi', en:'Šiauliai'}},
+  panevezys:{lat:55.735, lon:24.357, f:'🇱🇹', n:{ru:'Паневежис', lv:'Paņevēža', en:'Panevėžys'}}
+};
+const foreignName = id => FOREIGN[id].n[lang] || FOREIGN[id].n.ru;
 function inLVwide(la, lo) { return la >= 54 && la <= 59.5 && lo >= 19 && lo <= 30; }
 const samePlace = (a, b) => !!a && !!b && Math.abs(a.lat - b.lat) < 1e-3 && Math.abs(a.lon - b.lon) < 1e-3;
-const placeName = p => p.id ? townName(p.id) : p.sid && SMALL[p.sid] ? smallName(p.sid) : p.geo ? (p.name || t('geoHere')) : p.pt ? (p.name || t('pointName', {a:p.lat.toFixed(2), b:p.lon.toFixed(2)})) : p.name;
+const placeName = p => p.id ? townName(p.id) : p.sid && SMALL[p.sid] ? smallName(p.sid) : p.fid && FOREIGN[p.fid] ? foreignName(p.fid) : p.geo ? (p.name || t('geoHere')) : p.pt ? (p.name || t('pointName', {a:p.lat.toFixed(2), b:p.lon.toFixed(2)})) : p.name;
 
 const CFG_DEF = {wind:17, rain:4, heat:30, frost:-15, freeze:0, hours:12, off:{freeze:true}};
 let cfg = Object.assign({}, CFG_DEF, store.get('wx_cfg', {}));
@@ -150,7 +163,7 @@ function rebuildPlaces() {
 rebuildPlaces();
 
 /* ---------- состояние ---------- */
-const L0 = 19.4, L1 = 29.8, A0 = 54.7, A1 = 58.9, NLAT = 8, NLON = 12;   /* сетка прогноза шире Латвии: края поля уходят за видимую карту */
+const L0 = 18.6, L1 = 30.6, A0 = 54.1, A1 = 59.8, NLAT = 10, NLON = 13;   /* сетка прогноза шире Латвии: края поля уходят за видимую карту */
 const inLV = (la, lo) => la >= 55.6 && la <= 58.1 && lo >= 20.9 && lo <= 28.3;
 const LATVIA = [[57.76,22.59],[57.6,22.0],[57.39,21.55],[57.0,21.2],[56.51,21.01],[56.07,21.06],[56.15,21.7],[56.1,22.2],[56.25,22.9],[56.1,23.4],[56.07,24.0],[56.1,24.6],[56.0,25.3],[55.9,26.0],[55.7,26.6],[55.9,27.3],[56.1,28.15],[56.6,28.15],[57.0,27.9],[57.5,27.35],[57.57,26.6],[57.78,26.03],[57.87,25.2],[57.87,24.36],[57.55,24.35],[57.26,24.4],[56.95,24.1],[56.97,23.6],[57.15,23.2],[57.5,22.8]];
 const GRID_VARS = ['cloud_cover','precipitation','temperature_2m','wind_speed_10m','wind_direction_10m'];
@@ -493,6 +506,7 @@ async function loadCities() {
   setBase(cityData[0]);
   stamp.cities = Date.now();
   draw(); refreshWarnings();
+  loadForeign();
 }
 /* погода для небольших городов загружается только когда карту впервые приблизили */
 let smallData = null, smallIds = [], smallAt0 = 0;
@@ -505,6 +519,20 @@ async function loadSmall() {
     smallData = Array.isArray(j) ? j : [j]; smallIds = ids; smallAt0 = Date.now();
     WM.layoutKey = ''; wmLayout();
   } catch (e) {} finally { busy.small = false; }
+}
+let foreignData = null;
+async function loadForeign() {
+  const ids = Object.keys(FOREIGN);
+  try {
+    const j = await getJSON(`${API}?latitude=${ids.map(id => FOREIGN[id].lat).join(',')}&longitude=${ids.map(id => FOREIGN[id].lon).join(',')}`
+      + `&hourly=temperature_2m,weather_code,precipitation,wind_gusts_10m&forecast_days=3&wind_speed_unit=ms&timezone=${ENC_TZ}`);
+    foreignData = Array.isArray(j) ? j : [j]; WM.layoutKey = ''; wmLayout();
+  } catch (e) {}
+}
+function foreignAt(id, ps) {
+  const cd = foreignData && foreignData[Object.keys(FOREIGN).indexOf(id)]; if (!cd) return null;
+  const h = cd.hourly, n = h.time.length, h0 = clamp(Math.floor(ps), 0, n-1), h1 = Math.min(h0 + 1, n-1), f = ps - h0, r = clamp(Math.round(ps), 0, n-1);
+  return {T:(h.temperature_2m[h0] ?? 0)*(1-f) + (h.temperature_2m[h1] ?? 0)*f, code:h.weather_code[r], warn:hourWarn(h, r).length > 0};
 }
 function smallAt(id, ps) {
   const cd = smallData && smallData[smallIds.indexOf(id)]; if (!cd) return null;
@@ -528,7 +556,7 @@ async function loadGrid() {
   try {
     if (Date.now() - store.get('wx_grid_at', 0) < 25*6e4 && 'caches' in window) {
       const r = await (await caches.open('wx-data')).match(stateURL('__grid'));
-      if (r) j = await r.json();
+      if (r) { j = await r.json(); if (!Array.isArray(j) || j.length !== NLAT*NLON) j = null; }
     }
   } catch (e) { j = null; }
   if (!j) {
@@ -813,7 +841,7 @@ function cityHtml(p, cw, ms, mode) {
   const cls = 'cm' + (mode.small ? ' sm' : '') + (cw && cw.warn ? ' warn' : '') + (isSel ? ' sel' : '') + (p.fav ? ' fav' : '') + (compact ? ' mini' : '') + (mode.al ? ' cm-l' : mode.ar ? ' cm-r' : '');
   if (!cw) return `<div class="${cls}"><small>${esc(placeName(p))}</small></div>`;
   if (compact) return `<div class="${cls}" title="${esc(placeName(p))}"><i style="background:${tempColor(cw.T)}"></i><b>${fmt(cw.T)}</b></div>`;
-  return `<div class="${cls}"><span class="cm-i">${typeof wxIcon === 'function' ? wxIcon(cw.code, day, mode.small ? 18 : 24) : wmo(cw.code)[1]}</span><b>${fmt(cw.T)}</b><small>${esc(placeName(p))}${cw.warn ? ' ⚠' : ''}</small></div>`;
+  return `<div class="${cls}"><span class="cm-i">${typeof wxIcon === 'function' ? wxIcon(cw.code, day, mode.small ? 18 : 24) : wmo(cw.code)[1]}</span><b>${fmt(cw.T)}</b><small>${esc(placeName(p))}${mode.flag ? ' ' + mode.flag : ''}${cw.warn ? ' ⚠' : ''}</small></div>`;
 }
 function wmLayout() {
   if (!WM.map) return;
@@ -835,7 +863,16 @@ function wmLayout() {
     compact[o.k] = {gone:true};
   });
   /* небольшие города: появляются при приближении и только там, где есть место */
-  const dz = WM.map.getZoom() - (WM.map._fitZ ?? WM.map.getZoom()), show = {};
+  const dz = WM.map.getZoom() - (WM.map._fitZ ?? WM.map.getZoom()), show = {}, fshow = {}, msz = WM.map.getSize();
+  Object.keys(FOREIGN).forEach(id => {   /* Эстония и Литва: крупные города, если попадают в кадр и есть место */
+    const F = FOREIGN[id], pt = WM.map.latLngToContainerPoint([F.lat, F.lon]);
+    if (pt.x < -30 || pt.y < -15 || pt.x > msz.x + 30 || pt.y > msz.y + 15) return;
+    const full = place(pt, 62 + foreignName(id).length*5.6, 24);
+    if (!hits(full)) { boxes.push(full); fshow[id] = {al:full.al, ar:full.ar}; return; }
+    const mini = place(pt, 46, 19);
+    if (!hits(mini)) { boxes.push(mini); fshow[id] = {mini:true, al:mini.al, ar:mini.ar}; }
+  });
+  WM.foreign = fshow;
   if (dz >= .7) {
     if (!smallData || Date.now() - smallAt0 > REFRESH.cities) loadSmall();
     const sz = WM.map.getSize();
@@ -871,6 +908,16 @@ function wmMarkers(force) {
       m.setZIndexOffset(samePlace(p, sel) ? 1000 : WM.compact[k] && WM.compact[k].mini ? -100 : 0);
     }
   });
+  Object.keys(WM.foreign || {}).forEach(id => {
+    const F = FOREIGN[id], k = 'f:' + id, p = {fid:id, lat:F.lat, lon:F.lon}; seen[k] = 1;
+    const html = cityHtml(p, foreignAt(id, pos), ms, Object.assign({small:true, flag:F.f}, WM.foreign[id]));
+    let m = WM.markers[k];
+    if (!m) {
+      m = L.marker([F.lat, F.lon], {icon:L.divIcon({className:'cmw', html, iconSize:null}), keyboard:false, riseOnHover:true, zIndexOffset:-150})
+        .on('click', () => newSel({fid:id, lat:F.lat, lon:F.lon}));
+      m._html = html; m.addTo(WM.map); WM.markers[k] = m;
+    } else if (m._html !== html) { m.setIcon(L.divIcon({className:'cmw', html, iconSize:null})); m._html = html; }
+  });
   Object.keys(WM.small || {}).forEach(id => {
     const S = SMALL[id], k = 's:' + id, p = {sid:id, lat:S.lat, lon:S.lon}; seen[k] = 1;
     const html = cityHtml(p, smallAt(id, pos), ms, Object.assign({small:true}, WM.small[id]));
@@ -883,7 +930,7 @@ function wmMarkers(force) {
   });
   Object.keys(WM.markers).forEach(k => { if (!seen[k]) { WM.map.removeLayer(WM.markers[k]); delete WM.markers[k]; } });
   /* выбранная точка, если это не город */
-  const isCity = PLACES.some(p => !p.hide && samePlace(p, sel)) || !!(sel.sid && WM.small && WM.small[sel.sid]);
+  const isCity = PLACES.some(p => !p.hide && samePlace(p, sel)) || !!(sel.sid && WM.small && WM.small[sel.sid]) || !!(sel.fid && WM.foreign && WM.foreign[sel.fid]);
   if (!isCity) {
     if (!WM.pin) WM.pin = L.marker([sel.lat, sel.lon], {icon:L.divIcon({className:'cmw', html:'<div class="pin"></div>', iconSize:null}), interactive:false, zIndexOffset:2000}).addTo(WM.map);
     else WM.pin.setLatLng([sel.lat, sel.lon]);
