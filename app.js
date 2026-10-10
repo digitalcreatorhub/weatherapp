@@ -186,7 +186,7 @@ function guarded(name, fn) {
 /* ---------- прогноз по выбранной точке ---------- */
 async function loadPoint() {
   const key = selKey();
-  const url = `${API}?${pointQS()}&current=${CUR}&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,is_day,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_gusts_10m,wind_speed_10m,wind_direction_10m,pressure_msl`
+  const url = `${API}?${pointQS()}&current=${CUR}&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,precipitation,weather_code,is_day,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_gusts_10m,wind_speed_10m,wind_direction_10m,pressure_msl`
     + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset,uv_index_max&forecast_days=5`;
   try {
     const w = await getJSON(url);
@@ -195,6 +195,7 @@ async function loadPoint() {
     hourlyData = {t:w.hourly.time, T:w.hourly.temperature_2m, P:w.hourly.precipitation_probability, days:w.daily.time, base:Date.parse(w.hourly.time[0] + ':00Z') - w.utc_offset_seconds*1000, n:w.hourly.time.length};
     renderHero(); renderDaily(w); drawHourly(); draw(); renderH24(); renderToday(); renderMoon(); renderAcc();
     if (typeof renderPlan === 'function') renderPlan();
+    if (typeof renderUtil === 'function') renderUtil();
     guarded('mod', loadModels); guarded('air', loadAir); guarded('nc', loadNowcast);
   } catch (e) {
     if (!lastW) { $('hero').innerHTML = `<div class="state">${t('noData')}</div>`; showErr(t('netErr')); }
@@ -233,7 +234,9 @@ function renderHero() {
     <div class="trow"><div class="big" id="bigT">${fmt(c.temperature_2m)}</div><div class="ico">${wxI(c.weather_code, c.is_day, 92)}</div></div>
     <div class="cond">${esc(txt)}</div>
     <div class="sub">${t('feels', {f:fmt(c.apparent_temperature), lo:fmt(d.temperature_2m_min[0]), hi:fmt(d.temperature_2m_max[0])})}</div>
+    <div class="xpills" id="xpills"></div>
     ${panel}`;
+  if (typeof renderPills === 'function') renderPills();
   if (hasViz()) { try { vzCountUp($('bigT'), c.temperature_2m); skyUpdate(); } catch (e) { console.warn('viz', e); } }
 }
 $('hero').addEventListener('click', e => { if (e.target.closest('[data-act=star]')) toggleFav(); });
@@ -1020,7 +1023,7 @@ async function loadNowcast() {
     if (key !== selKey()) return;
     const m = j.minutely_15; if (!m || !m.precipitation) throw new Error('no data');
     const base = Date.parse(m.time[0] + ':00Z') - j.utc_offset_seconds*1000, i0 = clamp(Math.floor((Date.now() - base)/9e5), 0, m.time.length - 1);
-    nowcast = {p:m.precipitation.slice(i0, i0 + 12)};
+    nowcast = {p:m.precipitation.slice(i0, i0 + 12), t0:base + i0*9e5};
   } catch (e) { nowcast = false; }
   renderNowcast();
 }
@@ -1034,15 +1037,21 @@ function renderNowcast() {
   else { const end = p.findIndex((v, i) => i > 0 && !wet(v)); txt = end === -1 ? t('ncAll') : t('ncEnd', {m:end*15}); }
   el.textContent = txt;
   b.innerHTML = p.map(v => `<i style="height:${Math.min(100, (v ?? 0) > 0 ? 8 + (v ?? 0)*70 : 4)}%"></i>`).join('');
+  if (typeof rainSoon === 'function') rainSoon();
 }
 
 /* ---------- море и волны ---------- */
 const COAST = [['jurmala', 57.00, 23.78], ['liepaja', 56.52, 20.97], ['ventspils', 57.41, 21.50]];
-let sea = null;
+let sea = null, seaWind = null;
 async function loadSea() {
   stamp.sea = Date.now();
-  const q = 'current=wave_height,wave_direction,wave_period,sea_surface_temperature&hourly=wave_height&forecast_days=2&timezone=' + ENC_TZ;
-  sea = await Promise.all(COAST.map(([, la, lo]) => getJSON(`${MARINE_API}?latitude=${la}&longitude=${lo}&${q}`).catch(() => null)));
+  const q = 'current=wave_height,wave_direction,wave_period,sea_surface_temperature&hourly=wave_height,sea_surface_temperature&forecast_days=2&timezone=' + ENC_TZ;
+  /* ветер у берега за сутки назад и на полтора вперёд — для предупреждения об апвеллинге */
+  const wq = `${API}?latitude=${COAST.map(c => c[1]).join(',')}&longitude=${COAST.map(c => c[2]).join(',')}&hourly=wind_speed_10m,wind_direction_10m&past_days=1&forecast_days=2&wind_speed_unit=ms&timezone=${ENC_TZ}`;
+  [sea, seaWind] = await Promise.all([
+    Promise.all(COAST.map(([, la, lo]) => getJSON(`${MARINE_API}?latitude=${la}&longitude=${lo}&${q}`).catch(() => null))),
+    getJSON(wq).then(j => Array.isArray(j) ? j : [j]).catch(() => null)
+  ]);
   renderSea();
 }
 function renderSea() {
@@ -1062,7 +1071,8 @@ function renderSea() {
     return `<div class="sr"><div class="nm">${townName(id)}<small>${t('seaWater')}</small></div>
       <div class="wt">${c.sea_surface_temperature != null ? fmt(c.sea_surface_temperature) : '—'}</div>
       <div class="wv">🌊 ${hw != null ? t('visM', {v:hw.toFixed(1)}) : '—'} ${dir != null ? `<span style="display:inline-block;transform:rotate(${dir + 180}deg)">↑</span>` : ''} ${st}
-        <small>${[mx != null ? t('seaMax', {v:mx.toFixed(1)}) : '', c.wave_period != null ? t('seaPeriod', {s:Math.round(c.wave_period)}) : ''].filter(Boolean).join(', ')}</small></div></div>`;
+        <small>${[mx != null ? t('seaMax', {v:mx.toFixed(1)}) : '', c.wave_period != null ? t('seaPeriod', {s:Math.round(c.wave_period)}) : ''].filter(Boolean).join(', ')}</small></div></div>`
+      + (typeof upwellNote === 'function' ? upwellNote(i) : '');
   }).join('') + `<div class="nst">${t('seaNote')}</div>`;
 }
 
@@ -1713,6 +1723,7 @@ function setLang(k) {
   renderSea(); renderPollen(); renderRoad(); drawHourly(); draw(); drawRadar(); notifStatus(); syncState(); tick();
   if (typeof renderDrive === 'function') { renderDrive(); fillVoices(); }
   if (typeof renderPlan === 'function') renderPlan();
+  if (typeof renderUtil === 'function') { renderUtil(); renderPills(); }
   if ((sel.geo || sel.pt) && !sel.id) { sel.name = ''; buildChips(); nameSel(sel); }
 }
 
@@ -1721,8 +1732,8 @@ function tick() {
   const now = Date.now();
   if (live && gridBase) { pos = posNow(); $('slider').value = pos; }
   draw(); updateNowLine();
-  if (hourlyData && lastW) { const ix = clamp(Math.floor((now - hourlyData.base)/36e5), 0, lastW.hourly.time.length - 25); if (ix !== h24Idx) { renderH24(); renderToday(); if (typeof renderPlan === 'function') renderPlan(); } }
-  if (now - stamp.moon >= 60e3) { stamp.moon = now; renderMoon(); if (hasViz()) { try { refreshGauges(); } catch (e) {} } }
+  if (hourlyData && lastW) { const ix = clamp(Math.floor((now - hourlyData.base)/36e5), 0, lastW.hourly.time.length - 25); if (ix !== h24Idx) { renderH24(); renderToday(); if (typeof renderPlan === 'function') renderPlan(); if (typeof renderUtil === 'function') renderUtil(); } }
+  if (now - stamp.moon >= 60e3) { stamp.moon = now; renderMoon(); if (typeof renderPills === 'function') renderPills(); if (hasViz()) { try { refreshGauges(); } catch (e) {} } }
 
   if (!document.hidden) {
     if (now - stamp.current >= REFRESH.current && lastW) { stamp.current = now - REFRESH.current + 5000; guarded('cur', loadCurrent); }
