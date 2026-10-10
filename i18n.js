@@ -691,3 +691,6 @@ Object.assign(I18N.en, {
 Object.assign(I18N.ru, {roadNear:'рядом'});
 Object.assign(I18N.lv, {roadNear:'tuvumā'});
 Object.assign(I18N.en, {roadNear:'nearby'});
+Object.assign(I18N.ru, {h24Tab24:'24 часа', h24Tab5:'5 дней', h5Title:'5 дней, каждые 3 часа'});
+Object.assign(I18N.lv, {h24Tab24:'24 stundas', h24Tab5:'5 dienas', h5Title:'5 dienas, ik pēc 3 stundām'});
+Object.assign(I18N.en, {h24Tab24:'24 hours', h24Tab5:'5 days', h5Title:'5 days, every 3 hours'});

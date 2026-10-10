@@ -9,7 +9,7 @@
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="leaflet.css?v=25">
+<link rel="stylesheet" href="leaflet.css?v=26">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -447,6 +447,17 @@
 
   /* лента 24 часа */
   #h24{scroll-snap-type:x proximity;scroll-behavior:smooth}
+  .h24head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+  .h24head h2{margin:0}
+  .h24tabs button{padding:5px 12px;font-size:.8rem}
+  .hday{flex:0 0 66px;display:grid;justify-items:center;align-content:start;gap:1px;padding:8px 0;border-radius:12px;scroll-snap-align:start;
+    background:linear-gradient(180deg,rgba(255,210,122,.14),rgba(255,210,122,.04));box-shadow:inset 0 0 0 1px rgba(255,210,122,.22)}
+  .hday b{font-size:.82rem;text-transform:capitalize}
+  .hday small{color:var(--muted);font-size:.68rem}
+  .hday .hdi{display:block;line-height:0;margin:3px 0}
+  .hday .hmx{font-weight:700;font-size:1rem}
+  .hday .hmn{color:var(--muted);font-size:.82rem}
+  .hday em{font-style:normal;font-size:.68rem;color:var(--sky);min-height:1em;margin-top:2px}
   .hc{scroll-snap-align:start;transition:background .2s,transform .2s}
   .hc:hover{transform:translateY(-2px);background:rgba(255,255,255,.08)}
   .hc.nt{background:rgba(0,0,0,.2)}
@@ -533,7 +544,7 @@
     <section class="card plan" id="plan"><div class="state" data-i18n="loadingShort">Загружаю…</div></section>
 
     <section class="card h24">
-      <h2 data-i18n="h24Title">Ближайшие 24 часа</h2>
+      <div class="h24head"><h2 id="h24T">Ближайшие 24 часа</h2><div class="seg h24tabs" id="h24tabs" role="group"></div></div>
       <div id="h24"><div class="state" data-i18n="loadingShort">Загружаю…</div></div>
     </section>
 
@@ -640,13 +651,13 @@
   <footer id="footer"></footer>
 </div>
 
-<script src="i18n.js?v=25"></script>
-<script src="leaflet.js?v=25"></script>
-<script src="viz.js?v=25"></script>
-<script src="borders.js?v=25"></script>
-<script src="app.js?v=25"></script>
-<script src="drive.js?v=25"></script>
-<script src="plan.js?v=25"></script>
-<script src="info.js?v=25"></script>
+<script src="i18n.js?v=26"></script>
+<script src="leaflet.js?v=26"></script>
+<script src="viz.js?v=26"></script>
+<script src="borders.js?v=26"></script>
+<script src="app.js?v=26"></script>
+<script src="drive.js?v=26"></script>
+<script src="plan.js?v=26"></script>
+<script src="info.js?v=26"></script>
 </body>
 </html>

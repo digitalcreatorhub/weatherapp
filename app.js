@@ -158,9 +158,9 @@ const mer = a => Math.log(Math.tan(Math.PI/4 + a*Math.PI/360));
 const M0 = mer(A1), M1 = mer(A0);
 
 let sel = {id:'riga', lat:TOWNS.riga.lat, lon:TOWNS.riga.lon};
-/* «Где я»: если в прошлый раз смотрели погоду по своему местоположению, сразу начинаем с той точки (хранится только на телефоне) */
+/* «Где я» — по умолчанию: при запуске сразу начинаем с последней известной точки (хранится только на телефоне), потом уточняем по GPS */
 { const g = store.get('wx_geo_last', null);
-  if (store.get('wx_geo', false) && g && Number.isFinite(g.lat) && Number.isFinite(g.lon) && inLVwide(g.lat, g.lon))
+  if (g && Number.isFinite(g.lat) && Number.isFinite(g.lon) && inLVwide(g.lat, g.lon))
     sel = {geo:true, name:String(g.name || '').slice(0, 60), lat:g.lat, lon:g.lon}; }
 const selKey = () => sel.lat.toFixed(4) + ',' + sel.lon.toFixed(4);
 let lastW = null, hourlyData = null, air = null, pollen = null, models = null, nowcast = null, h24Idx = -1;
@@ -394,10 +394,48 @@ function renderAcc() {
 }
 
 /* ---------- ближайшие 24 часа ---------- */
+let h24Tab = store.get('wx_h24tab', '24') === '5' ? '5' : '24';
+function h24Tabs() {
+  const box = $('h24tabs'); if (!box) return;
+  box.innerHTML = [['24', t('h24Tab24')], ['5', t('h24Tab5')]].map(([k, l]) => `<button type="button" data-h="${k}" aria-pressed="${k === h24Tab}">${esc(l)}</button>`).join('');
+  $('h24T').textContent = t(h24Tab === '5' ? 'h5Title' : 'h24Title');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('#h24tabs [data-h]'); if (!b || b.dataset.h === h24Tab) return;
+  h24Tab = b.dataset.h; store.set('wx_h24tab', h24Tab); h24Tabs(); renderH24(); $('h24').scrollLeft = 0;
+});
+/* 5 дней шагом 3 часа: перед каждым днём — карточка дня с максимумом, минимумом и осадками */
+function renderH5(h, i0) {
+  const d = lastW.daily; let out = '', day = '';
+  for (let i = i0; i < h.time.length; i++) {
+    const hh = +h.time[i].slice(11, 13);
+    if (i !== i0 && hh % 3) continue;
+    const ds = h.time[i].slice(0, 10);
+    if (ds !== day) {
+      day = ds; const k = d.time.indexOf(ds);
+      if (k >= 0) {
+        const ps = d.precipitation_sum[k] ?? 0, pp = d.precipitation_probability_max ? d.precipitation_probability_max[k] ?? 0 : 0;
+        out += `<div class="hday"><b>${esc(k === 0 ? t('today') : dFmt(ds + 'T12:00', {weekday:'short'}))}</b><small>${esc(dFmt(ds + 'T12:00', {day:'numeric', month:'short'}))}</small>`
+          + `<span class="hdi">${wxI(d.weather_code[k], 1, 30)}</span><span class="hmx" style="color:${tempColor(d.temperature_2m_max[k])}">${fmt(d.temperature_2m_max[k])}</span>`
+          + `<span class="hmn">${fmt(d.temperature_2m_min[k])}</span><em>${ps >= 0.1 ? ps.toFixed(ps < 10 ? 1 : 0) + ' ' + esc(t('mm')) : pp >= 20 ? pp + '%' : ''}</em></div>`;
+      }
+    }
+    const j = Math.min(i + 3, h.time.length), T = h.temperature_2m[i];
+    let pp = 0; for (let x = i; x < j; x++) pp = Math.max(pp, h.precipitation_probability[x] ?? 0);
+    const wd = h.wind_direction_10m ? h.wind_direction_10m[i] : null, ws = h.wind_speed_10m ? h.wind_speed_10m[i] : null;
+    const wind = wd != null && ws != null ? `<span class="wd"><i style="transform:rotate(${Math.round(wd + 180)}deg)">↑</i>${Math.round(ws)}</span>` : '';
+    out += `<div class="hc${i === i0 ? ' now' : ''}${h.is_day[i] === 0 ? ' nt' : ''}"><small>${i === i0 ? t('nowLbl') : String(hh).padStart(2, '0') + ':00'}</small><span class="hi">${wxI(h.weather_code[i], h.is_day[i], 34)}</span>`
+      + `<b>${fmt(T)}</b><i class="tk" style="background:${tempColor(T)}"></i>${wind}`
+      + `<span class="pb" title="${pp}%"><i style="height:${Math.max(pp, 2)}%;opacity:${pp >= 20 ? 1 : .35}"></i></span><em>${pp >= 20 ? pp + '%' : ''}</em></div>`;
+  }
+  return out;
+}
 function renderH24() {
   if (!lastW || !hourlyData) return;
   const h = lastW.hourly, i0 = clamp(Math.floor((Date.now() - hourlyData.base)/36e5), 0, h.time.length - 25);
   h24Idx = i0; let out = '';
+  h24Tabs();
+  if (h24Tab === '5') { $('h24').innerHTML = renderH5(h, i0); return; }
   for (let i = i0; i < i0 + 24; i++) {
     const hh = h.time[i].slice(11, 13), pp = h.precipitation_probability[i] ?? 0, T = h.temperature_2m[i];
     const lab = i === i0 ? t('nowLbl') : hh === '00' ? dFmt(h.time[i], {weekday:'short'}) : hh + ':00';
@@ -1590,13 +1628,16 @@ function locateMe(user) {
     if (user) toast('📍', t('geoNoTitle'), t(e.code === 1 ? 'geoDenied' : 'geoFail'), 'info');
   }, {enableHighAccuracy:false, timeout:15000, maximumAge:120000});
 }
-/* при запуске и возвращении в приложение — обновляем точку, если разрешение уже дано */
-async function geoAuto() {
-  if (!store.get('wx_geo', false) || !navigator.geolocation) return;
-  try { const st = await navigator.permissions.query({name:'geolocation'}); if (st.state !== 'granted') return; } catch (e) {}
-  if (Date.now() - GEO.at > 10*60e3) locateMe(false);
+/* при запуске всегда открываем погоду там, где вы (первый раз телефон спросит разрешение);
+   при возвращении в приложение уточняем точку, только если сейчас выбрано «Где я» */
+async function geoAuto(startup) {
+  if (!navigator.geolocation || (!startup && !sel.geo)) return;
+  let state = 'prompt';
+  try { state = (await navigator.permissions.query({name:'geolocation'})).state; } catch (e) {}
+  if (state === 'denied' || (state === 'prompt' && !startup)) return;
+  if (startup || Date.now() - GEO.at > 10*60e3) locateMe(false);
 }
-document.addEventListener('visibilitychange', () => { if (!document.hidden) geoAuto(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) geoAuto(false); });
 function toggleFav() {
   const i = favs.findIndex(f => samePlace(f, sel));
   if (i >= 0) favs.splice(i, 1);
@@ -1692,5 +1733,5 @@ $('retry').onclick = start;
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 let rz; window.addEventListener('resize', () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { draw(); drawRadar(); drawHourly(); }); });
 applyStatic(); buildChips(); buildLayers(); buildCfg(); buildRoadUI(); notifStatus(); syncState(); renderAcc(); renderWarnings();
-draw(); drawRadar(); start(); setInterval(tick, 1000); geoAuto();
+draw(); drawRadar(); start(); setInterval(tick, 1000); geoAuto(true);
 if (sel.geo && !sel.name) nameSel(sel);
