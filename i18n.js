@@ -801,3 +801,6 @@ Object.assign(I18N.en, {xt:{
     hi:'Sudden cold water likely (upwelling): the {w} wind pushes warm surface water offshore and cold water rises from below — the sea at the beach can cool by 5–10° within a day.',
     maybe:'Upwelling possible: with a {w} wind the water near the shore may cool noticeably.'}
 }});
+Object.assign(I18N.ru, {rateErr:'Open-Meteo временно ограничил запросы с вашего интернета (слишком много обращений). Обычно это проходит само за несколько минут — до часа. Можно также переключиться между Wi-Fi и мобильным интернетом.'});
+Object.assign(I18N.lv, {rateErr:'Open-Meteo īslaicīgi ierobežoja pieprasījumus no jūsu interneta (pārāk daudz pieprasījumu). Parasti tas pāriet pats dažu minūšu līdz stundas laikā. Var arī pārslēgties starp Wi-Fi un mobilo internetu.'});
+Object.assign(I18N.en, {rateErr:'Open-Meteo has temporarily limited requests from your connection (too many requests). This usually clears by itself within minutes to an hour. You can also switch between Wi-Fi and mobile data.'});

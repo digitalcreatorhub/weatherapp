@@ -12,40 +12,49 @@ const dBetween = (a, b) => Math.round((utcDay(b) - utcDay(a))/864e5);
 const iso = (y, m, d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 const xNowIdx = () => clamp(Math.floor((Date.now() - hourlyData.base)/36e5), 0, lastW.hourly.time.length - 1);
 
-/* ---------- климатическая норма (1991–2020, архив ERA5 через Open-Meteo) ---------- */
+/* ---------- климатическая норма (архив ERA5 через Open-Meteo) ----------
+   Open-Meteo считает «вес» запроса по длине периода: 30 лет подряд — это сотни обычных запросов,
+   и бесплатный лимит сразу заканчивается. Поэтому берём только окно «неделя назад — 40 дней вперёд»
+   за 10 последних лет (10 маленьких запросов) и запоминаем результат на телефоне на две недели. */
 const NORM = {key:'', data:null, busy:false};
+const NORM_YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024], NORM_LEN = 48;
 const normKey = () => (Math.round(sel.lat*4)/4).toFixed(2) + ',' + (Math.round(sel.lon*4)/4).toFixed(2);
-const doyOf = s => { const [, m, d] = ymd(s); return Math.min(365, Math.round((Date.UTC(2000, m - 1, d) - Date.UTC(2000, 0, 1))/864e5)); };
+const addDays = (s, n) => new Date(utcDay(s) + n*864e5).toISOString().slice(0, 10);
+const normFresh = n => n && n.start && n.mx && n.mx.length === NORM_LEN && (() => { const g = dBetween(n.start, lastW.daily.time[0]); return g >= 0 && g <= 14; })();
 async function loadNormals() {
+  if (!lastW) return;
   const k = normKey();
-  if (NORM.key === k && NORM.data) return;
-  const cache = store.get('wx_norm', {}) || {};
-  if (cache[k] && cache[k].mx && cache[k].mx.length === 366) { NORM.key = k; NORM.data = cache[k]; renderPills(); renderUtil(); return; }
-  if (NORM.busy) return;
+  if (NORM.key === k && normFresh(NORM.data)) return;
+  const cache = store.get('wx_norm2', {}) || {};
+  if (normFresh(cache[k])) { NORM.key = k; NORM.data = cache[k]; renderPills(); renderUtil(); return; }
+  if (NORM.busy || Date.now() - store.get('wx_norm_fail', 0) < 6*36e5) return;
   NORM.busy = true;
   try {
-    const [la, lo] = k.split(',');
-    const j = await getJSON(`https://archive-api.open-meteo.com/v1/archive?latitude=${la}&longitude=${lo}&start_date=1991-01-01&end_date=2020-12-31&daily=temperature_2m_max,temperature_2m_min&timezone=${ENC_TZ}`);
-    const d = j.daily, sx = Array(366).fill(0), sn = Array(366).fill(0), c = Array(366).fill(0);
-    d.time.forEach((s, i) => {
-      const a = d.temperature_2m_max[i], b = d.temperature_2m_min[i];
-      if (a == null || b == null) return;
-      const q = doyOf(s); sx[q] += a; sn[q] += b; c[q]++;
+    const [la, lo] = k.split(','), start = addDays(lastW.daily.time[0], -7), [, sm, sd] = ymd(start);
+    const yrs = await Promise.all(NORM_YEARS.map(y => {
+      const a = iso(y, sm, sd), b = addDays(a, NORM_LEN - 1);
+      return getJSON(`https://archive-api.open-meteo.com/v1/archive?latitude=${la}&longitude=${lo}&start_date=${a}&end_date=${b}&daily=temperature_2m_max,temperature_2m_min&timezone=${ENC_TZ}`).catch(() => null);
+    }));
+    const ok = yrs.filter(j => j && j.daily && j.daily.temperature_2m_max);
+    if (ok.length < 6) throw new Error('normals');
+    const raw = (key, i) => { const v = ok.map(j => j.daily[key][i]).filter(x => x != null); return v.length ? v.reduce((p, q) => p + q, 0)/v.length : null; };
+    const rx = [], rn = [];
+    for (let i = 0; i < NORM_LEN; i++) { rx.push(raw('temperature_2m_max', i)); rn.push(raw('temperature_2m_min', i)); }
+    const sm3 = arr => arr.map((_, i) => {   /* сглаживаем ±3 дня */
+      const v = arr.slice(Math.max(0, i - 3), i + 4).filter(x => x != null);
+      return v.length ? +(v.reduce((p, q) => p + q, 0)/v.length).toFixed(1) : null;
     });
-    const mx = [], mn = [];
-    for (let i = 0; i < 366; i++) {   /* сглаживаем ±7 дней, чтобы норма не прыгала от дня к дню */
-      let a = 0, b = 0, n = 0;
-      for (let w = -7; w <= 7; w++) { const q = (i + w + 366) % 366; a += sx[q]; b += sn[q]; n += c[q]; }
-      mx.push(n ? +(a/n).toFixed(1) : null); mn.push(n ? +(b/n).toFixed(1) : null);
-    }
-    if (mx.some(v => v == null)) return;
-    NORM.key = k; NORM.data = {mx, mn};
+    NORM.key = k; NORM.data = {start, mx:sm3(rx), mn:sm3(rn)};
     const ks = Object.keys(cache); if (ks.length >= 6) delete cache[ks[0]];
-    cache[k] = NORM.data; store.set('wx_norm', cache);
+    cache[k] = NORM.data; store.set('wx_norm2', cache); store.set('wx_norm', null);
     renderPills(); renderUtil();
-  } catch (e) {} finally { NORM.busy = false; }
+  } catch (e) { store.set('wx_norm_fail', Date.now()); } finally { NORM.busy = false; }
 }
-const normFor = s => NORM.data && NORM.key === normKey() ? {mx:NORM.data.mx[doyOf(s)], mn:NORM.data.mn[doyOf(s)]} : null;
+const normFor = s => {
+  if (!NORM.data || NORM.key !== normKey()) return null;
+  const i = dBetween(NORM.data.start, s);
+  return i >= 0 && i < NORM_LEN && NORM.data.mx[i] != null ? {mx:NORM.data.mx[i], mn:NORM.data.mn[i]} : null;
+};
 function normInfo() {
   const d = lastW.daily, N = normFor(d.time[0]); if (!N) return null;
   const X = XT().norm, diff = ((d.temperature_2m_max[0] - N.mx) + (d.temperature_2m_min[0] - N.mn))/2, a = Math.round(Math.abs(diff));

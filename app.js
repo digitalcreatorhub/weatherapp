@@ -69,9 +69,10 @@ async function getJSON(url) {
     const c = new AbortController(), tm = setTimeout(() => c.abort(), 15000);
     try {
       const r = await fetch(url, {signal:c.signal}); clearTimeout(tm);
+      if (r.status === 429) { const e = new Error('HTTP 429'); e.rate = true; throw e; }   /* лимит запросов: повтор только ухудшит */
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return await r.json();
-    } catch (e) { clearTimeout(tm); if (a) throw e; await new Promise(r => setTimeout(r, 700)); }
+    } catch (e) { clearTimeout(tm); if (a || e.rate) throw e; await new Promise(r => setTimeout(r, 700)); }
   }
 }
 function showErr(m) { $('errt').textContent = m; $('err').style.display = 'block'; }
@@ -198,7 +199,7 @@ async function loadPoint() {
     if (typeof renderUtil === 'function') renderUtil();
     guarded('mod', loadModels); guarded('air', loadAir); guarded('nc', loadNowcast);
   } catch (e) {
-    if (!lastW) { $('hero').innerHTML = `<div class="state">${t('noData')}</div>`; showErr(t('netErr')); }
+    if (!lastW) { $('hero').innerHTML = `<div class="state">${t('noData')}</div>`; showErr(t(e && e.rate ? 'rateErr' : 'netErr')); }
     offline = true;
   }
 }
@@ -521,7 +522,19 @@ async function loadGrid() {
   const la = [], lo = [];
   lats.forEach(a => lons.forEach(b => { la.push(a.toFixed(2)); lo.push(b.toFixed(2)); }));
   const url = `${API}?latitude=${la.join(',')}&longitude=${lo.join(',')}&hourly=${GRID_VARS.join(',')}&forecast_days=3&wind_speed_unit=ms&timezone=${ENC_TZ}`;
-  const j = await getJSON(url);
+  /* сетка карты — самый «тяжёлый» запрос (96 точек). При частых перезапусках берём сохранённую копию до 25 минут,
+     чтобы не упираться в бесплатный лимит Open-Meteo */
+  let j = null;
+  try {
+    if (Date.now() - store.get('wx_grid_at', 0) < 25*6e4 && 'caches' in window) {
+      const r = await (await caches.open('wx-data')).match(stateURL('__grid'));
+      if (r) j = await r.json();
+    }
+  } catch (e) { j = null; }
+  if (!j) {
+    j = await getJSON(url);
+    try { if ('caches' in window) { await (await caches.open('wx-data')).put(stateURL('__grid'), new Response(JSON.stringify(j), {headers:{'Content-Type':'application/json'}})); store.set('wx_grid_at', Date.now()); } } catch (e) {}
+  }
   grid = Array.isArray(j) ? j : [j];
   setBase(grid[0]);
   stamp.grid = Date.now(); buildStrip(); draw();
@@ -1755,7 +1768,7 @@ function tick() {
 }
 function start() {
   $('err').style.display = 'none'; offline = false;
-  loadPoint(); loadCities().catch(() => showErr(t('netErr'))); loadGrid().catch(() => showErr(t('netErr')));
+  loadPoint(); loadCities().catch(e => showErr(t(e && e.rate ? 'rateErr' : 'netErr'))); loadGrid().catch(e => showErr(t(e && e.rate ? 'rateErr' : 'netErr')));
   guarded('rad', loadRadar); guarded('ma', loadOfficial); guarded('sea', loadSea); guarded('road', loadRoad);
 }
 $('retry').onclick = start;
