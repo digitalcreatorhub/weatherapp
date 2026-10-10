@@ -1049,6 +1049,21 @@ async function loadRoad() {
   } catch (e) { if (!roadRes || roadRes.key !== key) roadState = 'fail'; }
   renderRoad(); draw();
 }
+/* промежуточные точки маршрута: вместо «км 23» — ближайший посёлок */
+async function nameRoad(R) {
+  R.naming = true; const lg = lang;
+  const ends = [placeName(R.a), placeName(R.b)];
+  for (const p of R.pts) {
+    if (p.id || p.name) continue;
+    const nm = await geoTown(p.lat, p.lon);
+    if (roadRes !== R || lang !== lg) { R.naming = false; if (roadRes === R) renderRoad(); return; }
+    const same = ends.includes(nm) || R.pts.some(q => q !== p && (q.near === nm || (q.id && townName(q.id) === nm)));
+    p.near = nm && !same ? nm : '';
+    if (p.near) renderRoad();
+  }
+  R.nearLang = lg; R.naming = false;
+  renderRoad();
+}
 const visFmt = v => v >= 1000 ? t('visKm', {v:(v/1000).toFixed(v < 10000 ? 1 : 0)}) : t('visM', {v:Math.round(v/10)*10});
 function roadEval(h, i) {
   const T = h.temperature_2m[i], Td = h.dew_point_2m[i], Ts = h.soil_temperature_0cm[i] ?? T, pr = h.precipitation[i] ?? 0, rn = h.rain[i] ?? 0;
@@ -1078,7 +1093,8 @@ function renderRoad() {
   });
   const last = R.pts[R.pts.length - 1], totalKm = Math.round(last.km), mins = Math.round(last.km/SPEED*60);
   const worst = Math.max(...R.evals.map(e => e.lvl));
-  const label = p => p.id ? townName(p.id) : p.name ? p.name : `${t('km')} ${Math.round(p.km)}`;
+  if (R.nearLang !== lang && !R.naming) nameRoad(R);
+  const label = p => p.id ? townName(p.id) : p.name ? p.name : p.near || `${t('km')} ${Math.round(p.km)}`;
   const reasons = [];
   R.evals.forEach((e, k) => e.r.forEach(x => { const base = x.split(',')[0]; if (!reasons.some(y => y.b === base)) reasons.push({b:base, s:`${x} (${label(R.pts[k])})`}); }));
   const verdict = worst === 0 ? t('roadOK') : t(worst === 2 ? 'roadDanger' : 'roadWarn', {r:reasons.slice(0, 4).map(x => x.s).join('; ')});
@@ -1087,7 +1103,7 @@ function renderRoad() {
     <div class="ok" style="margin-bottom:8px">${esc(verdict)}</div>
     <div class="rbar">${R.evals.map(e => `<i style="background:${LV_COL[e.lvl]}"></i>`).join('')}</div>
     <div class="rpts">${R.evals.map((e, k) => `<div class="rp"><span class="d" style="background:${LV_COL[e.lvl]}"></span>
-      <span>${esc(label(R.pts[k]))}<br><small>${Math.round(R.pts[k].km)} ${t('km')}</small></span>
+      <span>${esc(label(R.pts[k]))}<br><small>${Math.round(R.pts[k].km)} ${t('km')}${R.pts[k].near && !R.pts[k].id && !R.pts[k].name ? ' · ' + esc(t('roadNear')) : ''}</small></span>
       <span>${hhmm(e.eta)}</span><span>${wmo(e.c)[1]}</span>
       <span>${fmt(e.T)} <small>${t('roadAir')}</small><br>${fmt(e.Ts)} <small>${t('roadSurf')}</small></span>
       <span class="why">${e.r.length ? esc(e.r.join(', ')) : `<small>${t('roadOkShort')}${e.vis != null ? ', ' + t('roadVis') + ' ' + visFmt(e.vis) : ''}</small>`}</span></div>`).join('')}</div>
@@ -1453,24 +1469,34 @@ function newSel(s) {
 /* ---------- «Где я»: погода для точки, где вы сейчас, с названием района ---------- */
 const GEO = {busy:false, at:0};
 const distKm = (a, b) => Math.hypot((a.lat - b.lat)*111.2, (a.lon - b.lon)*111.2*Math.cos(a.lat*RAD));
-/* название района по координатам: OpenStreetMap Nominatim; отправляем точку, округлённую примерно до 100 м */
-async function geoName(lat, lon) {
-  const key = `${lang}:${lat.toFixed(3)},${lon.toFixed(3)}`, cache = store.get('wx_geonames', {}) || {};
-  if (cache[key]) return cache[key];
-  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 6000);
-  try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}&zoom=16&addressdetails=1&accept-language=${lang}`,
-      {signal:ctl.signal, referrerPolicy:'strict-origin-when-cross-origin'});
-    if (!r.ok) return '';
-    const a = (await r.json()).address || {};
-    const area = a.suburb || a.quarter || a.neighbourhood || a.city_district || a.residential || a.village || a.hamlet || a.isolated_dwelling || '';
-    const city = a.city || a.town || a.village || a.municipality || a.county || '';
-    let nm = area && city && area !== city ? `${area}, ${city}` : (area || city);
-    nm = String(nm).slice(0, 60);
-    if (nm) { const ks = Object.keys(cache); if (ks.length > 40) delete cache[ks[0]]; cache[key] = nm; store.set('wx_geonames', cache); }
-    return nm;
-  } catch (e) { return ''; } finally { clearTimeout(to); }
+/* названия мест по координатам: OpenStreetMap Nominatim. Точка округляется примерно до 100 м,
+   запросы идут по одному не чаще раза в секунду (правило Nominatim), ответы запоминаются на телефоне */
+let nomQ = Promise.resolve();
+function nominatim(lat, lon, zoom, pick) {
+  const key = `${lang}:${zoom}:${lat.toFixed(3)},${lon.toFixed(3)}`, cache = store.get('wx_geonames', {}) || {};
+  if (cache[key]) return Promise.resolve(cache[key]);
+  const run = async () => {
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 6000);
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}&zoom=${zoom}&addressdetails=1&accept-language=${lang}`,
+        {signal:ctl.signal, referrerPolicy:'strict-origin-when-cross-origin'});
+      if (!r.ok) return '';
+      const nm = String(pick((await r.json()).address || {}) || '').slice(0, 60);
+      if (nm) { const c = store.get('wx_geonames', {}) || {}, ks = Object.keys(c); if (ks.length > 80) delete c[ks[0]]; c[key] = nm; store.set('wx_geonames', c); }
+      return nm;
+    } catch (e) { return ''; } finally { clearTimeout(to); }
+  };
+  const p = nomQ.then(run);
+  nomQ = p.then(() => new Promise(r => setTimeout(r, 1100)));
+  return p;
 }
+const geoName = (lat, lon) => nominatim(lat, lon, 16, a => {
+  const area = a.suburb || a.quarter || a.neighbourhood || a.city_district || a.residential || a.village || a.hamlet || a.isolated_dwelling || '';
+  const city = a.city || a.town || a.village || a.municipality || a.county || '';
+  return area && city && area !== city ? `${area}, ${city}` : (area || city);
+});
+/* ближайший населённый пункт для точки маршрута */
+const geoTown = (lat, lon) => nominatim(lat, lon, 13, a => a.village || a.town || a.hamlet || a.city || a.suburb || a.municipality || '');
 async function nameSel(s) {
   const nm = await geoName(s.lat, s.lon);
   if (!nm || sel !== s) return;

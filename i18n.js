@@ -688,3 +688,6 @@ Object.assign(I18N.en, {
   geoFarTitle:'You are outside Latvia', geoFar:'The app only shows weather in and around Latvia.',
   geoFoot:'Neighbourhood names: © {osm}. Location is determined on your phone only; requests carry a point rounded to ~100 m.'
 });
+Object.assign(I18N.ru, {roadNear:'рядом'});
+Object.assign(I18N.lv, {roadNear:'tuvumā'});
+Object.assign(I18N.en, {roadNear:'nearby'});
