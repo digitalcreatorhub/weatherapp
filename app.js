@@ -160,7 +160,7 @@ function guarded(name, fn) {
 /* ---------- прогноз по выбранной точке ---------- */
 async function loadPoint() {
   const key = selKey();
-  const url = `${API}?${pointQS()}&current=${CUR}&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,is_day,cloud_cover,wind_gusts_10m,wind_speed_10m,wind_direction_10m,pressure_msl`
+  const url = `${API}?${pointQS()}&current=${CUR}&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,is_day,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_gusts_10m,wind_speed_10m,wind_direction_10m,pressure_msl`
     + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset,uv_index_max&forecast_days=5`;
   try {
     const w = await getJSON(url);
@@ -168,6 +168,7 @@ async function loadPoint() {
     lastW = w; stamp.point = stamp.current = Date.now(); offline = false;
     hourlyData = {t:w.hourly.time, T:w.hourly.temperature_2m, P:w.hourly.precipitation_probability, days:w.daily.time, base:Date.parse(w.hourly.time[0] + ':00Z') - w.utc_offset_seconds*1000, n:w.hourly.time.length};
     renderHero(); renderDaily(w); drawHourly(); draw(); renderH24(); renderToday(); renderMoon(); renderAcc();
+    if (typeof renderPlan === 'function') renderPlan();
     guarded('mod', loadModels); guarded('air', loadAir); guarded('nc', loadNowcast);
   } catch (e) {
     if (!lastW) { $('hero').innerHTML = `<div class="state">${t('noData')}</div>`; showErr(t('netErr')); }
@@ -1491,6 +1492,7 @@ function setLang(k) {
   renderHero(); renderDaily(lastW); renderH24(); renderToday(); renderMoon(); renderAcc(); renderWarnings(); renderNowcast();
   renderSea(); renderPollen(); renderRoad(); drawHourly(); draw(); drawRadar(); notifStatus(); syncState(); tick();
   if (typeof renderDrive === 'function') { renderDrive(); fillVoices(); }
+  if (typeof renderPlan === 'function') renderPlan();
 }
 
 /* ---------- LIVE: тик раз в секунду ---------- */
@@ -1498,7 +1500,7 @@ function tick() {
   const now = Date.now();
   if (live && gridBase) { pos = posNow(); $('slider').value = pos; }
   draw(); updateNowLine();
-  if (hourlyData && lastW) { const ix = clamp(Math.floor((now - hourlyData.base)/36e5), 0, lastW.hourly.time.length - 25); if (ix !== h24Idx) { renderH24(); renderToday(); } }
+  if (hourlyData && lastW) { const ix = clamp(Math.floor((now - hourlyData.base)/36e5), 0, lastW.hourly.time.length - 25); if (ix !== h24Idx) { renderH24(); renderToday(); if (typeof renderPlan === 'function') renderPlan(); } }
   if (now - stamp.moon >= 60e3) { stamp.moon = now; renderMoon(); if (hasViz()) { try { refreshGauges(); } catch (e) {} } }
 
   if (!document.hidden) {

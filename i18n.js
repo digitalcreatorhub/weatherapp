@@ -415,3 +415,41 @@ Object.assign(I18N.en, {
   voiceWarn:'Attention! {where}: {what}. Please drive carefully.', voiceTest:'Attention! In twenty five kilometres there may be ice on the road. Please drive carefully.',
   dDarkHint:'Tap the screen to return'
 });
+
+/* советы на сегодня: мойка, лучшее окно, закат */
+Object.assign(I18N.ru, {
+  planTitle:'Советы на сегодня', washTitle:'Когда мыть машину', washToday:'Мойте сегодня', washTomorrow:'Лучше мыть завтра',
+  washOn:'Лучше мыть: {d}', washDry:'Следующие 2 дня без осадков — чистота продержится.', washDryAfter:'После этого 2 дня сухо.',
+  washWait:'Пока не стоит мыть', washRain:'В ближайшие 2 дня осадки (до {mm} мм).', washSnow:'Ожидается снег.',
+  washSalt:'Мокрые дороги около нуля — будут реагенты.', washCold:'Мороз: выбирайте мойку с сушкой и протрите уплотнители дверей.',
+  winTitle:'Лучшее время', acts:{walk:'Прогулка', run:'Пробежка', bike:'Велосипед', bbq:'Шашлык'},
+  winToday:'Сегодня {a}–{b}', winTomorrow:'Завтра {a}–{b}', winDetail:'ощущается {t}, осадки {p}%, ветер {w} м/с',
+  noWindow:'Подходящего времени не нашлось.', scoreLbl:['отлично','хорошо','так себе','плохо'],
+  sunsetToday:'Закат сегодня', sunsetTom:'Закат завтра', sunsetAt:'Закат в {t}, солнце садится на {d}',
+  goldenH:'Золотой час {a}–{b}', blueH:'Синий час {a}–{b}', sunriseTom:'Рассвет завтра в {t}: {l}',
+  sunLbl:['огненный, очень яркий','красивый, с красками','обычный','скорее не будет видно']
+});
+Object.assign(I18N.lv, {
+  planTitle:'Padomi šodienai', washTitle:'Kad mazgāt auto', washToday:'Mazgājiet šodien', washTomorrow:'Labāk mazgāt rīt',
+  washOn:'Labāk mazgāt: {d}', washDry:'Nākamās 2 dienas bez nokrišņiem — tīrība saglabāsies.', washDryAfter:'Pēc tam 2 dienas sauss.',
+  washWait:'Pagaidām nav vērts mazgāt', washRain:'Tuvākajās 2 dienās nokrišņi (līdz {mm} mm).', washSnow:'Gaidāms sniegs.',
+  washSalt:'Slapji ceļi ap nulli — būs pretslīdes reaģenti.', washCold:'Sals: izvēlieties mazgātuvi ar žāvēšanu un noslaukiet durvju blīves.',
+  winTitle:'Labākais laiks', acts:{walk:'Pastaiga', run:'Skriešana', bike:'Velosipēds', bbq:'Šašliks'},
+  winToday:'Šodien {a}–{b}', winTomorrow:'Rīt {a}–{b}', winDetail:'sajūta {t}, nokrišņi {p}%, vējš {w} m/s',
+  noWindow:'Piemērots laiks netika atrasts.', scoreLbl:['lieliski','labi','tā nekas','slikti'],
+  sunsetToday:'Saulriets šodien', sunsetTom:'Saulriets rīt', sunsetAt:'Saulriets {t}, saule riet {d}',
+  goldenH:'Zelta stunda {a}–{b}', blueH:'Zilā stunda {a}–{b}', sunriseTom:'Saullēkts rīt {t}: {l}',
+  sunLbl:['ugunīgs, ļoti spilgts','skaists, krāsains','parasts','visticamāk nebūs redzams']
+});
+Object.assign(I18N.en, {
+  planTitle:'Tips for today', washTitle:'When to wash the car', washToday:'Wash it today', washTomorrow:'Better wash it tomorrow',
+  washOn:'Best day to wash: {d}', washDry:'No precipitation for the next 2 days — it will stay clean.', washDryAfter:'Dry for 2 days after that.',
+  washWait:'Not worth washing yet', washRain:'Precipitation in the next 2 days (up to {mm} mm).', washSnow:'Snow is expected.',
+  washSalt:'Wet roads around freezing — de-icing salt likely.', washCold:'Frost: choose a wash with drying and wipe the door seals.',
+  winTitle:'Best time', acts:{walk:'Walk', run:'Run', bike:'Bike', bbq:'Barbecue'},
+  winToday:'Today {a}–{b}', winTomorrow:'Tomorrow {a}–{b}', winDetail:'feels {t}, precip. {p}%, wind {w} m/s',
+  noWindow:'No suitable time found.', scoreLbl:['excellent','good','so-so','poor'],
+  sunsetToday:'Sunset today', sunsetTom:'Sunset tomorrow', sunsetAt:'Sunset at {t}, the sun sets in the {d}',
+  goldenH:'Golden hour {a}–{b}', blueH:'Blue hour {a}–{b}', sunriseTom:'Sunrise tomorrow at {t}: {l}',
+  sunLbl:['fiery, very vivid','beautiful, colourful','ordinary','probably not visible']
+});
