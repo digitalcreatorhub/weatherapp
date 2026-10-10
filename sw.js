@@ -1,6 +1,6 @@
 // Сервис-воркер: офлайн-кэш, уведомления Android, фоновая проверка погоды (для установленного приложения).
-const VER = 'wx-v24';
-const SHELL = ['./', 'index.html', 'i18n.js?v=24', 'app.js?v=24', 'borders.js?v=24', 'viz.js?v=24', 'drive.js?v=24', 'plan.js?v=24', 'info.js?v=24', 'leaflet.js?v=24', 'leaflet.css?v=24', 'manifest.webmanifest', 'logo.svg', 'icon-192.png', 'icon-512.png'];
+const VER = 'wx-v25';
+const SHELL = ['./', 'index.html', 'i18n.js?v=25', 'app.js?v=25', 'borders.js?v=25', 'viz.js?v=25', 'drive.js?v=25', 'plan.js?v=25', 'info.js?v=25', 'leaflet.js?v=25', 'leaflet.css?v=25', 'manifest.webmanifest', 'logo.svg', 'icon-192.png', 'icon-512.png'];
 const TYPES = {
   storm:['⛈️','Гроза'], rain:['🌧️','Сильный дождь'], snow:['❄️','Сильный снег'], ice:['🧊','Ледяной дождь, гололёд'],
   wind:['💨','Сильный ветер'], heat:['🥵','Сильная жара'], frost:['🥶','Сильный мороз'], freeze:['🌱','Заморозок']

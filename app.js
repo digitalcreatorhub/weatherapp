@@ -110,9 +110,30 @@ const ROUTES = [
   ['riga','jelgava']
 ];
 const townName = id => TOWNS[id].n[lang] || TOWNS[id].n.ru;
+/* небольшие города для карты погоды: видны только при приближении (ярус 2 — раньше, ярус 3 — при сильном приближении) */
+const SMALL = (() => {
+  const o = {};
+  ['jurmala','ogre','lielvarde','aizkraukle','livani','sigulda','tukums','kandava','saldus','skrunda','vilani'].forEach(id => { o[id] = {lat:TOWNS[id].lat, lon:TOWNS[id].lon, n:TOWNS[id].n, tier:2}; });
+  `talsi 57.2447 22.5889 Талси Talsi 2|kuldiga 56.9677 21.9686 Кулдига Kuldīga 2|dobele 56.6257 23.2789 Добеле Dobele 2|bauska 56.4079 24.1944 Бауска Bauska 2
+  |olaine 56.7853 23.9383 Олайне Olaine 2|salaspils 56.8614 24.3497 Саласпилс Salaspils 2|limbazi 57.5133 24.7136 Лимбажи Limbaži 2|saulkrasti 57.2636 24.4142 Саулкрасты Saulkrasti 2
+  |valka 57.7752 26.0175 Валка Valka 2|smiltene 57.4242 25.9017 Смилтене Smiltene 2|aluksne 57.4219 27.0464 Алуксне Alūksne 2|gulbene 57.1775 26.7528 Гулбене Gulbene 2
+  |madona 56.8539 26.2172 Мадона Madona 2|balvi 57.1313 27.2653 Балви Balvi 2|ludza 56.5461 27.7189 Лудза Ludza 2|preili 56.2942 26.7247 Прейли Preiļi 2
+  |kraslava 55.8951 27.1682 Краслава Krāslava 2|salacgriva 57.7536 24.3586 Салацгрива Salacgrīva 2|kekava 56.828 24.23 Кекава Ķekava 3|adazi 57.0753 24.3236 Адажи Ādaži 3
+  |baldone 56.7428 24.3964 Балдоне Baldone 3|iecava 56.5994 24.2069 Иецава Iecava 3|vecumnieki 56.6061 24.5214 Вецумниеки Vecumnieki 3|jaunjelgava 56.6125 25.0811 Яунелгава Jaunjelgava 3
+  |koknese 56.6408 25.4344 Кокнесе Koknese 3|viesite 56.3456 25.5556 Виесите Viesīte 3|akniste 56.1611 25.7489 Акнисте Aknīste 3|ilukste 55.9775 26.2967 Илуксте Ilūkste 3
+  |dagda 56.0947 27.5372 Дагда Dagda 3|zilupe 56.3864 28.1219 Зилупе Zilupe 3|karsava 56.7842 27.6886 Карсава Kārsava 3|varaklani 56.6083 26.7514 Варакляны Varakļāni 3
+  |lubana 56.9028 26.7172 Лубана Lubāna 3|cesvaine 56.9667 26.3069 Цесвайне Cesvaine 3|ergli 56.9 25.6417 Эргли Ērgļi 3|ape 57.5392 26.6936 Апе Ape 3
+  |strenci 57.6256 25.6806 Стренчи Strenči 3|rujiena 57.8975 25.3253 Руйиена Rūjiena 3|mazsalaca 57.8622 25.0503 Мазсалаца Mazsalaca 3|ainazi 57.8639 24.3594 Айнажи Ainaži 3
+  |ligatne 57.2333 25.0408 Лигатне Līgatne 3|roja 57.5061 22.8028 Роя Roja 3|kolka 57.7469 22.5928 Колка Kolka 3|mersrags 57.3347 23.1225 Мерсрагс Mērsrags 3
+  |engure 57.16 23.2219 Энгуре Engure 3|auce 56.46 22.9014 Ауце Auce 3|broceni 56.6819 22.5683 Броцены Brocēni 3|aizpute 56.7211 21.6017 Айзпуте Aizpute 3
+  |pavilosta 56.8883 21.1856 Павилоста Pāvilosta 3|grobina 56.5353 21.1667 Гробиня Grobiņa 3|priekule 56.4461 21.5872 Приекуле Priekule 3|rucava 56.1622 21.1631 Руцава Rucava 3`
+    .split('|').forEach(r => { const [id, la, lo, ru, lv, tr] = r.trim().split(/\s+/); o[id] = {lat:+la, lon:+lo, n:{ru, lv, en:lv}, tier:+tr}; });
+  return o;
+})();
+const smallName = id => SMALL[id].n[lang] || SMALL[id].n.ru;
 function inLVwide(la, lo) { return la >= 54 && la <= 59.5 && lo >= 19 && lo <= 30; }
 const samePlace = (a, b) => !!a && !!b && Math.abs(a.lat - b.lat) < 1e-3 && Math.abs(a.lon - b.lon) < 1e-3;
-const placeName = p => p.id ? townName(p.id) : p.geo ? (p.name || t('geoHere')) : p.pt ? (p.name || t('pointName', {a:p.lat.toFixed(2), b:p.lon.toFixed(2)})) : p.name;
+const placeName = p => p.id ? townName(p.id) : p.sid && SMALL[p.sid] ? smallName(p.sid) : p.geo ? (p.name || t('geoHere')) : p.pt ? (p.name || t('pointName', {a:p.lat.toFixed(2), b:p.lon.toFixed(2)})) : p.name;
 
 const CFG_DEF = {wind:17, rain:4, heat:30, frost:-15, freeze:0, hours:12, off:{freeze:true}};
 let cfg = Object.assign({}, CFG_DEF, store.get('wx_cfg', {}));
@@ -449,6 +470,23 @@ async function loadCities() {
   stamp.cities = Date.now();
   draw(); refreshWarnings();
 }
+/* погода для небольших городов загружается только когда карту впервые приблизили */
+let smallData = null, smallIds = [], smallAt0 = 0;
+async function loadSmall() {
+  if (busy.small) return; busy.small = true;
+  try {
+    const ids = Object.keys(SMALL);
+    const j = await getJSON(`${API}?latitude=${ids.map(id => SMALL[id].lat.toFixed(3)).join(',')}&longitude=${ids.map(id => SMALL[id].lon.toFixed(3)).join(',')}`
+      + `&hourly=temperature_2m,weather_code,precipitation,wind_gusts_10m&forecast_days=3&wind_speed_unit=ms&timezone=${ENC_TZ}`);
+    smallData = Array.isArray(j) ? j : [j]; smallIds = ids; smallAt0 = Date.now();
+    WM.layoutKey = ''; wmLayout();
+  } catch (e) {} finally { busy.small = false; }
+}
+function smallAt(id, ps) {
+  const cd = smallData && smallData[smallIds.indexOf(id)]; if (!cd) return null;
+  const h = cd.hourly, n = h.time.length, h0 = clamp(Math.floor(ps), 0, n-1), h1 = Math.min(h0 + 1, n-1), f = ps - h0, r = clamp(Math.round(ps), 0, n-1);
+  return {T:(h.temperature_2m[h0] ?? 0)*(1-f) + (h.temperature_2m[h1] ?? 0)*f, code:h.weather_code[r], warn:hourWarn(h, r).length > 0};
+}
 function cityAt(p, ps) {
   const i = cityPlaces.findIndex(q => samePlace(q, p)), cd = cityData[i]; if (!cd) return null;
   const h = cd.hourly, n = h.time.length, h0 = clamp(Math.floor(ps), 0, n-1), h1 = Math.min(h0 + 1, n-1), f = ps - h0, r = clamp(Math.round(ps), 0, n-1);
@@ -567,6 +605,7 @@ function wmInit() {
   map.on('resize', () => { wmSize(); wmFrame(); WM.velKey = ''; wmLayout(); });
   map.on('zoomstart', () => pane.classList.add('zooming'));
   map.on('zoomend', () => { pane.classList.remove('zooming'); wmSize(); wmFrame(); WM.velKey = ''; wmLayout(); });
+  let mvT; map.on('moveend', () => { clearTimeout(mvT); mvT = setTimeout(wmLayout, 120); });   /* при сдвиге показываем небольшие города, попавшие в кадр */
   try { new IntersectionObserver(es => { WM.visible = es[0].isIntersecting; wmKick(); }).observe($('map')); } catch (e) {}
   document.addEventListener('visibilitychange', wmKick);
   wmSize();
@@ -734,10 +773,10 @@ function cityHtml(p, cw, ms, mode) {
   mode = mode || {};
   if (mode.gone) return '<div class="cm gone"></div>';
   const compact = mode.mini, isSel = samePlace(p, sel), day = sunElev(sunParams(ms), p.lat, p.lon) > 0 ? 1 : 0;
-  const cls = 'cm' + (cw && cw.warn ? ' warn' : '') + (isSel ? ' sel' : '') + (p.fav ? ' fav' : '') + (compact ? ' mini' : '') + (mode.al ? ' cm-l' : mode.ar ? ' cm-r' : '');
+  const cls = 'cm' + (mode.small ? ' sm' : '') + (cw && cw.warn ? ' warn' : '') + (isSel ? ' sel' : '') + (p.fav ? ' fav' : '') + (compact ? ' mini' : '') + (mode.al ? ' cm-l' : mode.ar ? ' cm-r' : '');
   if (!cw) return `<div class="${cls}"><small>${esc(placeName(p))}</small></div>`;
   if (compact) return `<div class="${cls}" title="${esc(placeName(p))}"><i style="background:${tempColor(cw.T)}"></i><b>${fmt(cw.T)}</b></div>`;
-  return `<div class="${cls}"><span class="cm-i">${typeof wxIcon === 'function' ? wxIcon(cw.code, day, 24) : wmo(cw.code)[1]}</span><b>${fmt(cw.T)}</b><small>${esc(placeName(p))}${cw.warn ? ' ⚠' : ''}</small></div>`;
+  return `<div class="${cls}"><span class="cm-i">${typeof wxIcon === 'function' ? wxIcon(cw.code, day, mode.small ? 18 : 24) : wmo(cw.code)[1]}</span><b>${fmt(cw.T)}</b><small>${esc(placeName(p))}${cw.warn ? ' ⚠' : ''}</small></div>`;
 }
 function wmLayout() {
   if (!WM.map) return;
@@ -758,6 +797,22 @@ function wmLayout() {
     if (!hits(mini)) { boxes.push(mini); compact[o.k] = {mini:true, al:mini.al, ar:mini.ar}; return; }
     compact[o.k] = {gone:true};
   });
+  /* небольшие города: появляются при приближении и только там, где есть место */
+  const dz = WM.map.getZoom() - (WM.map._fitZ ?? WM.map.getZoom()), show = {};
+  if (dz >= .7) {
+    if (!smallData || Date.now() - smallAt0 > REFRESH.cities) loadSmall();
+    const sz = WM.map.getSize();
+    Object.keys(SMALL).filter(id => SMALL[id].tier === 2 || dz >= 1.45).sort((a, b) => SMALL[a].tier - SMALL[b].tier).forEach(id => {
+      const S = SMALL[id], pt = WM.map.latLngToContainerPoint([S.lat, S.lon]);
+      if (pt.x < -40 || pt.y < -20 || pt.x > sz.x + 40 || pt.y > sz.y + 20) return;
+      if (PLACES.some(p => !p.hide && samePlace(p, S))) return;
+      const full = place(pt, 52 + smallName(id).length*5.6, 24);
+      if (!hits(full)) { boxes.push(full); show[id] = {al:full.al, ar:full.ar}; return; }
+      const mini = place(pt, 46, 19);
+      if (!hits(mini)) { boxes.push(mini); show[id] = {mini:true, al:mini.al, ar:mini.ar}; }
+    });
+  }
+  WM.small = show;
   WM.compact = compact; WM.layoutKey = '';
   wmMarkers(true);
 }
@@ -779,9 +834,19 @@ function wmMarkers(force) {
       m.setZIndexOffset(samePlace(p, sel) ? 1000 : WM.compact[k] && WM.compact[k].mini ? -100 : 0);
     }
   });
+  Object.keys(WM.small || {}).forEach(id => {
+    const S = SMALL[id], k = 's:' + id, p = {sid:id, lat:S.lat, lon:S.lon}; seen[k] = 1;
+    const html = cityHtml(p, smallAt(id, pos), ms, Object.assign({small:true}, WM.small[id]));
+    let m = WM.markers[k];
+    if (!m) {
+      m = L.marker([S.lat, S.lon], {icon:L.divIcon({className:'cmw', html, iconSize:null}), keyboard:false, riseOnHover:true, zIndexOffset:samePlace(p, sel) ? 1000 : -200})
+        .on('click', () => newSel({sid:id, lat:S.lat, lon:S.lon}));
+      m._html = html; m.addTo(WM.map); WM.markers[k] = m;
+    } else if (m._html !== html) { m.setIcon(L.divIcon({className:'cmw', html, iconSize:null})); m._html = html; }
+  });
   Object.keys(WM.markers).forEach(k => { if (!seen[k]) { WM.map.removeLayer(WM.markers[k]); delete WM.markers[k]; } });
   /* выбранная точка, если это не город */
-  const isCity = PLACES.some(p => !p.hide && samePlace(p, sel));
+  const isCity = PLACES.some(p => !p.hide && samePlace(p, sel)) || !!(sel.sid && WM.small && WM.small[sel.sid]);
   if (!isCity) {
     if (!WM.pin) WM.pin = L.marker([sel.lat, sel.lon], {icon:L.divIcon({className:'cmw', html:'<div class="pin"></div>', iconSize:null}), interactive:false, zIndexOffset:2000}).addTo(WM.map);
     else WM.pin.setLatLng([sel.lat, sel.lon]);

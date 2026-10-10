@@ -9,7 +9,7 @@
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="leaflet.css?v=24">
+<link rel="stylesheet" href="leaflet.css?v=25">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -160,6 +160,13 @@
   .cm.mini{padding:2px 7px 2px 5px;gap:4px;background:rgba(10,21,34,.68)}
   .cm.mini i{display:block;width:8px;height:8px;border-radius:50%}
   .cm.mini b{font-size:.75rem;font-weight:600}
+  .cm.sm{padding:1px 8px 1px 2px;gap:2px;background:rgba(10,21,34,.6);border-color:rgba(255,255,255,.1)}
+  .cm.sm .cm-i{width:18px;height:18px}
+  .cm.sm b{font-size:.76rem;font-weight:650}
+  .cm.sm small{font-size:.62rem;margin-left:1px}
+  .cm.sm.mini{padding:1px 6px 1px 4px;gap:3px}
+  .cm.sm.mini i{width:6px;height:6px}
+  .cm.sm.mini b{font-size:.68rem}
   .cm.sel{border-color:var(--sun);box-shadow:0 0 0 3px rgba(255,181,71,.28),0 6px 18px rgba(0,0,0,.4)}
   .cm.warn{border-color:#ff6b4a;animation:cmin .45s both,warnpulse 1.8s ease-in-out .5s infinite}
   @keyframes cmin{from{opacity:0;transform:translate(-50%,-30%) scale(.9)}}
@@ -633,13 +640,13 @@
   <footer id="footer"></footer>
 </div>
 
-<script src="i18n.js?v=24"></script>
-<script src="leaflet.js?v=24"></script>
-<script src="viz.js?v=24"></script>
-<script src="borders.js?v=24"></script>
-<script src="app.js?v=24"></script>
-<script src="drive.js?v=24"></script>
-<script src="plan.js?v=24"></script>
-<script src="info.js?v=24"></script>
+<script src="i18n.js?v=25"></script>
+<script src="leaflet.js?v=25"></script>
+<script src="viz.js?v=25"></script>
+<script src="borders.js?v=25"></script>
+<script src="app.js?v=25"></script>
+<script src="drive.js?v=25"></script>
+<script src="plan.js?v=25"></script>
+<script src="info.js?v=25"></script>
 </body>
 </html>
