@@ -268,7 +268,7 @@ async function loadAir() {
   const key = selKey();
   const pk = POLLEN.map(p => p[0] + '_pollen').join(',');
   try {
-    const j = await getJSON(`${AQ_API}?latitude=${sel.lat.toFixed(4)}&longitude=${sel.lon.toFixed(4)}&current=european_aqi,pm2_5&hourly=${pk}&forecast_days=1&timezone=${ENC_TZ}`);
+    const j = await getJSON(`${AQ_API}?latitude=${sel.lat.toFixed(4)}&longitude=${sel.lon.toFixed(4)}&current=european_aqi,pm2_5,pm10,nitrogen_dioxide,ozone,european_aqi_pm2_5,european_aqi_pm10,european_aqi_nitrogen_dioxide,european_aqi_ozone&hourly=${pk}&forecast_days=1&timezone=${ENC_TZ}`);
     if (key !== selKey()) return;
     air = j.current && j.current.european_aqi != null ? j.current : false;
     const out = {}; let any = false;

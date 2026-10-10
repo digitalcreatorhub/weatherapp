@@ -116,14 +116,14 @@ function gaugesHTML() {
   const c = lastW.current, d = lastW.daily;
   const hum = c.relative_humidity_2m ?? 0, uv = c.uv_index, ui = uv != null ? uvIdx(uv) : 0;
   const aq = air && air.european_aqi != null ? air.european_aqi : null, ai = aq != null ? aqiIdx(aq) : 0;
-  const tile = (label, body) => `<div class="gauge"><div class="gl">${esc(label)}</div>${body}</div>`;
+  const tile = (k, label, body) => `<div class="gauge" data-gi="${k}" role="button" tabindex="0" aria-haspopup="dialog" aria-label="${esc(label)}: ${esc(t('gi').open)}"><div class="gl">${esc(label)}</div>${body}</div>`;
   return [
-    tile(t('wind'), gWind(c, gustNow())),
-    tile(t('humidity'), arcMeter(hum/100, '#5cc8ff', hum + '%', '') + `<div class="gv">☁️ ${c.cloud_cover ?? '—'}%</div>`),
-    tile(t('gUV'), arcMeter(uv != null ? uv/11 : 0, UV_COL[ui], uv != null ? uv.toFixed(1) : '—', '') + `<div class="gv">${uv != null ? esc(uvLabel(uv)) : '—'}</div>`),
-    tile(t('gAir'), arcMeter(aq != null ? aq/100 : 0, AQI_COL[ai], aq != null ? Math.round(aq) : (air === null ? '…' : '—'), 'EAQI') + `<div class="gv">${aq != null ? esc(aqiLabel(aq)) : '&nbsp;'}</div>`),
-    tile(t('pressure'), gPressure(c, pressureTrend())),
-    tile(t('gSun'), gSun(d))
+    tile('wind', t('wind'), gWind(c, gustNow())),
+    tile('hum', t('humidity'), arcMeter(hum/100, '#5cc8ff', hum + '%', '') + `<div class="gv">☁️ ${c.cloud_cover ?? '—'}%</div>`),
+    tile('uv', t('gUV'), arcMeter(uv != null ? uv/11 : 0, UV_COL[ui], uv != null ? uv.toFixed(1) : '—', '') + `<div class="gv">${uv != null ? esc(uvLabel(uv)) : '—'}</div>`),
+    tile('air', t('gAir'), arcMeter(aq != null ? aq/100 : 0, AQI_COL[ai], aq != null ? Math.round(aq) : (air === null ? '…' : '—'), 'EAQI') + `<div class="gv">${aq != null ? esc(aqiLabel(aq)) : '&nbsp;'}</div>`),
+    tile('pres', t('pressure'), gPressure(c, pressureTrend())),
+    tile('sun', t('gSun'), gSun(d))
   ].join('');
 }
 function refreshGauges() { const el = $('gauges'); if (el && lastW) el.innerHTML = gaugesHTML(); }

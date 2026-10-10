@@ -453,3 +453,212 @@ Object.assign(I18N.en, {
   goldenH:'Golden hour {a}–{b}', blueH:'Blue hour {a}–{b}', sunriseTom:'Sunrise tomorrow at {t}: {l}',
   sunLbl:['fiery, very vivid','beautiful, colourful','ordinary','probably not visible']
 });
+
+/* ---------- пояснения к приборам главной карточки (касание по прибору) ---------- */
+Object.assign(I18N.ru, {gi:{
+  open:'Пояснение', close:'Закрыть', how:'Как читать', scale:'Шкала', now:'Сейчас',
+  wind:{
+    ico:'💨', head:'{v} м/с · {n}',
+    lv:[['0–1.5','штиль, тихий','дым поднимается почти вертикально'],['1.6–3.3','лёгкий','ветер ощущается лицом, шелестят листья'],['3.4–5.4','слабый','колышутся листья и тонкие ветки, флаги развеваются'],['5.5–7.9','умеренный','поднимает пыль и бумажки, качаются ветки'],['8–10.7','свежий','качаются небольшие деревья, на воде барашки'],['10.8–13.8','сильный','качаются толстые ветки, зонт держать трудно'],['13.9–17.1','крепкий','качаются деревья, идти против ветра трудно'],['17.2–20.7','очень крепкий','ломаются ветки, опасно у деревьев'],['20.8+','шторм','падают деревья, возможны разрушения']],
+    nowTxt:'{v} м/с — это {kmh} км/ч, {bf} по шкале Бофорта: {e}.',
+    gust:'Порывы до {g} м/с: короткие усиления на несколько секунд. Именно они ломают зонты и ветки.',
+    gustBad:'Порывы до {g} м/с опасны: держитесь подальше от деревьев, рекламных щитов и строительных лесов.',
+    dir:'Ветер дует {f}.',
+    feel:'Из-за ветра и влажности на улице ощущается как {f} при {t} на термометре.',
+    sea:'Западный и юго-западный ветер в Латвии обычно несёт влажный воздух с Балтики: облака, дождь, мягкая погода.',
+    land:'Восточный и северный ветер обычно приносит сухой воздух: ясно, зимой мороз, ночью прохладно.',
+    south:'Южный ветер обычно тёплый.',
+    from:['с севера','с северо-востока','с востока','с юго-востока','с юга','с юго-запада','с запада','с северо-запада'],
+    how:'Большое число — средняя скорость ветра в метрах в секунду. Голубая стрелка стоит на той стороне круга, откуда дует ветер, и указывает, куда он дует. «С» сверху — север. Ниже — сторона света, откуда дует ветер, и сила порывов.',
+    tip:'Скорость в прогнозе дана на высоте 10 м над открытой местностью. Между домами ветер обычно слабее, а на побережье, мостах и в поле сильнее.'
+  },
+  hum:{
+    ico:'💧', head:'{v}% · {n}',
+    lv:[['0–30%','очень сухо','сохнут кожа и губы'],['30–40%','сухо','лёгкая сухость'],['40–60%','комфортно','идеально для человека'],['60–80%','влажно','обычно для Латвии'],['80–100%','очень влажно','сырость, возможны туман и морось']],
+    nowTxt:'Воздух содержит {v}% от того количества влаги, которое он может удержать при {t}.',
+    dew:'Точка росы {d}: если воздух остынет до этой температуры, выпадет роса, появится туман или иней.',
+    fog:'До точки росы осталось всего {k}°: вероятны туман, морось и мокрые поверхности.',
+    raw:'Сырой холод: при высокой влажности прохлада ощущается сильнее, одежда быстрее отсыревает.',
+    muggy:'Точка росы выше 18°: воздух душный, тяжело заниматься спортом.',
+    cloud:'☁️ {c}% — доля неба, закрытая облаками: до 20% ясно, 30–60% переменная облачность, 70–90% облачно, 100% пасмурно.',
+    how:'Дуга и число — относительная влажность. Это не «сколько воды в воздухе», а насколько воздух близок к насыщению при нынешней температуре. Поэтому ночью, когда холодает, влажность растёт, а днём падает.',
+    tip:'Зимой при проветривании холодный уличный воздух нагревается и становится сухим, даже если на улице 90%. Дома комфортно 40–60%.'
+  },
+  uv:{
+    ico:'🕶️', head:'{v} · {n}',
+    lv:[['0–2','низкий','защита не нужна'],['3–5','умеренный','в полдень очки, головной убор, крем SPF 30'],['6–7','высокий','с 12 до 16 ищите тень, крем SPF 30–50'],['8–10','очень высокий','избегайте солнца в полдень'],['11+','экстремальный','без защиты на солнце лучше не выходить']],
+    nowTxt:'Сейчас индекс {v}: {e}.',
+    max:'Максимум сегодня около {m}, в солнечный полдень примерно в {n}.',
+    need:'Защита от солнца нужна при индексе 3 и выше.',
+    how:'УФ-индекс показывает силу ультрафиолета, от которого бывают загар и ожоги. Чем выше число, тем быстрее можно обгореть. Он зависит от высоты Солнца, облаков и озона и сильнее всего в полдень.',
+    tip:'Тонкие облака пропускают до 80% ультрафиолета. Вода, песок и снег его отражают. В Латвии индекс 3 и выше бывает примерно с апреля по сентябрь.'
+  },
+  air:{
+    ico:'🍃', head:'{v} EAQI · {n}',
+    lv:[['0–20','хороший','без ограничений'],['20–40','приемлемый','без ограничений'],['40–60','умеренный','чувствительным людям — меньше нагрузки на улице'],['60–80','плохой','всем снизить нагрузку на улице'],['80–100','очень плохой','избегать нагрузок на улице'],['100+','крайне плохой','по возможности оставаться дома']],
+    nowTxt:'Индекс {v}: {e}.',
+    main:'Больше всего влияет {p}.',
+    pol:{pm2_5:'мелкая пыль PM2.5 (дым, выхлоп, печное отопление)', pm10:'пыль PM10 (дороги, стройки, песок)', nitrogen_dioxide:'диоксид азота NO₂ (транспорт)', ozone:'озон O₃ (образуется на солнце в жару)'},
+    conc:'PM2.5 {a} · PM10 {b} · NO₂ {c} · O₃ {d} мкг/м³',
+    how:'Европейский индекс качества воздуха (EAQI): берётся худший из показателей — мелкие частицы PM2.5 и PM10, диоксид азота и озон. Меньше — лучше. Это прогноз модели CAMS для этого места, а не замер ближайшей станции.',
+    tip:'Пыльца в индекс не входит — смотрите карточку «Пыльца». В тихие морозные вечера в районах с печным отоплением воздух обычно хуже.'
+  },
+  pres:{
+    ico:'🧭', head:'{v} гПа · {n}',
+    lv:[['< 990','очень низкое','глубокий циклон: ветер, осадки'],['990–1005','пониженное','облачно, часто осадки'],['1005–1020','обычное','норма около 1013'],['1020–1030','повышенное','антициклон: сухо, малооблачно'],['> 1030','высокое','ясно; зимой сильный мороз, летом жара']],
+    nowTxt:'{v} гПа = {mm} мм рт. ст. Давление {n}: {e}.',
+    down:'За 3 часа падает на {x} гПа. Так обычно приближается циклон или фронт: облака, осадки и усиление ветра в ближайшие 6–24 часа.',
+    fast:'Падает быстро ({x} гПа за 3 часа) — признак сильного ветра.',
+    up:'За 3 часа растёт на {x} гПа: погода обычно улучшается, ветер слабеет.',
+    flat:'Почти не меняется: погода, скорее всего, останется такой же.',
+    how:'Стрелка показывает давление на шкале от 960 до 1050 гПа. Средняя отметка — 1013 гПа, это норма. Значение приведено к уровню моря, поэтому домашний барометр без настройки покажет меньше: примерно на 1 гПа на каждые 8 м высоты.',
+    tip:'Важнее не само число, а куда оно движется: ↗ растёт, → стабильно, ↘ падает.'
+  },
+  sun:{
+    ico:'🌅', head:'{a} – {b}',
+    len:'Световой день {h} ч {m} мин; завтра {d}.', longer:'на {n} мин длиннее', shorter:'на {n} мин короче', same:'такой же',
+    noon:'Солнце выше всего в {t}: {e}° над горизонтом.',
+    dusk:'После заката ещё светло примерно до {t} (гражданские сумерки).',
+    dawn:'Светать начнёт около {t}, восход в {r}.',
+    how:'Дуга — путь Солнца по небу сегодня: слева время восхода, справа заката. Жёлтая точка показывает, где Солнце сейчас. Внизу — сколько осталось до заката, а ночью — до восхода.',
+    tip:'В Латвии день длится от неполных 7 часов в декабре до почти 18 часов в июне. Золотой час и прогноз красивого заката — в карточке «Советы на сегодня».'
+  }
+}});
+Object.assign(I18N.lv, {gi:{
+  open:'Skaidrojums', close:'Aizvērt', how:'Kā lasīt', scale:'Skala', now:'Tagad',
+  wind:{
+    ico:'💨', head:'{v} m/s · {n}',
+    lv:[['0–1.5','bezvējš, kluss','dūmi kāpj gandrīz vertikāli'],['1.6–3.3','viegls','vējš jūtams sejā, šalc lapas'],['3.4–5.4','vājš','kustas lapas un tievi zari, plīvo karogi'],['5.5–7.9','mērens','ceļ putekļus un papīrus, šūpojas zari'],['8–10.7','svaigs','šūpojas nelieli koki, uz ūdens viļņu galotnes'],['10.8–13.8','stiprs','šūpojas resni zari, lietussargu grūti noturēt'],['13.9–17.1','ļoti stiprs','šūpojas koki, grūti iet pret vēju'],['17.2–20.7','vētrains','lūst zari, bīstami pie kokiem'],['20.8+','vētra','krīt koki, iespējami postījumi']],
+    nowTxt:'{v} m/s ir {kmh} km/h, {bf} pēc Boforta skalas: {e}.',
+    gust:'Brāzmas līdz {g} m/s: īslaicīgi pastiprinājumi uz dažām sekundēm. Tieši tās lauž lietussargus un zarus.',
+    gustBad:'Brāzmas līdz {g} m/s ir bīstamas: turieties tālāk no kokiem, reklāmas stendiem un sastatnēm.',
+    dir:'Vējš pūš {f}.',
+    feel:'Vēja un mitruma dēļ ārā jūtas kā {f}, termometrs rāda {t}.',
+    sea:'Rietumu un dienvidrietumu vējš Latvijā parasti nes mitru gaisu no Baltijas jūras: mākoņi, lietus, maigs laiks.',
+    land:'Austrumu un ziemeļu vējš parasti nes sausu gaisu: skaidrs, ziemā sals, naktīs vēss.',
+    south:'Dienvidu vējš parasti ir silts.',
+    from:['no ziemeļiem','no ziemeļaustrumiem','no austrumiem','no dienvidaustrumiem','no dienvidiem','no dienvidrietumiem','no rietumiem','no ziemeļrietumiem'],
+    how:'Lielais skaitlis ir vidējais vēja ātrums metros sekundē. Zilā bultiņa atrodas tajā apļa pusē, no kuras pūš vējš, un rāda, uz kurieni tas pūš. «Z» augšā ir ziemeļi. Zemāk — debespuse, no kuras pūš vējš, un brāzmu stiprums.',
+    tip:'Prognozē ātrums dots 10 m augstumā virs atklāta apvidus. Starp mājām vējš parasti ir vājāks, bet piekrastē, uz tiltiem un laukā — stiprāks.'
+  },
+  hum:{
+    ico:'💧', head:'{v}% · {n}',
+    lv:[['0–30%','ļoti sauss','sausē āda un lūpas'],['30–40%','sauss','neliels sausums'],['40–60%','komfortabli','ideāli cilvēkam'],['60–80%','mitrs','Latvijai ierasti'],['80–100%','ļoti mitrs','drēgns, iespējama migla un smidzinājums']],
+    nowTxt:'Gaisā ir {v}% no mitruma daudzuma, ko tas var noturēt pie {t}.',
+    dew:'Rasas punkts {d}: ja gaiss atdzisīs līdz šai temperatūrai, nokritīs rasa, veidosies migla vai sarma.',
+    fog:'Līdz rasas punktam palikuši tikai {k}°: iespējama migla, smidzinājums un slapjas virsmas.',
+    raw:'Drēgns aukstums: augstā mitrumā vēsums jūtams stiprāk, apģērbs ātrāk kļūst mitrs.',
+    muggy:'Rasas punkts virs 18°: gaiss ir smacīgs, grūti sportot.',
+    cloud:'☁️ {c}% — mākoņu klātā debess daļa: līdz 20% skaidrs, 30–60% mainīgs mākoņu daudzums, 70–90% mākoņains, 100% apmācies.',
+    how:'Loks un skaitlis ir relatīvais mitrums. Tas nav «cik ūdens ir gaisā», bet gan cik tuvu gaiss ir piesātinājumam pie pašreizējās temperatūras. Tāpēc naktī, kad kļūst vēsāks, mitrums pieaug, bet dienā samazinās.',
+    tip:'Ziemā vēdinot aukstais āra gaiss sasilst un kļūst sauss, pat ja ārā ir 90%. Mājās komfortabli ir 40–60%.'
+  },
+  uv:{
+    ico:'🕶️', head:'{v} · {n}',
+    lv:[['0–2','zems','aizsardzība nav vajadzīga'],['3–5','mērens','pusdienlaikā brilles, cepure, krēms SPF 30'],['6–7','augsts','no 12 līdz 16 meklējiet ēnu, krēms SPF 30–50'],['8–10','ļoti augsts','izvairieties no saules pusdienlaikā'],['11+','ekstrēms','bez aizsardzības saulē labāk neiet']],
+    nowTxt:'Tagad indekss {v}: {e}.',
+    max:'Šodien maksimums ap {m}, saules pusdienlaikā ap {n}.',
+    need:'Aizsardzība no saules vajadzīga, ja indekss ir 3 un vairāk.',
+    how:'UV indekss rāda ultravioletā starojuma stiprumu, no kura rodas iedegums un apdegumi. Jo lielāks skaitlis, jo ātrāk var apdegt. Tas atkarīgs no Saules augstuma, mākoņiem un ozona, un ir vislielākais pusdienlaikā.',
+    tip:'Plāni mākoņi laiž cauri līdz 80% UV starojuma. Ūdens, smiltis un sniegs to atstaro. Latvijā indekss 3 un vairāk ir aptuveni no aprīļa līdz septembrim.'
+  },
+  air:{
+    ico:'🍃', head:'{v} EAQI · {n}',
+    lv:[['0–20','labs','bez ierobežojumiem'],['20–40','pieņemams','bez ierobežojumiem'],['40–60','mērens','jutīgiem cilvēkiem mazāk slodzes ārā'],['60–80','slikts','visiem samazināt slodzi ārā'],['80–100','ļoti slikts','izvairīties no slodzes ārā'],['100+','ārkārtīgi slikts','ja iespējams, palikt mājās']],
+    nowTxt:'Indekss {v}: {e}.',
+    main:'Visvairāk ietekmē {p}.',
+    pol:{pm2_5:'smalkās daļiņas PM2.5 (dūmi, izplūdes gāzes, krāšņu apkure)', pm10:'putekļi PM10 (ceļi, būvdarbi, smiltis)', nitrogen_dioxide:'slāpekļa dioksīds NO₂ (transports)', ozone:'ozons O₃ (veidojas saulē karstumā)'},
+    conc:'PM2.5 {a} · PM10 {b} · NO₂ {c} · O₃ {d} µg/m³',
+    how:'Eiropas gaisa kvalitātes indekss (EAQI): ņem sliktāko no rādītājiem — smalkās daļiņas PM2.5 un PM10, slāpekļa dioksīdu un ozonu. Mazāk ir labāk. Tā ir CAMS modeļa prognoze šai vietai, nevis tuvākās stacijas mērījums.',
+    tip:'Ziedputekšņi indeksā neietilpst — skatiet karti «Ziedputekšņi». Klusos salnos vakaros rajonos ar krāšņu apkuri gaiss parasti ir sliktāks.'
+  },
+  pres:{
+    ico:'🧭', head:'{v} hPa · {n}',
+    lv:[['< 990','ļoti zems','dziļš ciklons: vējš, nokrišņi'],['990–1005','pazemināts','mākoņains, bieži nokrišņi'],['1005–1020','parasts','norma ap 1013'],['1020–1030','paaugstināts','anticiklons: sauss, maz mākoņu'],['> 1030','augsts','skaidrs; ziemā stiprs sals, vasarā karstums']],
+    nowTxt:'{v} hPa = {mm} mm dz. st. Spiediens {n}: {e}.',
+    down:'3 stundās krītas par {x} hPa. Tā parasti tuvojas ciklons vai fronte: mākoņi, nokrišņi un vēja pastiprināšanās tuvāko 6–24 stundu laikā.',
+    fast:'Krītas ātri ({x} hPa 3 stundās) — stipra vēja pazīme.',
+    up:'3 stundās pieaug par {x} hPa: laiks parasti uzlabojas, vējš pierimst.',
+    flat:'Gandrīz nemainās: laiks, visticamāk, paliks tāds pats.',
+    how:'Bultiņa rāda spiedienu skalā no 960 līdz 1050 hPa. Vidējā atzīme — 1013 hPa, tā ir norma. Vērtība pārrēķināta uz jūras līmeni, tāpēc neiestatīts mājas barometrs rādīs mazāk: aptuveni par 1 hPa uz katriem 8 m augstuma.',
+    tip:'Svarīgāks par pašu skaitli ir virziens: ↗ pieaug, → stabils, ↘ krītas.'
+  },
+  sun:{
+    ico:'🌅', head:'{a} – {b}',
+    len:'Gaišais laiks {h} h {m} min; rīt {d}.', longer:'par {n} min garāks', shorter:'par {n} min īsāks', same:'tikpat garš',
+    noon:'Saule visaugstāk {t}: {e}° virs horizonta.',
+    dusk:'Pēc saulrieta vēl gaišs aptuveni līdz {t} (pilsoniskā krēsla).',
+    dawn:'Gaišs sāks kļūt ap {t}, saullēkts {r}.',
+    how:'Loks ir Saules ceļš pa debesīm šodien: pa kreisi saullēkta laiks, pa labi saulrieta. Dzeltenais punkts rāda, kur Saule ir tagad. Apakšā — cik atlicis līdz saulrietam, bet naktī — līdz saullēktam.',
+    tip:'Latvijā diena ilgst no nepilnām 7 stundām decembrī līdz gandrīz 18 stundām jūnijā. Zelta stunda un skaista saulrieta prognoze — kartē «Padomi šodienai».'
+  }
+}});
+Object.assign(I18N.en, {gi:{
+  open:'Explain', close:'Close', how:'How to read it', scale:'Scale', now:'Now',
+  wind:{
+    ico:'💨', head:'{v} m/s · {n}',
+    lv:[['0–1.5','calm, light air','smoke rises almost vertically'],['1.6–3.3','light breeze','felt on the face, leaves rustle'],['3.4–5.4','gentle breeze','leaves and twigs move, flags fly'],['5.5–7.9','moderate','raises dust and paper, branches sway'],['8–10.7','fresh','small trees sway, whitecaps on water'],['10.8–13.8','strong','large branches move, umbrellas hard to hold'],['13.9–17.1','near gale','whole trees move, hard to walk into the wind'],['17.2–20.7','gale','twigs break off, dangerous near trees'],['20.8+','storm','trees fall, damage possible']],
+    nowTxt:'{v} m/s is {kmh} km/h, {bf} on the Beaufort scale: {e}.',
+    gust:'Gusts up to {g} m/s: short bursts lasting a few seconds. They are what breaks umbrellas and branches.',
+    gustBad:'Gusts up to {g} m/s are dangerous: keep away from trees, billboards and scaffolding.',
+    dir:'The wind blows {f}.',
+    feel:'Because of wind and humidity it feels like {f} while the thermometer shows {t}.',
+    sea:'West and south-west winds in Latvia usually bring moist Baltic air: clouds, rain, mild weather.',
+    land:'East and north winds usually bring dry air: clear skies, frost in winter, cool nights.',
+    south:'South winds are usually warm.',
+    from:['from the north','from the north-east','from the east','from the south-east','from the south','from the south-west','from the west','from the north-west'],
+    how:'The big number is the average wind speed in metres per second. The blue arrow sits on the side of the circle the wind comes from and points where it blows. “N” at the top is north. Below are the wind direction and gust strength.',
+    tip:'Forecast speed is for 10 m above open ground. Between buildings the wind is usually weaker; on the coast, bridges and open fields it is stronger.'
+  },
+  hum:{
+    ico:'💧', head:'{v}% · {n}',
+    lv:[['0–30%','very dry','dry skin and lips'],['30–40%','dry','slightly dry'],['40–60%','comfortable','ideal for people'],['60–80%','humid','normal for Latvia'],['80–100%','very humid','damp, fog and drizzle possible']],
+    nowTxt:'The air holds {v}% of the moisture it can hold at {t}.',
+    dew:'Dew point {d}: if the air cools to this temperature, dew, fog or frost will form.',
+    fog:'Only {k}° to the dew point: fog, drizzle and wet surfaces are likely.',
+    raw:'Raw cold: in high humidity the chill feels stronger and clothes get damp faster.',
+    muggy:'Dew point above 18°: the air is muggy, hard to exercise.',
+    cloud:'☁️ {c}% — share of the sky covered by cloud: up to 20% clear, 30–60% partly cloudy, 70–90% cloudy, 100% overcast.',
+    how:'The arc and number show relative humidity. It is not “how much water is in the air” but how close the air is to saturation at the current temperature. That is why humidity rises at night as it cools and falls during the day.',
+    tip:'In winter, cold outdoor air becomes dry once it warms up indoors, even at 90% outside. Indoors 40–60% is comfortable.'
+  },
+  uv:{
+    ico:'🕶️', head:'{v} · {n}',
+    lv:[['0–2','low','no protection needed'],['3–5','moderate','at midday: sunglasses, hat, SPF 30'],['6–7','high','seek shade 12–16, SPF 30–50'],['8–10','very high','avoid the midday sun'],['11+','extreme','better not to go out unprotected']],
+    nowTxt:'Index now {v}: {e}.',
+    max:'Today’s peak is about {m}, at solar noon around {n}.',
+    need:'Sun protection is needed at index 3 and above.',
+    how:'The UV index shows the strength of the ultraviolet rays that cause tanning and sunburn. The higher the number, the faster you burn. It depends on sun height, clouds and ozone and peaks at midday.',
+    tip:'Thin clouds let through up to 80% of UV. Water, sand and snow reflect it. In Latvia the index reaches 3+ roughly from April to September.'
+  },
+  air:{
+    ico:'🍃', head:'{v} EAQI · {n}',
+    lv:[['0–20','good','no restrictions'],['20–40','fair','no restrictions'],['40–60','moderate','sensitive people: less exertion outdoors'],['60–80','poor','everyone: reduce outdoor exertion'],['80–100','very poor','avoid outdoor exertion'],['100+','extremely poor','stay indoors if possible']],
+    nowTxt:'Index {v}: {e}.',
+    main:'The main contributor is {p}.',
+    pol:{pm2_5:'fine particles PM2.5 (smoke, exhaust, wood heating)', pm10:'dust PM10 (roads, construction, sand)', nitrogen_dioxide:'nitrogen dioxide NO₂ (traffic)', ozone:'ozone O₃ (forms in hot sunshine)'},
+    conc:'PM2.5 {a} · PM10 {b} · NO₂ {c} · O₃ {d} µg/m³',
+    how:'The European Air Quality Index (EAQI) takes the worst of fine particles PM2.5 and PM10, nitrogen dioxide and ozone. Lower is better. It is a CAMS model forecast for this place, not a reading from the nearest station.',
+    tip:'Pollen is not part of the index — see the “Pollen” card. On calm frosty evenings, areas with wood heating usually have worse air.'
+  },
+  pres:{
+    ico:'🧭', head:'{v} hPa · {n}',
+    lv:[['< 990','very low','deep low: wind, precipitation'],['990–1005','low','cloudy, often rain'],['1005–1020','normal','average about 1013'],['1020–1030','high','high pressure: dry, few clouds'],['> 1030','very high','clear; hard frost in winter, heat in summer']],
+    nowTxt:'{v} hPa = {mm} mmHg. Pressure is {n}: {e}.',
+    down:'Falling by {x} hPa in 3 hours. This usually means a low or front is coming: clouds, rain and stronger wind in the next 6–24 hours.',
+    fast:'Falling fast ({x} hPa in 3 hours) — a sign of strong wind.',
+    up:'Rising by {x} hPa in 3 hours: weather usually improves and the wind eases.',
+    flat:'Almost unchanged: the weather will probably stay the same.',
+    how:'The needle shows pressure on a scale from 960 to 1050 hPa. The middle mark is 1013 hPa, the average. The value is reduced to sea level, so an uncalibrated home barometer reads lower: about 1 hPa per 8 m of altitude.',
+    tip:'The trend matters more than the number: ↗ rising, → steady, ↘ falling.'
+  },
+  sun:{
+    ico:'🌅', head:'{a} – {b}',
+    len:'Daylight {h} h {m} min; tomorrow {d}.', longer:'{n} min longer', shorter:'{n} min shorter', same:'the same',
+    noon:'The sun is highest at {t}: {e}° above the horizon.',
+    dusk:'After sunset it stays light until about {t} (civil twilight).',
+    dawn:'It starts getting light around {t}, sunrise at {r}.',
+    how:'The arc is today’s path of the sun: sunrise time on the left, sunset on the right. The yellow dot shows where the sun is now. Below is the time left until sunset, or until sunrise at night.',
+    tip:'In Latvia daylight lasts from under 7 hours in December to almost 18 hours in June. Golden hour and the sunset forecast are in the “Tips for today” card.'
+  }
+}});
