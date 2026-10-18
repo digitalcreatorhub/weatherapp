@@ -825,3 +825,9 @@ Object.assign(I18N.en, {carTitle:'Car: wash and tyres', washTitle:'Car wash',
 Object.assign(I18N.ru.xt.hol, {usualShort:'обычно {a}…{b}'});
 Object.assign(I18N.lv.xt.hol, {usualShort:'parasti {a}…{b}'});
 Object.assign(I18N.en.xt.hol, {usualShort:'usually {a}…{b}'});
+Object.assign(I18N.ru, {ribAria:'Лента маршрута', ribPick:'Нажмите на точку, чтобы увидеть подробности', ribPrecip:'осадки', ribAll:'Все точки ({n})', ribNow:'Сегодня',
+  moonAhead:'Ближайший месяц', moonStripHint:'нажмите на день', moonDayLit:'освещена на {p}%'});
+Object.assign(I18N.lv, {ribAria:'Maršruta josla', ribPick:'Pieskarieties punktam, lai redzētu detaļas', ribPrecip:'nokrišņi', ribAll:'Visi punkti ({n})', ribNow:'Šodien',
+  moonAhead:'Tuvākais mēnesis', moonStripHint:'pieskarieties dienai', moonDayLit:'apgaismots {p}%'});
+Object.assign(I18N.en, {ribAria:'Route ribbon', ribPick:'Tap a point to see the details', ribPrecip:'precipitation', ribAll:'All points ({n})', ribNow:'Today',
+  moonAhead:'Next month', moonStripHint:'tap a day', moonDayLit:'{p}% lit'});

@@ -9,7 +9,7 @@
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="leaflet.css?v=41">
+<link rel="stylesheet" href="leaflet.css?v=42">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -300,6 +300,19 @@
   .mrow{display:flex;gap:16px;align-items:center}
   .mt b{font-size:1.15rem;font-weight:500;display:block}
   .mn{display:grid;gap:2px;margin-top:8px;font-size:.84rem;color:var(--muted)}
+  .mstripbox{margin-top:16px}
+  .mstrip-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+  .mstrip-h b{font-weight:500;font-size:.9rem;white-space:nowrap}.mstrip-h small{color:var(--muted);font-size:.74rem;text-align:right}
+  .mstrip{display:flex;gap:2px;overflow-x:auto;padding:4px 0 6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent);mask-image:linear-gradient(90deg,#000 90%,transparent)}
+  .mc{flex:0 0 40px;display:flex;flex-direction:column;align-items:center;gap:1px;background:none;border:1.5px solid transparent;border-radius:12px;padding:3px 0 2px;color:var(--text);cursor:pointer;font:inherit}
+  .mc .mmo{height:.8rem;font-size:.68rem;color:var(--muted);line-height:.8rem;text-transform:capitalize;white-space:nowrap}
+  .mc .mdn{font-size:.8rem}.mc .mev{height:.95rem;font-size:.8rem;line-height:.95rem}
+  .mc svg{display:block}
+  .mc.today{background:rgba(92,200,255,.14)}.mc.today .mdn{color:var(--sky);font-weight:600}
+  .mc.ev{background:rgba(255,181,71,.1)}.mc.near{border-color:var(--sun)}
+  .mc.sel{border-color:rgba(255,255,255,.75)}
+  .mc:focus-visible{outline:2px solid var(--sky);outline-offset:1px}
+  .msel{display:flex;gap:8px;align-items:center;font-size:.84rem;color:var(--muted);margin-top:4px}.msel b{color:var(--text);font-weight:500}
   .sky{margin-top:14px;background:rgba(255,255,255,.05);border-radius:12px;padding:10px 12px;font-size:.9rem}
   .sky small{display:block;color:var(--muted);font-size:.78rem;margin-top:2px}
 
@@ -376,6 +389,33 @@
   .rp:first-child{border-top:0}
   .rp .d{width:10px;height:10px;border-radius:50%}
   .rp small{color:var(--muted);font-size:.76rem}
+  /* лента маршрута */
+  .rib{margin:4px 0 6px}
+  .rib-in{position:relative;margin:0 20px}
+  .rib-ic{position:relative;height:34px}
+  .rk{position:absolute;top:0;transform:translateX(-50%);width:34px;height:34px;border-radius:50%;border:1.5px solid transparent;background:none;color:inherit;font-size:1.15rem;line-height:1;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .rk.sm{width:20px;height:34px;border:0}
+  .rk.sm::after{content:"";width:5px;height:5px;border-radius:50%;background:var(--muted);opacity:.7}
+  .rk.sel{border-color:rgba(255,255,255,.8);background:rgba(255,255,255,.1)}
+  .rk.sel.dot::after{background:#fff;opacity:1}
+  .rk:focus-visible{outline:2px solid var(--sky);outline-offset:1px}
+  .rib-bar{display:flex;gap:2px;height:9px;border-radius:5px;overflow:hidden;margin-top:2px}
+  .rib-bar i{border-radius:2px}
+  .rib-ch{position:relative;margin-top:8px;background:rgba(255,255,255,.04);border-radius:8px}
+  .rib-ch svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .rd{position:absolute;width:7px;height:7px;border-radius:50%;transform:translate(-50%,-50%);border:1.5px solid #0a1522;pointer-events:none}
+  .rt{position:absolute;left:4px;font-size:.7rem;color:var(--muted);pointer-events:none}.rt.hi{top:1px}.rt.lo{bottom:1px}
+  .rib-lb{position:relative;height:36px;margin-top:5px}
+  .rl{position:absolute;top:0;transform:translateX(-50%);font-size:.76rem;text-align:center;white-space:nowrap;max-width:30%;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+  .rl small{display:block;color:var(--muted);font-size:.72rem}
+  .rl.f{transform:translateX(-20px);text-align:left}.rl.l{transform:translateX(calc(-100% + 20px));text-align:right}
+  .rib-leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.74rem;color:var(--muted);margin:2px 0 8px}
+  .rib-leg i{display:inline-block;width:16px;height:0;border-top:2px solid #eaf2f8;vertical-align:middle;margin-right:5px}
+  .rib-leg .l2{border-top:2px dashed #ffb547}.rib-leg .l3{height:8px;border:0;background:#5cc8ff;opacity:.6;width:8px;border-radius:2px}.rib-leg .l4{border-top:1px dashed #8fd3ff}
+  .rp.rsel{background:rgba(255,255,255,.06);border:0;border-radius:12px;padding:10px}
+  .rib-hint{font-size:.74rem;color:var(--muted);margin:6px 0 4px}
+  .rall{margin:8px 0}.rall summary{cursor:pointer;color:var(--sky);font-size:.86rem;padding:8px 0}
+  .rall .rp:first-child{border-top:0}
   .rp .why{font-size:.78rem;color:#ffc2b3}
   @media(max-width:600px){.rp{grid-template-columns:12px minmax(0,1fr) 46px 26px minmax(0,1fr)}.rp .why{grid-column:2/-1}}
   /* ===== визуализации и движение ===== */
@@ -721,15 +761,15 @@
   <button type="button" role="menuitem" data-go="ticksCard" data-i18n="navTicks">Клещи</button>
   <button type="button" role="menuitem" data-go="sec-hourly" data-i18n="navChart">График по часам</button>
 </div>
-<script src="i18n.js?v=41"></script>
-<script src="leaflet.js?v=41"></script>
-<script src="viz.js?v=41"></script>
-<script src="borders.js?v=41"></script>
-<script src="app.js?v=41"></script>
-<script src="drive.js?v=41"></script>
-<script src="plan.js?v=41"></script>
-<script src="info.js?v=41"></script>
-<script src="extra.js?v=41"></script>
-<script src="nav.js?v=41"></script>
+<script src="i18n.js?v=42"></script>
+<script src="leaflet.js?v=42"></script>
+<script src="viz.js?v=42"></script>
+<script src="borders.js?v=42"></script>
+<script src="app.js?v=42"></script>
+<script src="drive.js?v=42"></script>
+<script src="plan.js?v=42"></script>
+<script src="info.js?v=42"></script>
+<script src="extra.js?v=42"></script>
+<script src="nav.js?v=42"></script>
 </body>
 </html>

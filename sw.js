@@ -1,6 +1,6 @@
 // Сервис-воркер: офлайн-кэш, уведомления Android, фоновая проверка погоды (для установленного приложения).
-const VER = 'wx-v41';
-const SHELL = ['./', 'index.html', 'i18n.js?v=41', 'app.js?v=41', 'borders.js?v=41', 'viz.js?v=41', 'drive.js?v=41', 'plan.js?v=41', 'info.js?v=41', 'extra.js?v=41', 'nav.js?v=41', 'leaflet.js?v=41', 'leaflet.css?v=41', 'manifest.webmanifest', 'logo.svg', 'icon-192.png', 'icon-512.png'];
+const VER = 'wx-v42';
+const SHELL = ['./', 'index.html', 'i18n.js?v=42', 'app.js?v=42', 'borders.js?v=42', 'viz.js?v=42', 'drive.js?v=42', 'plan.js?v=42', 'info.js?v=42', 'extra.js?v=42', 'nav.js?v=42', 'leaflet.js?v=42', 'leaflet.css?v=42', 'manifest.webmanifest', 'logo.svg', 'icon-192.png', 'icon-512.png'];
 const TYPES = {
   storm:['⛈️','Гроза'], rain:['🌧️','Сильный дождь'], snow:['❄️','Сильный снег'], ice:['🧊','Ледяной дождь, гололёд'],
   wind:['💨','Сильный ветер'], heat:['🥵','Сильная жара'], frost:['🥶','Сильный мороз'], freeze:['🌱','Заморозок']

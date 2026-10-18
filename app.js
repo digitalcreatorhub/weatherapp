@@ -265,7 +265,7 @@ function dailyHTML(w) {
     const nm = i === 0 ? t('today') : i === 1 ? t('tomorrow') : dFmt(day, {weekday:'long'});
     const mm = d.precipitation_sum[i] > 0.1 ? dec(d.precipitation_sum[i].toFixed(1)) + ' ' + t('mm') : '';
     const [wt, wi] = wmo(d.weather_code[i]);
-    return `<div class="row"><div class="nm"><span class="dn">${nm}</span><small>${dFmt(day, {day:'numeric', month:'short'})}${mm ? `<span class="mm"> · ${mm}</span>` : ''}</small></div>
+    return `<div class="row"><div class="nm"><span class="dn">${nm}</span><small>${dFmt(day, {day:'numeric', month:'short'})}${mm ? `<span class="mmo"> · ${mm}</span>` : ''}</small></div>
       <div class="ic" title="${esc(wt)}">${wxI(d.weather_code[i], 1, 36, wi)}</div>
       <div class="rg"><span>${fmt(d.temperature_2m_min[i])}</span><div class="tr"><i style="left:${l}%;width:${wd}%;background:linear-gradient(90deg,${tempColor(d.temperature_2m_min[i])},${tempColor(d.temperature_2m_max[i])});animation-delay:${i*80}ms"></i></div><span>${fmt(d.temperature_2m_max[i])}</span></div>${confCell(i)}</div>`;
   }).join('') + `<p class="dhint">${esc(t('d5Hint'))}</p></div>`;
@@ -471,10 +471,10 @@ function nextMoon(ms, target) {
   }
   return null;
 }
-function moonSvg(E) {
+function moonSvg(E, size = 96) {
   const r = 44, wax = E <= 180, Ee = wax ? E : 360 - E, c = Math.cos(Ee*RAD), rx = Math.abs(c)*r, sw = c > 0 ? 0 : 1;
   const lit = `<path d="M0,${-r} A${r},${r} 0 0 1 0,${r} A${rx},${r} 0 0 ${sw} 0,${-r}Z" fill="#f3ecd2"/>`;
-  return `<svg viewBox="-50 -50 100 100" width="96" height="96" aria-hidden="true"><circle r="${r}" fill="#1d2b3c" stroke="rgba(255,255,255,.14)"/><g ${wax ? '' : 'transform="scale(-1,1)"'}>${lit}</g></svg>`;
+  return `<svg viewBox="-50 -50 100 100" width="${size}" height="${size}" aria-hidden="true"><circle r="${r}" fill="#1d2b3c" stroke="rgba(255,255,255,.14)"/><g ${wax ? '' : 'transform="scale(-1,1)"'}>${lit}</g></svg>`;
 }
 function skyRating(frac) {
   if (!lastW || !hourlyData) return null;
@@ -488,15 +488,49 @@ function skyRating(frac) {
   const c = sum/n, k = c < 20 ? 0 : c < 45 ? 1 : c < 70 ? 2 : 3;
   return {c, txt:t('sky')[k], note:c < 45 && frac > 0.6 ? t('skyMoon') : ''};
 }
+/* лента фаз на месяц вперёд: по диску на день, новолуния и полнолуния подсвечены */
+let moonSel = -1;
+function moonStrip(now) {
+  const dk = ms => new Date(ms).toLocaleDateString('sv', {timeZone:TZ});
+  const hm = new Date(now).toLocaleTimeString('en-GB', {timeZone:TZ, hour12:false, hour:'2-digit', minute:'2-digit'}).split(':').map(Number);
+  const noon = now - ((hm[0] - 12)*60 + hm[1])*6e4, N = 30;
+  const ev = {};   /* день -> 0 новолуние / 180 полнолуние */
+  let first = {0:null, 180:null};
+  [0, 180].forEach(tg => { let x = now - 36e5; for (let n = 0; n < 3; n++) { const f = nextMoon(x, tg); if (!f || f > noon + (N + 1)*864e5) break; ev[dk(f)] = tg; if (first[tg] === null && f >= now - 36e5) first[tg] = dk(f); x = f + 864e5; } });
+  const days = Array.from({length:N}, (_, d) => {
+    const ms = noon + d*864e5, mi = moonInfo(ms), key = dk(ms), dt = new Date(ms);
+    return {ms, mi, key, ev:ev[key], d, day:+dt.toLocaleDateString('en-GB', {timeZone:TZ, day:'numeric'}), mon:dt.toLocaleDateString(LOC, {timeZone:TZ, month:'short'}),
+      wd:dt.toLocaleDateString(LOC, {timeZone:TZ, weekday:'short'})};
+  });
+  if (moonSel < 0 || moonSel >= N) moonSel = 0;
+  const cell = c => `<button type="button" class="mc${c.d === 0 ? ' today' : ''}${c.ev !== undefined ? ' ev' + (c.key === first[c.ev] ? ' near' : '') : ''}${c.d === moonSel ? ' sel' : ''}" data-md="${c.d}" aria-label="${esc(c.day + ' ' + c.mon + ': ' + c.mi.name)}">
+      <span class="mmo">${c.day === 1 || c.d === 0 ? esc(c.mon) : ''}</span>${moonSvg(c.mi.E, 30)}<span class="mdn">${c.day}</span>
+      <span class="mev">${c.ev === 0 ? '🌑' : c.ev === 180 ? '🌕' : ''}</span></button>`;
+  const s = days[moonSel];
+  return `<div class="mstrip-h"><b>${t('moonAhead')}</b><small>${t('moonStripHint')}</small></div>
+    <div class="mstrip" role="group">${days.map(cell).join('')}</div>
+    <div class="msel">${moonSvg(s.mi.E, 22)}<span><b>${esc(s.wd)}, ${s.day} ${esc(s.mon)}</b> · ${esc(s.mi.name)} · ${t('moonDayLit', {p:Math.round(s.mi.frac*100)})}</span></div>`;
+}
 function renderMoon() {
   const now = Date.now(), m = moonInfo(now), nn = nextMoon(now, 0), nf = nextMoon(now, 180), sky = skyRating(m.frac);
   const fd = x => x ? new Date(x).toLocaleDateString(LOC, {timeZone:TZ, day:'numeric', month:'long'}) : '—';
-  $('moon').innerHTML = `<h2>${t('moonTitle')}</h2>
+  const oldStrip = $('moon').querySelector('.mstrip'), keepX = oldStrip ? oldStrip.scrollLeft : 0;
+  const html = `<h2>${t('moonTitle')}</h2>
     <div class="mrow">${moonSvg(m.E)}<div class="mt"><b>${m.name}</b>
       <div class="sub">${t('moonLit', {p:Math.round(m.frac*100), a:m.age.toFixed(1)})}</div>
       <div class="mn"><span>${t('newMoon', {d:fd(nn)})}</span><span>${t('fullMoon', {d:fd(nf)})}</span></div></div></div>
+    <div class="mstripbox">${moonStrip(now)}</div>
     ${sky ? `<div class="sky">⭐ ${sky.txt}<small>${t('skyNote', {c:Math.round(sky.c)})} ${sky.note}</small></div>` : ''}`;
+  if (html === renderMoon.last) return;   /* не трогаем разметку без изменений, чтобы не прерывать прокрутку ленты пальцем */
+  renderMoon.last = html; $('moon').innerHTML = html;
+  const ns = $('moon').querySelector('.mstrip'); if (ns) ns.scrollLeft = keepX;
 }
+
+$('moon').addEventListener('click', e => {
+  const b = e.target.closest('[data-md]'); if (!b) return;
+  moonSel = +b.dataset.md;
+  renderMoon();
+});
 
 /* ---------- города: почасовой прогноз для карты и предупреждений ---------- */
 async function loadCities() {
@@ -1274,7 +1308,7 @@ function roadEval(h, i) {
   else if ((vis != null && vis < 1000) || (vis == null && (c === 45 || c === 48))) up(1, t('rFog', {v:vis != null ? visFmt(vis) : t('visKm', {v:'< 1'})}));
   if (pr >= 4 && sn === 0) up(1, t('rRain'));
   if (g >= 22) up(2, t('rWind', {g:Math.round(g)})); else if (g >= 17) up(1, t('rWind', {g:Math.round(g)}));
-  return {lvl, r, T, Ts, vis, c};
+  return {lvl, r, T, Ts, vis, c, pr};
 }
 function renderRoad() {
   const el = $('roadOut');
@@ -1294,17 +1328,61 @@ function renderRoad() {
   const reasons = [];
   R.evals.forEach((e, k) => e.r.forEach(x => { const base = x.split(',')[0]; if (!reasons.some(y => y.b === base)) reasons.push({b:base, s:`${x} (${label(R.pts[k])})`}); }));
   const verdict = worst === 0 ? t('roadOK') : t(worst === 2 ? 'roadDanger' : 'roadWarn', {r:reasons.slice(0, 4).map(x => x.s).join('; ')});
-  el.innerHTML = `<div class="rsum">${esc(t('roadSummary', {a:placeName(R.a), b:placeName(R.b), km:totalKm, dur:t('dur', {h:Math.floor(mins/60), m:mins % 60}), t1:hhmm(dep), t2:hhmm(dep + mins*6e4)}))}
-      <small>${R.straight ? t('roadStraight') : ''}</small></div>
-    <div class="ok" style="margin-bottom:8px">${esc(verdict)}</div>
-    <div class="rbar">${R.evals.map(e => `<i style="background:${LV_COL[e.lvl]}"></i>`).join('')}</div>
-    <div class="rpts">${R.evals.map((e, k) => `<div class="rp"><span class="d" style="background:${LV_COL[e.lvl]}"></span>
+  const tot = Math.max(1, last.km), X = k => R.pts[k].km/tot*100, np = R.pts.length;
+  if (R.sel == null || R.sel >= np) R.sel = Math.max(0, R.evals.findIndex(e => e.lvl === worst));
+  const sel = R.sel;
+  /* значки погоды: показываем не чаще, чем помещаются */
+  const showIcon = []; let lastX = -99;
+  const MINGAP = 12, farFromSel = k => k === sel || Math.abs(X(k) - X(sel)) >= MINGAP;
+  R.evals.forEach((e, k) => { const x = X(k); if (k === sel || (farFromSel(k) && (k === 0 || x - lastX >= MINGAP))) { showIcon[k] = true; lastX = x; } });
+  if (!showIcon[np - 1] && farFromSel(np - 1) && X(np - 1) - lastX >= MINGAP) showIcon[np - 1] = true;
+  if (!showIcon[0] && farFromSel(0)) showIcon[0] = true;
+  /* подписи городов под лентой */
+  const named = k => k === 0 || k === np - 1 || R.pts[k].id || R.pts[k].sid || R.pts[k].name;
+  const lbl = []; let lastL = -99;
+  R.pts.forEach((p, k) => { if (named(k) && k !== np - 1 && (k === 0 || (X(k) - lastL >= 22 && 100 - X(k) >= 22))) { lbl.push(k); lastL = X(k); } });
+  lbl.push(np - 1);
+  const temps = R.evals.flatMap(e => [e.T, e.Ts]), tmin = Math.min(...temps), tmax = Math.max(...temps);
+  const lo = tmin - 1, hi = Math.max(tmax, lo + 4) + 1, CH = 56;
+  const Y = v => CH - 4 - (v - lo)/(hi - lo)*(CH - 10);
+  const prMax = Math.max(2, ...R.evals.map(e => e.pr));
+  const line = key => R.evals.map((e, k) => `${k ? 'L' : 'M'}${X(k).toFixed(2)},${Y(e[key]).toFixed(1)}`).join('');
+  const bw = Math.min(3.2, 100/np*0.6);
+  const bars = R.evals.map((e, k) => e.pr > 0 ? `<rect x="${(X(k) - bw/2).toFixed(2)}" y="${(CH - e.pr/prMax*(CH*0.45)).toFixed(1)}" width="${bw.toFixed(2)}" height="${(e.pr/prMax*CH*0.45).toFixed(1)}" fill="#5cc8ff" opacity=".55"/>` : '').join('');
+  const zero = lo < 0 && hi > 0 ? `<line x1="0" x2="100" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}" stroke="#8fd3ff" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke" opacity=".7"/>` : '';
+  const segs = R.pts.slice(1).map((p, k) => `<i style="flex:${Math.max(0.5, p.km - R.pts[k].km).toFixed(1)};background:${LV_COL[Math.max(R.evals[k].lvl, R.evals[k + 1].lvl)]}"></i>`).join('');
+  const icons = R.evals.map((e, k) => `<button type="button" class="rk${k === sel ? ' sel' : ''}${showIcon[k] ? '' : ' sm'}" data-rk="${k}" style="left:${X(k).toFixed(2)}%" aria-label="${esc(label(R.pts[k]) + ', ' + hhmm(e.eta))}">${showIcon[k] ? wmo(e.c)[1] : ''}</button>`).join('');
+  const dots = R.evals.map((e, k) => `<span class="rd" style="left:${X(k).toFixed(2)}%;top:${Y(e.T).toFixed(1)}px;background:${LV_COL[e.lvl]}"></span>`).join('');
+  const labels = lbl.map(k => `<span class="rl${k === 0 ? ' f' : k === np - 1 ? ' l' : ''}" style="left:${X(k).toFixed(2)}%">${esc(label(R.pts[k]))}<small>${hhmm(R.evals[k].eta)}</small></span>`).join('');
+  const detail = (e, k) => `<span class="d" style="background:${LV_COL[e.lvl]}"></span>
       <span>${esc(label(R.pts[k]))}<br><small>${Math.round(R.pts[k].km)} ${t('km')}${R.pts[k].near && !R.pts[k].id && !R.pts[k].sid && !R.pts[k].name ? ' · ' + esc(t('roadNear')) : ''}</small></span>
       <span>${hhmm(e.eta)}</span><span>${wmo(e.c)[1]}</span>
       <span>${fmt(e.T)} <small>${t('roadAir')}</small><br>${fmt(e.Ts)} <small>${t('roadSurf')}</small></span>
-      <span class="why">${e.r.length ? esc(e.r.join(', ')) : `<small>${t('roadOkShort')}${e.vis != null ? ', ' + t('roadVis') + ' ' + visFmt(e.vis) : ''}</small>`}</span></div>`).join('')}</div>
+      <span class="why">${e.r.length ? esc(e.r.join(', ')) : `<small>${t('roadOkShort')}${e.vis != null ? ', ' + t('roadVis') + ' ' + visFmt(e.vis) : ''}</small>`}</span>`;
+  el.innerHTML = `<div class="rsum">${esc(t('roadSummary', {a:placeName(R.a), b:placeName(R.b), km:totalKm, dur:t('dur', {h:Math.floor(mins/60), m:mins % 60}), t1:hhmm(dep), t2:hhmm(dep + mins*6e4)}))}
+      <small>${R.straight ? t('roadStraight') : ''}</small></div>
+    <div class="ok" style="margin-bottom:8px">${esc(verdict)}</div>
+    <div class="rib" role="group" aria-label="${esc(t('ribAria'))}"><div class="rib-in">
+      <div class="rib-ic">${icons}</div>
+      <div class="rib-bar">${segs}</div>
+      <div class="rib-ch" style="height:${CH}px"><svg viewBox="0 0 100 ${CH}" preserveAspectRatio="none" aria-hidden="true">${zero}${bars}
+        <path d="${line('Ts')}" fill="none" stroke="#ffb547" stroke-width="1.6" stroke-dasharray="4 3" vector-effect="non-scaling-stroke" opacity=".9"/>
+        <path d="${line('T')}" fill="none" stroke="#eaf2f8" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+        <line x1="${X(sel).toFixed(2)}" x2="${X(sel).toFixed(2)}" y1="0" y2="${CH}" stroke="#fff" stroke-width="1" vector-effect="non-scaling-stroke" opacity=".45"/></svg>${dots}
+        <span class="rt hi">${fmt(hi - 1)}</span><span class="rt lo">${fmt(lo + 1)}</span></div>
+      <div class="rib-lb">${labels}</div>
+    </div></div>
+    <div class="rib-leg"><span><i class="l1"></i>${t('roadAir')}</span><span><i class="l2"></i>${t('roadSurf')}</span><span><i class="l3"></i>${t('ribPrecip')}</span>${zero ? '<span><i class="l4"></i>0°</span>' : ''}</div>
+    <div class="rp rsel" aria-live="polite">${detail(R.evals[sel], sel)}</div>
+    <div class="rib-hint">${t('ribPick')}</div>
+    <details class="rall"${R.listOpen ? ' open' : ''}><summary>${t('ribAll', {n:np})}</summary><div class="rpts">${R.evals.map((e, k) => `<div class="rp">${detail(e, k)}</div>`).join('')}</div></details>
     <div class="nst">${t('roadNote', {lvc:link(LVC_URL, 'Latvijas Valsts ceļi')})}</div>`;
 }
+$('roadOut').addEventListener('click', e => {
+  const b = e.target.closest('[data-rk]'); if (!b || !roadRes) return;
+  roadRes.sel = +b.dataset.rk; renderRoad();
+});
+$('roadOut').addEventListener('toggle', e => { if (roadRes && e.target.classList && e.target.classList.contains('rall')) roadRes.listOpen = e.target.open; }, true);
 
 /* ---------- официальные предупреждения LVĢMC (MeteoAlarm) ---------- */
 const MA_ICON = {1:'💨',2:'🧊',3:'⛈️',4:'🌫️',5:'🥵',6:'🥶',7:'🌊',8:'🔥',9:'🏔️',10:'🌧️',12:'🌊',13:'🌧️'};
