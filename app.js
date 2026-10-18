@@ -24,11 +24,13 @@ const LANGS = {ru:'ru-RU', lv:'lv-LV', en:'en-GB'};
 let lang = store.get('wx_lang', null);
 if (!LANGS[lang]) { const n = String(navigator.language || 'ru').slice(0, 2).toLowerCase(); lang = LANGS[n] ? n : 'ru'; }
 let LOC = LANGS[lang];
+/* десятичный разделитель: в русском и латышском запятая («1,6 мм»), в английском точка */
+const dec = v => (lang !== 'en' && typeof v === 'string' && /^-?\d+\.\d+$/.test(v)) ? v.replace('.', ',') : v;
 function t(key, vars) {
   let s = I18N[lang] ? I18N[lang][key] : undefined;
   if (s === undefined) s = I18N.ru[key];
   if (s === undefined) return key;
-  if (vars && typeof s === 'string') s = s.replace(/\{(\w+)\}/g, (m, k) => vars[k] !== undefined ? vars[k] : m);
+  if (vars && typeof s === 'string') s = s.replace(/\{(\w+)\}/g, (m, k) => vars[k] !== undefined ? dec(vars[k]) : m);
   return s;
 }
 const fmt = n => (Math.round(n) < 0 ? '−' : '') + Math.abs(Math.round(n)) + '°';
@@ -239,7 +241,7 @@ function renderHero() {
       <div class="fact"><small>${t('wind')}</small><b><span style="display:inline-block;transform:rotate(${dir + 180}deg)">↑</span> ${compass(dir)} ${Math.round(c.wind_speed_10m)} ${t('ms')}</b></div>
       <div class="fact"><small>${t('humidity')}</small><b>${c.relative_humidity_2m}%</b></div>
       <div class="fact"><small>${t('pressure')}</small><b>${Math.round(c.pressure_msl)} ${t('hpa')}</b></div>
-      <div class="fact"><small>${t('uvToday', {n:Math.round(d.uv_index_max[0] ?? 0)})}</small><b>${uv != null ? uv.toFixed(1) + ', ' + uvLabel(uv) : '—'}</b></div>
+      <div class="fact"><small>${t('uvToday', {n:Math.round(d.uv_index_max[0] ?? 0)})}</small><b>${uv != null ? dec(uv.toFixed(1)) + ', ' + uvLabel(uv) : '—'}</b></div>
       <div class="fact"><small>${t('air')}</small><b>${airTxt}</b></div>
       <div class="fact"><small>${t('daylen')}</small><b>${t('daylenVal', {h:Math.floor(dl/60), m:Math.round(dl % 60)})}</b></div>
     </div>`;
@@ -261,7 +263,7 @@ function dailyHTML(w) {
   return `<div class="dlist">` + d.time.map((day, i) => {
     const l = (d.temperature_2m_min[i] - lo)/span*100, wd = Math.max((d.temperature_2m_max[i] - d.temperature_2m_min[i])/span*100, 8);
     const nm = i === 0 ? t('today') : i === 1 ? t('tomorrow') : dFmt(day, {weekday:'long'});
-    const mm = d.precipitation_sum[i] > 0.1 ? d.precipitation_sum[i].toFixed(1) + ' ' + t('mm') : '';
+    const mm = d.precipitation_sum[i] > 0.1 ? dec(d.precipitation_sum[i].toFixed(1)) + ' ' + t('mm') : '';
     const [wt, wi] = wmo(d.weather_code[i]);
     return `<div class="row"><div class="nm"><span class="dn">${nm}</span><small>${dFmt(day, {day:'numeric', month:'short'})}${mm ? `<span class="mm"> · ${mm}</span>` : ''}</small></div>
       <div class="ic" title="${esc(wt)}">${wxI(d.weather_code[i], 1, 36, wi)}</div>
@@ -366,7 +368,7 @@ async function loadModels() {
 function confCell(i) {
   const m = models && models[i]; if (!m) return '<div class="cf"></div>';
   const s = m.spread, k = s <= 1.5 ? 0 : s <= 3 ? 1 : 2, col = ['#4ade80', '#ffb547', '#ff6b4a'][k];
-  return `<div class="cf" title="${esc(t('confTitle', {l:t('conf')[k], s:s.toFixed(1)}))}"><i style="background:${col}"></i>±${(s/2).toFixed(1)}°</div>`;
+  return `<div class="cf" title="${esc(t('confTitle', {l:t('conf')[k], s:s.toFixed(1)}))}"><i style="background:${col}"></i>±${dec((s/2).toFixed(1))}°</div>`;
 }
 function recordAcc(d) {
   const k = accKey(); if (!k || !d.time[1]) return;
@@ -414,7 +416,7 @@ function renderAcc() {
     return;
   }
   const mx = Math.max(...rows.map(r => r.mae), 0.5);
-  el.innerHTML = head + rows.map((r, i) => `<div class="ar${i === 0 ? ' best' : ''}"><span>${i === 0 ? '🏆 ' : ''}${esc(r.lab)}</span><div class="bar"><i style="width:${Math.max(6, r.mae/mx*100)}%"></i></div><b>±${r.mae.toFixed(1)}°</b></div>`).join('')
+  el.innerHTML = head + rows.map((r, i) => `<div class="ar${i === 0 ? ' best' : ''}"><span>${i === 0 ? '🏆 ' : ''}${esc(r.lab)}</span><div class="bar"><i style="width:${Math.max(6, r.mae/mx*100)}%"></i></div><b>±${dec(r.mae.toFixed(1))}°</b></div>`).join('')
     + `<div class="nst">${t('accNote', {d:dates.length})}</div>`;
 }
 
@@ -1045,8 +1047,10 @@ function drawRadar() {
   const n = radar.frames.length, sig = radar.host + radar.frames.map(f => f.path).join(',');
   if (sig !== RM.sig) {
     RM.layers.forEach(l => RM.map.removeLayer(l)); RM.sig = sig;
+    /* у RainViewer лимит 100 запросов в минуту с одного IP: если плитка не загрузилась (429/сбой), пробуем один раз позже */
     RM.layers = radar.frames.map(f => L.tileLayer(`${radar.host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`,
-      {maxNativeZoom:7, maxZoom:10, opacity:0, className:'rvl', zIndex:5, attribution:'<a href="https://www.rainviewer.com/" target="_blank" rel="noopener noreferrer">RainViewer</a>'}));
+      {maxNativeZoom:7, maxZoom:10, opacity:0, className:'rvl', zIndex:5, attribution:'<a href="https://www.rainviewer.com/" target="_blank" rel="noopener noreferrer">RainViewer</a>'})
+      .on('tileerror', e => { const tl = e.tile; if (!tl || tl._rvRetry) return; tl._rvRetry = 1; const src = tl.src; setTimeout(() => { tl.src = src; }, 4000 + Math.random()*6000); }));
   }
   RM.layers.forEach((ly, i) => {
     const cur = i === radar.idx, next = n && i === (radar.idx + 1) % n;
@@ -1400,7 +1404,7 @@ function computeAlerts() {
       : e.type === 'heat' ? t('upHot', {v:fmt(v)}) : (e.type === 'frost' || e.type === 'freeze') ? t('downCold', {v:fmt(-v)}) : '';
     const when = e.start === from ? t('ongoing', {t:tE.slice(11)}) : `${dayLabel(tS, times[0])} ${tS.slice(11)}–${tE.slice(11)}`;
     return {key:`${e.type}|${tS.slice(0, 10)}|${Math.floor(parseInt(tS.slice(11, 13), 10)/6)}`, icon:WT_ICON[e.type], title:t('wtypes')[e.type],
-      text:`${[...e.cities].join(', ')}. ${when}${detail ? ', ' + detail : ''}`};
+      text:`${[...e.cities].join(', ')}. ${when.charAt(0).toUpperCase() + when.slice(1)}${detail ? ', ' + detail : ''}`};
   });
 }
 function renderWarnings() {
@@ -1458,7 +1462,7 @@ async function systemNotify(title, body, tag) {
 }
 function alertUser(ic, title, text, tag) {
   toast(ic, title, text);
-  try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (e) {}
+  try { if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate([300, 150, 300]); } catch (e) {}
   systemNotify(`${ic} ${title}`, text, tag).then(err => { if (err) { lastNotifErr = err; notifStatus(); } });
 }
 const stateURL = n => new URL(n, location.href).href;
@@ -1530,7 +1534,7 @@ $('notifBtn').onclick = () => askPermission();
 $('testBtn').onclick = async () => {
   const p = await askPermission();
   toast('⚠️', t('testTitle'), t('testBody'));
-  try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (e) {}
+  try { if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate([300, 150, 300]); } catch (e) {}
   if (p !== 'granted') return;
   const err = await systemNotify('⚠️ ' + t('testTitle'), t('testBody'), 'wx-test-' + Date.now());
   if (err) { lastNotifErr = err; toast('❗', t('notSentTitle'), err + '. ' + t('howOS'), 'info'); }
@@ -1567,7 +1571,7 @@ function drawHourly() {
   if (!hourlyData || !lastW) return;
   const svg = $('hourly'), W = svg.clientWidth || 600, {t:tm, T, P, days, n} = hourlyData, h = lastW.hourly, PR = h.precipitation || [];
   const fresh = hourlyKey !== selKey(); hourlyKey = selKey();
-  const pt = 28, tH = 150, gap = 18, pH = 34, ax = 22, tB = pt + tH, p0 = tB + gap, pB = p0 + pH, H = pB + ax;
+  const pt = 28, tH = 150, gap = 24, pH = 34, ax = 22, tB = pt + tH, p0 = tB + gap, pB = p0 + pH, H = pB + ax;
   hourlyData.W = W;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('height', H);
   const lo = Math.floor(Math.min(...T)) - 1, hi = Math.ceil(Math.max(...T)) + 1;
