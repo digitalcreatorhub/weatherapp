@@ -112,7 +112,7 @@ function giBody(k) {
   }
   return {head, html:p.map(s => `<p>${esc(s)}</p>`).join('') + scale};
 }
-function fill(s, vars) { return String(s).replace(/\{(\w+)\}/g, (m, k) => vars[k] !== undefined ? vars[k] : m); }
+function fill(s, vars) { return String(s).replace(/\{(\w+)\}/g, (m, k) => vars[k] !== undefined ? dec(vars[k]) : m); }
 
 function giEnsure() {
   let dlg = $('gi');

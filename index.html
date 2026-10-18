@@ -9,7 +9,7 @@
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="leaflet.css?v=38">
+<link rel="stylesheet" href="leaflet.css?v=39">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -50,7 +50,7 @@
   @media(prefers-reduced-motion:reduce){.dot{animation:none}}
   .install{display:none;font:inherit;font-size:.8rem;padding:6px 12px;border-radius:99px;border:1px solid var(--sun);background:transparent;color:var(--sun);cursor:pointer}
   .search{position:relative;flex:1 1 100%;max-width:440px}
-  .search input{width:100%;font:inherit;font-size:.9rem;color:var(--text);background:rgba(255,255,255,.07);border:1px solid var(--edge);border-radius:99px;padding:8px 14px}
+  .search input{width:100%;font:inherit;font-size:16px;color:var(--text);background:rgba(255,255,255,.07);border:1px solid var(--edge);border-radius:99px;padding:8px 14px}
   .search input::placeholder{color:var(--muted)}
   .qres{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#12263a;border:1px solid var(--edge);border-radius:14px;overflow:hidden;z-index:40;display:none}
   .qres button{display:block;width:100%;text-align:left;font:inherit;font-size:.88rem;color:var(--text);background:transparent;border:0;padding:10px 14px;cursor:pointer}
@@ -98,7 +98,7 @@
   .whead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
   .whead h2{margin:0}
   .wbtns{display:flex;gap:6px}
-  .wbtn{font:inherit;font-size:.78rem;padding:6px 12px;border-radius:99px;border:1px solid var(--edge);background:transparent;color:var(--muted);cursor:pointer}
+  .wbtn{font:inherit;font-size:.78rem;padding:8px 14px;border-radius:99px;border:1px solid var(--edge);background:transparent;color:var(--muted);cursor:pointer}
   .wbtn.on{background:rgba(74,222,128,.16);border-color:rgba(74,222,128,.5);color:var(--live)}
   .wl{display:grid;gap:8px}
   .wi{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;background:rgba(255,107,74,.1);border:1px solid rgba(255,107,74,.35);border-radius:12px;padding:10px 12px}
@@ -131,7 +131,7 @@
   .mhead{display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:space-between;align-items:center;padding:16px 18px 10px}
   .mhead h2{margin:0}
   .seg{display:flex;background:rgba(255,255,255,.07);border-radius:99px;padding:3px}
-  .seg button{font:inherit;font-size:.78rem;color:var(--muted);background:transparent;border:0;padding:5px 11px;border-radius:99px;cursor:pointer}
+  .seg button{font:inherit;font-size:.78rem;color:var(--muted);background:transparent;border:0;padding:8px 12px;border-radius:99px;cursor:pointer}
   .seg button[aria-pressed=true]{background:var(--text);color:#0a1522;font-weight:500}
   /* ===== карты ===== */
   .lmap{width:100%;height:clamp(260px,64vw,470px);background:#0b1622;border-top:1px solid var(--edge);border-bottom:1px solid var(--edge);z-index:0}
@@ -156,7 +156,7 @@
   .cm.gone{display:none}
   .cm .cm-i{line-height:0;width:24px;height:24px}
   .cm b{font-size:.88rem;font-weight:700}
-  .cm small{font-size:.68rem;color:var(--muted);margin-left:2px}
+  .cm small{font-size:.72rem;color:var(--muted);margin-left:2px}
   .cm.mini{padding:2px 7px 2px 5px;gap:4px;background:rgba(10,21,34,.68)}
   .cm.mini i{display:block;width:8px;height:8px;border-radius:50%}
   .cm.mini b{font-size:.75rem;font-weight:600}
@@ -166,7 +166,7 @@
   .cm.sm small{font-size:.62rem;margin-left:1px}
   .cm.sm.mini{padding:1px 6px 1px 4px;gap:3px}
   .cm.sm.mini i{width:6px;height:6px}
-  .cm.sm.mini b{font-size:.68rem}
+  .cm.sm.mini b{font-size:.72rem}
   .cm.sel{border-color:var(--sun);box-shadow:0 0 0 3px rgba(255,181,71,.28),0 6px 18px rgba(0,0,0,.4)}
   .cm.warn{border-color:#ff6b4a;animation:cmin .45s both,warnpulse 1.8s ease-in-out .5s infinite}
   @keyframes cmin{from{opacity:0;transform:translate(-50%,-30%) scale(.9)}}
@@ -236,10 +236,10 @@
   .chip.geo.busy i{animation:gbusy 1s ease-in-out infinite alternate}
   @keyframes gbusy{from{opacity:.25;transform:translateY(1px)}to{opacity:1;transform:translateY(-2px)}}
   .gpin{margin-right:4px}
-  .pchips .chip{font-size:.78rem;padding:4px 10px}
+  .pchips .chip{font-size:.78rem;padding:7px 12px}
   .pbars{display:grid;gap:2px;align-items:end;height:34px}
   .pbars i{display:block;border-radius:3px 3px 0 0;min-height:3px;transform-origin:bottom;animation:pgrow .6s cubic-bezier(.2,.8,.2,1) both}
-  .plbl{display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-top:-6px}
+  .plbl{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:-6px}
   .psun{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center}
   .pring svg{display:block;width:96px;height:auto}
   @media(prefers-reduced-motion:reduce){.pbars i{animation:none}}
@@ -317,7 +317,7 @@
   footer a{color:inherit}
 
   .toasts{position:fixed;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;z-index:50;display:grid;gap:8px;max-width:520px;margin:0 auto;pointer-events:none}
-  .toast{pointer-events:auto;display:grid;grid-template-columns:36px 1fr 28px;gap:10px;align-items:start;background:#2a1612;border:1px solid var(--alert);border-radius:16px;padding:12px 12px 12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:in .25s ease-out}
+  .toast{pointer-events:auto;display:grid;grid-template-columns:36px 1fr 36px;gap:8px;align-items:start;background:#2a1612;border:1px solid var(--alert);border-radius:16px;padding:12px 12px 12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:in .25s ease-out}
   @keyframes in{from{transform:translateY(-14px);opacity:0}}
   @media(prefers-reduced-motion:reduce){.toast{animation:none}}
   .toast.info{background:#10263a;border-color:var(--sky)}
@@ -326,7 +326,7 @@
   .toast .t-ic{font-size:1.8rem;line-height:1.1}
   .toast b{display:block;font-weight:700;color:#ffd7cc}
   .toast span{font-size:.88rem;color:#f3c4b6}
-  .toast button{background:transparent;border:0;color:#f3c4b6;font-size:1.2rem;cursor:pointer;line-height:1;padding:2px}
+  .toast button{background:transparent;border:0;color:#f3c4b6;font-size:1.2rem;cursor:pointer;line-height:1;padding:2px;width:36px;height:36px;margin:-6px -6px 0 0}
 
   .langs{flex:none}
   .tline{font-size:.95rem;margin-bottom:10px}
@@ -410,16 +410,16 @@
   .pseason i{width:10px;height:10px;border-radius:50%}
   .pseason small{color:var(--muted)}
   .gauges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:16px}
-  .gauge{background:rgba(10,21,34,.58);border:1px solid var(--edge);border-radius:16px;padding:8px 6px 9px;text-align:center;
+  .gauge{background:rgba(10,21,34,.58);border:1px solid var(--edge);border-radius:16px;padding:19px 6px 9px;text-align:center;
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:transform .25s,border-color .25s}
   .gauge:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.2)}
   .gauge svg{display:block;width:100%;height:auto;max-height:92px}
   .gauge svg text{font-family:inherit}
   .gauge .gl{font-size:.72rem;color:var(--muted)}
   .gauge .gv{font-size:.74rem;line-height:1.25;opacity:.9;min-height:2.5em;display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;padding:0 2px}
-  .dirc{display:inline-block;min-width:1.6em;padding:0 5px;border:1px solid rgba(92,200,255,.5);border-radius:6px;color:var(--sky);font-weight:700;font-size:.7rem;line-height:1.5}
+  .dirc{display:inline-block;min-width:1.6em;padding:0 5px;border:1px solid rgba(92,200,255,.5);border-radius:6px;color:var(--sky);font-weight:700;font-size:.72rem;line-height:1.5}
   .gauge{cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent}
-  .gauge::after{content:'i';position:absolute;top:6px;right:7px;width:14px;height:14px;border-radius:50%;font:italic 600 9px/13px Georgia,serif;color:var(--muted);border:1px solid rgba(255,255,255,.2);opacity:.8}
+  .gauge::after{content:'i';position:absolute;top:5px;right:5px;width:14px;height:14px;border-radius:50%;font:italic 600 9px/13px Georgia,serif;color:var(--muted);border:1px solid rgba(255,255,255,.2);opacity:.8}
   .gauge:active{transform:scale(.97)}
   .gauge:focus-visible{outline:2px solid #5cc8ff;outline-offset:2px}
   html.gi-lock{overflow:hidden}
@@ -451,7 +451,7 @@
   .gi-day{position:relative;height:12px;margin:18px 0 5px}
   .gi-day i{display:block;height:100%;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
   .gi-day s{top:-4px}
-  .gi-hrs{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted)}
+  .gi-hrs{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
   .gi-tip{background:rgba(255,210,122,.08);border:1px solid rgba(255,210,122,.2);border-radius:12px;padding:10px 12px;margin-top:16px!important}
   @keyframes giUp{from{transform:translateY(48px);opacity:0}to{transform:none;opacity:1}}
   @keyframes giDown{to{transform:translateY(48px);opacity:0}}
@@ -497,7 +497,7 @@
   .hc.now{background:rgba(255,255,255,.11);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
   .hc .hi{display:block;line-height:0;height:34px;width:34px;margin:2px 0}
   .hc .tk{display:block;width:22px;height:3px;border-radius:2px}
-  .hc .wd{font-size:.7rem;color:var(--muted);display:flex;align-items:center;gap:2px}
+  .hc .wd{font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:2px}
   .hc .wd i{font-style:normal;display:inline-block;color:var(--sky);font-weight:700}
   .hc .pb{display:block;width:6px;height:18px;border-radius:3px;background:rgba(92,200,255,.12);position:relative;overflow:hidden}
   .hc .pb i{position:absolute;left:0;right:0;bottom:0;background:var(--sky);border-radius:3px}
@@ -684,14 +684,14 @@
   <footer id="footer"></footer>
 </div>
 
-<script src="i18n.js?v=38"></script>
-<script src="leaflet.js?v=38"></script>
-<script src="viz.js?v=38"></script>
-<script src="borders.js?v=38"></script>
-<script src="app.js?v=38"></script>
-<script src="drive.js?v=38"></script>
-<script src="plan.js?v=38"></script>
-<script src="info.js?v=38"></script>
-<script src="extra.js?v=38"></script>
+<script src="i18n.js?v=39"></script>
+<script src="leaflet.js?v=39"></script>
+<script src="viz.js?v=39"></script>
+<script src="borders.js?v=39"></script>
+<script src="app.js?v=39"></script>
+<script src="drive.js?v=39"></script>
+<script src="plan.js?v=39"></script>
+<script src="info.js?v=39"></script>
+<script src="extra.js?v=39"></script>
 </body>
 </html>

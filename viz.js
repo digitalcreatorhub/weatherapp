@@ -120,7 +120,7 @@ function gaugesHTML() {
   return [
     tile('wind', t('wind'), gWind(c, gustNow())),
     tile('hum', t('humidity'), arcMeter(hum/100, '#5cc8ff', hum + '%', '') + `<div class="gv">☁️ ${c.cloud_cover ?? '—'}%</div>`),
-    tile('uv', t('gUV'), arcMeter(uv != null ? uv/11 : 0, UV_COL[ui], uv != null ? uv.toFixed(1) : '—', '') + `<div class="gv">${uv != null ? esc(uvLabel(uv)) : '—'}</div>`),
+    tile('uv', t('gUV'), arcMeter(uv != null ? uv/11 : 0, UV_COL[ui], uv != null ? dec(uv.toFixed(1)) : '—', '') + `<div class="gv">${uv != null ? esc(uvLabel(uv)) : '—'}</div>`),
     tile('air', t('gAir'), arcMeter(aq != null ? aq/100 : 0, AQI_COL[ai], aq != null ? Math.round(aq) : (air === null ? '…' : '—'), 'EAQI') + `<div class="gv">${aq != null ? esc(aqiLabel(aq)) : '&nbsp;'}</div>`),
     tile('pres', t('pressure'), gPressure(c, pressureTrend())),
     tile('sun', t('gSun'), gSun(d))
