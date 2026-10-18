@@ -340,18 +340,21 @@ Object.assign(I18N.ru, {
   gUV:'УФ-индекс', gAir:'Воздух', gSun:'Солнце', pUp:'растёт', pDown:'падает', pFlat:'стабильно',
   sunLeft:'до заката {h} ч {m} мин', sunRise:'до восхода {h} ч {m} мин', gustShort:'порывы {v}',
   precipBand:'Вероятность осадков', tempScale:'цвет линии — температура',
+  navAria:'Разделы', navNow:'Сейчас', navToday:'Сегодня', navMap:'Карта', navRadar:'Радар', navRoad:'Дорога', navMore:'Ещё', navAdvice:'Советы', navWarn:'Предупреждения', navDrive:'Режим в пути', navSea:'Море', navPollen:'Пыльца', navMoon:'Луна и небо', navTicks:'Клещи', navChart:'График по часам',
   hourTip2:'{d} {h}: {t} · осадки {p}%, {mm} мм', skyAria:'Анимация неба по текущей погоде'
 });
 Object.assign(I18N.lv, {
   gUV:'UV indekss', gAir:'Gaiss', gSun:'Saule', pUp:'pieaug', pDown:'krītas', pFlat:'stabils',
   sunLeft:'līdz rietam {h} h {m} min', sunRise:'līdz lēktam {h} h {m} min', gustShort:'brāzmas {v}',
   precipBand:'Nokrišņu varbūtība', tempScale:'līnijas krāsa — temperatūra',
+  navAria:'Sadaļas', navNow:'Tagad', navToday:'Šodien', navMap:'Karte', navRadar:'Radars', navRoad:'Ceļš', navMore:'Vēl', navAdvice:'Padomi', navWarn:'Brīdinājumi', navDrive:'Braukšanas režīms', navSea:'Jūra', navPollen:'Putekšņi', navMoon:'Mēness un debesis', navTicks:'Ērces', navChart:'Stundu grafiks',
   hourTip2:'{d} {h}: {t} · nokrišņi {p}%, {mm} mm', skyAria:'Debesu animācija pēc pašreizējiem laikapstākļiem'
 });
 Object.assign(I18N.en, {
   gUV:'UV index', gAir:'Air', gSun:'Sun', pUp:'rising', pDown:'falling', pFlat:'steady',
   sunLeft:'{h} h {m} min to sunset', sunRise:'{h} h {m} min to sunrise', gustShort:'gusts {v}',
   precipBand:'Chance of precipitation', tempScale:'line colour shows temperature',
+  navAria:'Sections', navNow:'Now', navToday:'Today', navMap:'Map', navRadar:'Radar', navRoad:'Road', navMore:'More', navAdvice:'Tips', navWarn:'Warnings', navDrive:'Drive mode', navSea:'Sea', navPollen:'Pollen', navMoon:'Moon & sky', navTicks:'Ticks', navChart:'Hourly chart',
   hourTip2:'{d} {h}: {t} · precip. {p}%, {mm} mm', skyAria:'Sky animation for the current weather'
 });
 

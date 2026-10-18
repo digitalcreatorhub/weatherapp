@@ -1409,6 +1409,7 @@ function computeAlerts() {
 }
 function renderWarnings() {
   alerts = computeAlerts(); stamp.warn = Date.now();
+  const nm = $('navMore'); if (nm) nm.classList.toggle('alert', alerts.length > 0);   /* красная точка на «Ещё», пока есть предупреждения */
   const model = !cityData.length ? `<div class="ok">${t('checking')}</div>`
     : alerts.length ? alerts.map(a => `<div class="wi"><div class="wic">${a.icon}</div><div><b>${esc(a.title)}</b><small>${esc(a.text)}</small></div></div>`).join('')
     : `<div class="ok">${t('noDanger', {h:cfg.hours, n:cityPlaces.length})}</div>`;

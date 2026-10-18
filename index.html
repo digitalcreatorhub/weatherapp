@@ -9,7 +9,7 @@
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="leaflet.css?v=40">
+<link rel="stylesheet" href="leaflet.css?v=41">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -381,6 +381,25 @@
   /* ===== визуализации и движение ===== */
   .card{transition:border-color .25s}
   .card:hover{border-color:rgba(255,255,255,.16)}
+  /* нижняя панель быстрых переходов (только телефон и узкие окна) */
+  .bnav,.nsheet{display:none}
+  .grid>.card{scroll-margin-top:12px}
+  @media(max-width:860px){
+    body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+    .bnav{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;position:fixed;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));z-index:30;padding:4px;
+      background:rgba(14,28,44,.84);border:1px solid var(--edge);border-radius:22px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 10px 30px rgba(0,0,0,.45)}
+    .bnav button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:48px;padding:5px 1px 4px;font:inherit;font-size:.72rem;line-height:1.1;
+      color:var(--muted);background:transparent;border:0;border-radius:17px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .bnav button i{font-style:normal;font-size:1.2rem;line-height:1.1}
+    .bnav button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bnav button[aria-current=true]{background:rgba(255,255,255,.11);color:var(--text)}
+    .bnav button.alert::after{content:'';position:absolute;top:6px;right:calc(50% - 20px);width:8px;height:8px;border-radius:50%;background:var(--alert);box-shadow:0 0 0 2px #0e1c2c}
+    .nsheet:not([hidden]){display:grid;grid-template-columns:1fr 1fr;gap:6px;position:fixed;left:8px;right:8px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 64px);z-index:31;padding:8px;
+      background:#12263a;border:1px solid var(--edge);border-radius:18px;box-shadow:0 14px 36px rgba(0,0,0,.55)}
+    .nsheet button{font:inherit;font-size:.88rem;text-align:left;min-height:44px;padding:8px 12px;color:var(--text);background:rgba(255,255,255,.05);border:1px solid var(--edge);border-radius:12px;cursor:pointer}
+    .nsheet button:active{background:rgba(255,255,255,.12)}
+    body.typing .bnav,body.typing .nsheet{display:none!important}
+  }
   .grid>.card{animation:cardin .7s cubic-bezier(.2,.8,.2,1) both}
   .grid>.card:nth-child(2){animation-delay:.05s}.grid>.card:nth-child(3){animation-delay:.1s}.grid>.card:nth-child(4){animation-delay:.15s}
   .grid>.card:nth-child(5){animation-delay:.2s}.grid>.card:nth-child(6){animation-delay:.25s}.grid>.card:nth-child(7){animation-delay:.3s}
@@ -578,12 +597,12 @@
 
     <section class="card util" id="util"><div class="state" data-i18n="loadingShort">Загружаю…</div></section>
 
-    <section class="card h24">
+    <section class="card h24" id="sec-h24">
       <div class="h24head"><h2 id="h24T">Ближайшие 24 часа</h2><div class="seg h24tabs" id="h24tabs" role="group"></div></div>
       <div id="h24"><div class="state" data-i18n="loadingShort">Загружаю…</div></div>
     </section>
 
-    <section class="card warn">
+    <section class="card warn" id="sec-warn">
       <div class="whead">
         <h2 data-i18n="warnTitle">Предупреждения</h2>
         <div class="wbtns">
@@ -616,7 +635,7 @@
       <p class="nst" data-i18n="driveNote"></p>
     </section>
 
-    <section class="card mapc">
+    <section class="card mapc" id="sec-map">
       <div class="mhead">
         <h2 data-i18n="mapTitle">Погода в городах и облачность на 3 дня</h2>
         <div class="seg" id="layers" role="group" aria-label="Слой облачности" data-i18n-aria="layersAria"></div>
@@ -636,7 +655,7 @@
       <p class="note" data-i18n="mapNote"></p>
     </section>
 
-    <section class="card radarc">
+    <section class="card radarc" id="sec-radar">
       <h2 data-i18n="radarTitle">Радар осадков и дождь в ближайшие часы</h2>
       <div class="nowc"><div class="t" id="nowt" data-i18n="computing">Считаю…</div><div class="nc" id="nowbars" aria-hidden="true"></div></div>
       <div id="radar" class="lmap rmap" role="region" aria-label="" data-i18n-aria="radarAria"></div>
@@ -648,7 +667,7 @@
       <div class="rleg"><span data-i18n="weaker">слабее</span><i></i><span data-i18n="stronger">сильнее</span><span data-i18n="radarSrc">Радар: RainViewer</span></div>
     </section>
 
-    <section class="card road">
+    <section class="card road" id="sec-road">
       <h2 data-i18n="roadTitle">Погода на дороге</h2>
       <div class="rsel">
         <label><span data-i18n="roadFrom">Откуда</span><select id="rFrom"></select></label>
@@ -659,12 +678,12 @@
     </section>
 
 
-    <section class="card sea">
+    <section class="card sea" id="sec-sea">
       <h2 data-i18n="seaTitle">Море и волны</h2>
       <div id="seaOut"><div class="state" data-i18n="loadingShort">Загружаю…</div></div>
     </section>
 
-    <section class="card pollen">
+    <section class="card pollen" id="sec-pollen">
       <h2 data-i18n="pollenTitle">Пыльца</h2>
       <div id="pollenOut"><div class="state" data-i18n="loadingShort">Загружаю…</div></div>
     </section>
@@ -673,7 +692,7 @@
 
     <section class="card acc" id="acc"><div class="state" data-i18n="accLoading">Учёт точности…</div></section>
 
-    <section class="card hourly">
+    <section class="card hourly" id="sec-hourly">
       <h2 data-i18n="hourlyTitle">Температура и осадки по часам</h2>
       <svg id="hourly" role="img" aria-label="" data-i18n-aria="hourlyAria"></svg>
       <div class="tscale" id="tscale"></div>
@@ -684,14 +703,33 @@
   <footer id="footer"></footer>
 </div>
 
-<script src="i18n.js?v=40"></script>
-<script src="leaflet.js?v=40"></script>
-<script src="viz.js?v=40"></script>
-<script src="borders.js?v=40"></script>
-<script src="app.js?v=40"></script>
-<script src="drive.js?v=40"></script>
-<script src="plan.js?v=40"></script>
-<script src="info.js?v=40"></script>
-<script src="extra.js?v=40"></script>
+<nav class="bnav" id="bnav" aria-label="Разделы" data-i18n-aria="navAria">
+  <button type="button" data-go="top" data-tab="now"><i aria-hidden="true">🌤️</i><span data-i18n="navNow">Сейчас</span></button>
+  <button type="button" data-go="sec-h24" data-tab="today"><i aria-hidden="true">🕒</i><span data-i18n="navToday">Сегодня</span></button>
+  <button type="button" data-go="sec-map" data-tab="map"><i aria-hidden="true">🗺️</i><span data-i18n="navMap">Карта</span></button>
+  <button type="button" data-go="sec-radar" data-tab="radar"><i aria-hidden="true">📡</i><span data-i18n="navRadar">Радар</span></button>
+  <button type="button" data-go="sec-road" data-tab="road"><i aria-hidden="true">🚗</i><span data-i18n="navRoad">Дорога</span></button>
+  <button type="button" id="navMore" data-tab="more" aria-haspopup="true" aria-expanded="false" aria-controls="nsheet"><i aria-hidden="true">⋯</i><span data-i18n="navMore">Ещё</span></button>
+</nav>
+<div class="nsheet" id="nsheet" role="menu" hidden>
+  <button type="button" role="menuitem" data-go="plan" data-i18n="navAdvice">Советы</button>
+  <button type="button" role="menuitem" data-go="sec-warn" data-i18n="navWarn">Предупреждения</button>
+  <button type="button" role="menuitem" data-go="driveCard" data-i18n="navDrive">Режим в пути</button>
+  <button type="button" role="menuitem" data-go="sec-sea" data-i18n="navSea">Море</button>
+  <button type="button" role="menuitem" data-go="sec-pollen" data-i18n="navPollen">Пыльца</button>
+  <button type="button" role="menuitem" data-go="moon" data-i18n="navMoon">Луна и небо</button>
+  <button type="button" role="menuitem" data-go="ticksCard" data-i18n="navTicks">Клещи</button>
+  <button type="button" role="menuitem" data-go="sec-hourly" data-i18n="navChart">График по часам</button>
+</div>
+<script src="i18n.js?v=41"></script>
+<script src="leaflet.js?v=41"></script>
+<script src="viz.js?v=41"></script>
+<script src="borders.js?v=41"></script>
+<script src="app.js?v=41"></script>
+<script src="drive.js?v=41"></script>
+<script src="plan.js?v=41"></script>
+<script src="info.js?v=41"></script>
+<script src="extra.js?v=41"></script>
+<script src="nav.js?v=41"></script>
 </body>
 </html>
