@@ -1547,9 +1547,17 @@ let installEvt = null;
 if (canSW) {
   navigator.serviceWorker.register('sw.js', {scope:'./'}).then(r => { swReg = r; notifStatus(); if (perm() === 'granted') registerBg(); })
     .catch(e => { lastNotifErr = t('nRegFail', {e:(e && e.message) || e}); notifStatus(); });
-  const hadSW = !!navigator.serviceWorker.controller; let swReloaded = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => { notifStatus(); if (hadSW && !swReloaded) { swReloaded = true; location.reload(); } });
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && swReg) swReg.update().catch(() => {}); });
+  /* автообновление без кнопок: новый sw.js ставится сам (skipWaiting), страница перезагружается сама.
+     Не перезагружаем посреди поездки (режим «в пути») и пока человек вводит текст — ждём и делаем это сразу после */
+  const hadSW = !!navigator.serviceWorker.controller; let swReloaded = false, reloadWanted = false;
+  const busyNow = () => { const a = document.activeElement; return (typeof DRIVE !== 'undefined' && DRIVE.on) || !!(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)); };
+  const tryReload = () => { if (reloadWanted && !swReloaded && !busyNow()) { swReloaded = true; location.reload(); } };
+  const checkUpdate = () => { if (swReg) swReg.update().catch(() => {}); };
+  navigator.serviceWorker.addEventListener('controllerchange', () => { notifStatus(); if (hadSW) { reloadWanted = true; tryReload(); } });
+  setInterval(tryReload, 10e3);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(); });
+  window.addEventListener('online', checkUpdate);
+  setInterval(() => { if (!document.hidden) checkUpdate(); }, 30*60e3);
 }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('installBtn').style.display = 'inline-block'; });
 window.addEventListener('appinstalled', () => { $('installBtn').style.display = 'none'; registerBg(); });
