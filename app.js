@@ -309,7 +309,7 @@ function renderToday() {
 
 /* ---------- воздух и пыльца ---------- */
 const POLLEN = [['alder',[10,100,500]],['birch',[10,100,500]],['grass',[10,50,150]],['mugwort',[10,30,100]],['ragweed',[5,20,60]]];
-const P_COL = ['#4ade80','#4ade80','#ffd23f','#ff8c1a','#ff3b30'];
+const P_COL = ['#a58bff','#a58bff','#ffd23f','#ff8c1a','#ff3b30'];
 async function loadAir() {
   const key = selKey();
   const pk = POLLEN.map(p => p[0] + '_pollen').join(',');
@@ -367,7 +367,7 @@ async function loadModels() {
 }
 function confCell(i) {
   const m = models && models[i]; if (!m) return '<div class="cf"></div>';
-  const s = m.spread, k = s <= 1.5 ? 0 : s <= 3 ? 1 : 2, col = ['#4ade80', '#ffb547', '#ff6b4a'][k];
+  const s = m.spread, k = s <= 1.5 ? 0 : s <= 3 ? 1 : 2, col = ['#a58bff', '#ffb547', '#ff6b4a'][k];
   return `<div class="cf" title="${esc(t('confTitle', {l:t('conf')[k], s:s.toFixed(1)}))}"><i style="background:${col}"></i>±${dec((s/2).toFixed(1))}°</div>`;
 }
 function recordAcc(d) {
@@ -972,7 +972,7 @@ function wmMarkers(force) {
     else WM.pin.setLatLng([sel.lat, sel.lon]);
   } else if (WM.pin) { WM.map.removeLayer(WM.pin); WM.pin = null; }
 }
-const LV_COL = ['#4ade80', '#ffb547', '#ff6b4a'];
+const LV_COL = ['#a58bff', '#ffb547', '#ff6b4a'];
 function wmRoute() {
   const ok = roadRes && roadRes.evals && roadState === 'ok';
   const key = ok ? roadRes.key + ':' + roadRes.evals.map(e => e.lvl).join('') : '';
@@ -1698,7 +1698,7 @@ function drawHourly() {
     + mark(iMax, -10) + (iMin !== iMax ? mark(iMin, 20) : '')
     + `<text x="4" y="${p0 - 5}" fill="#8fa6ba" font-size="10" ${F}>${esc(t('precipBand'))}</text>`
     + `<line x1="0" x2="${W}" y1="${pB}" y2="${pB}" stroke="rgba(255,255,255,.12)"/>` + bars
-    + `<line id="nw" y1="${pt - 6}" y2="${pB}" stroke="#4ade80" stroke-width="1.5"/>`
+    + `<line id="nw" y1="${pt - 6}" y2="${pB}" stroke="#a58bff" stroke-width="1.5"/>`
     + `<g id="tip" opacity="0" pointer-events="none"><line id="tl" y1="${pt - 6}" y2="${pB}" stroke="#fff" stroke-opacity=".45"/>`
     + `<circle id="tc" r="5" fill="#fff" stroke="#0a1522" stroke-width="2"/><rect id="tr" y="2" height="20" rx="10" fill="rgba(10,21,34,.92)" stroke="rgba(255,255,255,.15)"/>`
     + `<text id="tt" y="16" fill="#eaf2f8" font-size="12" font-weight="500" ${F}></text></g>`;

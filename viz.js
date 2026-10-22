@@ -25,7 +25,7 @@ function arcMeter(frac, color, value, unit) {
 }
 
 /* ---------- приборы ---------- */
-const UV_COL = ['#4ade80', '#ffd23f', '#ff8c1a', '#ff3b30', '#b36bff'];
+const UV_COL = ['#a58bff', '#ffd23f', '#ff8c1a', '#ff3b30', '#b36bff'];
 const AQI_COL = ['#50f0e6', '#50ccaa', '#f0e641', '#ff6b5a', '#e0457b', '#b36bff'];
 const uvIdx = u => u < 3 ? 0 : u < 6 ? 1 : u < 8 ? 2 : u < 11 ? 3 : 4;
 const aqiIdx = a => a <= 20 ? 0 : a <= 40 ? 1 : a <= 60 ? 2 : a <= 80 ? 3 : a <= 100 ? 4 : 5;

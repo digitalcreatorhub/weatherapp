@@ -9,13 +9,13 @@
 <meta name="description" content="Погода, радар осадков, облачность, Луна и предупреждения для Латвии">
 <meta name="theme-color" content="#0a1522">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="leaflet.css?v=47">
+<link rel="stylesheet" href="leaflet.css?v=48">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root{
-    --bg:#0a1522; --text:#eaf2f8; --muted:#8fa6ba; --sun:#ffb547; --sky:#5cc8ff; --live:#4ade80; --alert:#ff6b4a;
+    --bg:#0a1522; --text:#eaf2f8; --muted:#8fa6ba; --sun:#ffb547; --sky:#5cc8ff; --live:#a58bff; --alert:#ff6b4a;
     --glass:rgba(255,255,255,.055); --edge:rgba(255,255,255,.1);
   }
   *{box-sizing:border-box;margin:0}
@@ -44,9 +44,9 @@
   @media(prefers-reduced-motion:reduce){.logo-mark .rays,.logo-mark .cl,.logo-mark .mh{animation:none}}
   .live{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--muted)}
   .live b{font-size:1.15rem;font-weight:500;color:var(--text);font-variant-numeric:tabular-nums}
-  .dot{width:9px;height:9px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 rgba(74,222,128,.6);animation:pulse 2s infinite}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 rgba(165,139,255,.6);animation:pulse 2s infinite}
   .dot.off{background:#ff7a5a;animation:none}
-  @keyframes pulse{70%{box-shadow:0 0 0 8px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+  @keyframes pulse{70%{box-shadow:0 0 0 8px rgba(165,139,255,0)}100%{box-shadow:0 0 0 0 rgba(165,139,255,0)}}
   @media(prefers-reduced-motion:reduce){.dot{animation:none}}
   .install{display:none;font:inherit;font-size:.8rem;padding:6px 12px;border-radius:99px;border:1px solid var(--sun);background:transparent;color:var(--sun);cursor:pointer}
   .search{position:relative;flex:1 1 100%;max-width:440px}
@@ -99,7 +99,7 @@
   .whead h2{margin:0}
   .wbtns{display:flex;gap:6px}
   .wbtn{font:inherit;font-size:.78rem;padding:8px 14px;border-radius:99px;border:1px solid var(--edge);background:transparent;color:var(--muted);cursor:pointer}
-  .wbtn.on{background:rgba(74,222,128,.16);border-color:rgba(74,222,128,.5);color:var(--live)}
+  .wbtn.on{background:rgba(165,139,255,.16);border-color:rgba(165,139,255,.5);color:var(--live)}
   .wl{display:grid;gap:8px}
   .wi{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;background:rgba(255,107,74,.1);border:1px solid rgba(255,107,74,.35);border-radius:12px;padding:10px 12px}
   .wi .wic{font-size:1.5rem;line-height:1.2}
@@ -228,7 +228,7 @@
   .pv small,.psun small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
   .pdays{display:flex;gap:6px;flex-wrap:wrap}
   .pd{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;color:var(--muted);padding:3px 8px;border-radius:99px;border:1px solid var(--edge);text-transform:capitalize}
-  .pd i{width:8px;height:8px;border-radius:50%;background:#ff6b4a}.pd.l1 i{background:#ffb547}.pd.l2 i{background:#4ade80}
+  .pd i{width:8px;height:8px;border-radius:50%;background:#ff6b4a}.pd.l1 i{background:#ffb547}.pd.l2 i{background:#a58bff}
   .pchips{display:flex;gap:6px;flex-wrap:wrap}
   .chip.geo{display:inline-flex;align-items:center;gap:5px;color:var(--text);border-color:rgba(92,200,255,.35);background:rgba(92,200,255,.08)}
   .chip.geo[aria-pressed=true]{background:var(--text);color:#0a1522;border-color:var(--text)}
@@ -269,7 +269,7 @@
   .darkscr{position:fixed;inset:0;z-index:100;background:#000;color:#e6edf3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;cursor:pointer}
   .darkscr .dk-sp{font-size:6rem;font-weight:200;line-height:1}
   .darkscr .dk-u{color:#6b7c8c;font-size:1rem}
-  .darkscr .dk-msg{font-size:1.25rem;max-width:520px;margin-top:18px;color:#7fd99a}
+  .darkscr .dk-msg{font-size:1.25rem;max-width:520px;margin-top:18px;color:#cbbcff}
   .darkscr.lv1 .dk-msg{color:#ffc46b}.darkscr.lv2 .dk-msg{color:#ff8a70;font-weight:600}
   .darkscr .dk-hint{position:absolute;bottom:28px;font-size:.8rem;color:#4b5966}
   .ctrl{padding:12px 18px 6px}
@@ -277,7 +277,7 @@
   .play{flex:none;width:42px;height:42px;border-radius:50%;border:0;background:var(--sun);color:#0a1522;font-size:.95rem;cursor:pointer}
   input[type=range]{flex:1;min-width:0;accent-color:var(--sun)}
   .nowbtn{flex:none;font:inherit;font-size:.8rem;padding:7px 12px;border-radius:99px;border:1px solid var(--edge);background:transparent;color:var(--muted);cursor:pointer}
-  .nowbtn[aria-pressed=true]{background:rgba(74,222,128,.16);border-color:rgba(74,222,128,.5);color:var(--live)}
+  .nowbtn[aria-pressed=true]{background:rgba(165,139,255,.16);border-color:rgba(165,139,255,.5);color:var(--live)}
   .when{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px;margin-top:10px;font-weight:500;font-variant-numeric:tabular-nums}
   .when span:last-child{font-weight:400;color:var(--muted)}
   .strip{display:grid;gap:1px;align-items:end;height:40px;margin-top:10px}
@@ -580,7 +580,7 @@
     .draw{animation:none;stroke-dashoffset:0}
   }
 </style>
-<link rel="stylesheet" href="glass.css?v=47">
+<link rel="stylesheet" href="glass.css?v=48">
 </head>
 <body>
 <div class="toasts" id="toasts" aria-live="assertive"></div>
@@ -762,15 +762,16 @@
   <button type="button" role="menuitem" data-go="ticksCard" data-i18n="navTicks">Клещи</button>
   <button type="button" role="menuitem" data-go="sec-hourly" data-i18n="navChart">График по часам</button>
 </div>
-<script src="i18n.js?v=47"></script>
-<script src="leaflet.js?v=47"></script>
-<script src="viz.js?v=47"></script>
-<script src="borders.js?v=47"></script>
-<script src="app.js?v=47"></script>
-<script src="drive.js?v=47"></script>
-<script src="plan.js?v=47"></script>
-<script src="info.js?v=47"></script>
-<script src="extra.js?v=47"></script>
-<script src="nav.js?v=47"></script>
+<script src="i18n.js?v=48"></script>
+<script src="leaflet.js?v=48"></script>
+<script src="viz.js?v=48"></script>
+<script src="borders.js?v=48"></script>
+<script src="app.js?v=48"></script>
+<script src="drive.js?v=48"></script>
+<script src="plan.js?v=48"></script>
+<script src="info.js?v=48"></script>
+<script src="extra.js?v=48"></script>
+<script src="nav.js?v=48"></script>
+<script src="okmark.js?v=48"></script>
 </body>
 </html>
