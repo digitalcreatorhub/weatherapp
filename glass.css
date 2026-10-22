@@ -96,3 +96,11 @@ body{background:
 @media(prefers-reduced-transparency:reduce){
   .card,.chip,.wbtn,.seg,.bnav{-webkit-backdrop-filter:none;backdrop-filter:none}
 }
+
+/* ---------- крупная температура: читается поверх облаков ---------- */
+.hero::after{background:linear-gradient(180deg,rgba(10,21,34,.36) 0%,rgba(10,21,34,.14) 30%,rgba(10,21,34,.62) 58%,rgba(10,21,34,.88) 100%)}
+.hero .big{font-weight:400;color:#fff;letter-spacing:-.045em;text-shadow:0 1px 2px rgba(5,12,22,.55),0 8px 34px rgba(5,12,22,.75)}
+.hero .place{color:#fff;font-weight:600;text-shadow:0 1px 10px rgba(5,12,22,.6)}
+
+/* ---------- столбики «лучшее время»: объём вместо плоского цвета ---------- */
+.pbars i{border-radius:5px 5px 2px 2px;background-image:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,0) 72%)}
