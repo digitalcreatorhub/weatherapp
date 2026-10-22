@@ -90,7 +90,7 @@ function bestWindow() {
 }
 const scoreLbl = v => t('scoreLbl')[v >= 80 ? 0 : v >= 60 ? 1 : v >= 40 ? 2 : 3];
 /* цвета оценки: отлично, хорошо, так себе, плохо */
-const SC = ['#2de2c7', '#5cc8ff', '#ffb547', '#ff6b4a'];
+const SC = ['#7ea8ff', '#a58bff', '#ff8fc7', '#ff6b7a'];
 const scoreCol = v => SC[v >= 80 ? 0 : v >= 60 ? 1 : v >= 40 ? 2 : 3];
 function windowHtml() {
   const h = lastW.hourly, {sc, best, tom} = bestWindow();
