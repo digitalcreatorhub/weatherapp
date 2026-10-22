@@ -89,7 +89,9 @@ function bestWindow() {
   return {sc, best, tom};
 }
 const scoreLbl = v => t('scoreLbl')[v >= 80 ? 0 : v >= 60 ? 1 : v >= 40 ? 2 : 3];
-const scoreCol = v => v >= 80 ? '#4ade80' : v >= 60 ? '#a3e635' : v >= 40 ? '#ffb547' : '#ff6b4a';
+/* цвета оценки: отлично, хорошо, так себе, плохо */
+const SC = ['#2de2c7', '#5cc8ff', '#ffb547', '#ff6b4a'];
+const scoreCol = v => SC[v >= 80 ? 0 : v >= 60 ? 1 : v >= 40 ? 2 : 3];
 function windowHtml() {
   const h = lastW.hourly, {sc, best, tom} = bestWindow();
   const chips = Object.keys(ACTS).map(k => `<button class="chip pa" data-act="${k}" aria-pressed="${k === PLAN.act}">${ACTS[k].ico} ${esc(t('acts')[k])}</button>`).join('');
@@ -101,7 +103,7 @@ function windowHtml() {
     res = `<div class="pv"><span class="pi">${ACTS[PLAN.act].ico}</span><div><b>${esc(t(tom ? 'winTomorrow' : 'winToday', {a:from, b:to}))}</b>`
       + `<small>${esc(scoreLbl(best.v))} · ${esc(t('winDetail', {t:fmt(T), p:P, w:ws ?? '—'}))}</small></div></div>`;
   }
-  const bars = sc.map((x, k) => `<i style="height:${Math.max(8, x.s)}%;background:${scoreCol(x.s)}${best && (k === best.k || k === best.k + 1) ? '' : ';opacity:.45'}" title="${h.time[x.i].slice(11)}: ${x.s}"></i>`).join('');
+  const bars = sc.map((x, k) => { const c = scoreCol(x.s), on = best && (k === best.k || k === best.k + 1); return `<i style="height:${Math.max(8, x.s)}%;background-color:${c}${on ? ';box-shadow:0 0 14px -3px ' + c : ';opacity:.45'}" title="${h.time[x.i].slice(11)}: ${x.s}"></i>`; }).join('');
   const lbls = sc.filter((x, k) => k % 3 === 0).map(x => `<span>${h.time[x.i].slice(11, 13)}</span>`).join('');
   return `<div class="pb"><div class="ph">⏱ ${esc(t('winTitle'))}</div><div class="pchips" role="group">${chips}</div>${res}
     <div class="pbars" style="grid-template-columns:repeat(${sc.length},1fr)" aria-hidden="true">${bars}</div><div class="plbl" aria-hidden="true">${lbls}</div></div>`;
