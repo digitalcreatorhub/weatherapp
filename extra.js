@@ -145,7 +145,7 @@ function ticksHtml() {
     lv = tm < 10 ? 1 : tm < 15 ? 2 : tm <= 24 ? 3 : tm <= 28 ? 2 : 1;
     if (rh != null) { if (rh < 50) lv = Math.max(1, lv - 1); else if (rh >= 75 && lv < 3 && tm >= 8) lv++; }
   }
-  const COL = ['#4ade80', '#a3e635', '#ffb547', '#ff6b4a'];
+  const COL = ['#a58bff', '#d9a0ff', '#ffb547', '#ff6b4a'];
   const bar = [1, 2, 3].map(k => `<i style="background:${k <= lv ? COL[lv] : 'rgba(255,255,255,.1)'}"></i>`).join('');
   return `<h2>🕷️ ${esc(X.title)} · ${esc(placeName(sel))}</h2><div class="tkgrid">
     <div class="tkmain"><div class="pv"><span class="pi">${lv === 0 ? '😴' : lv === 3 ? '⚠️' : '🌿'}</span><div><b>${esc(X.lv[lv])}</b>
