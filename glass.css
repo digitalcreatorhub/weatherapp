@@ -1,0 +1,122 @@
+/* Laiks: единый стеклянный стиль (iOS / Android). Подключается после основных стилей.
+   Чтобы откатить дизайн, достаточно убрать <link> на этот файл в index.html. */
+
+:root{
+  /* Шрифт: системный «современный» стек. Свой веб-шрифт можно добавить первым в список. */
+  --font:"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Inter","Google Sans Text","Google Sans","Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+  --edge:rgba(255,255,255,.13);
+  --glass-fill:linear-gradient(150deg,rgba(255,255,255,.115) 0%,rgba(255,255,255,.045) 42%,rgba(255,255,255,.07) 100%);
+  --tile-fill:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.035));
+  --tile-edge:rgba(255,255,255,.11);
+  --hi:inset 0 1px 0 rgba(255,255,255,.2);
+  --glow:rgba(92,200,255,.30);
+}
+
+/* ---------- типографика ---------- */
+html{-webkit-text-size-adjust:100%}
+body,button,input,select,textarea{font-family:var(--font)}
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-optical-sizing:auto;letter-spacing:-.005em}
+h2{font-size:1.02rem;font-weight:650;letter-spacing:-.012em;color:#dcebf6;margin-bottom:14px}
+.hint{font-weight:450}
+.big{font-weight:200;letter-spacing:-.05em}
+.cond{font-weight:600;letter-spacing:-.015em}
+.place{font-weight:500}
+.sub,.nst,.note,.dhint,.src{line-height:1.45}
+.row .nm,.sr .nm,.ar b,.pr b,.drow b,.fact b,.hc b,.when,.dstat b,.rp,.big,.live b,.gv,.gauge text{font-variant-numeric:tabular-nums}
+.fact small,.gauge .gl,.pb .ph,.ph,.ph2{letter-spacing:.01em}
+
+/* ---------- фон с подсветкой: «стеклу» нужно, что просвечивать ---------- */
+.wrap{position:relative;z-index:1}
+body::before,body::after{content:"";position:fixed;z-index:0;pointer-events:none;border-radius:50%;will-change:transform}
+body::before{width:90vmax;height:90vmax;left:-35vmax;top:-30vmax;
+  background:radial-gradient(closest-side,rgba(64,150,255,.30),rgba(64,150,255,.10) 55%,transparent 100%)}
+body::after{width:80vmax;height:80vmax;right:-40vmax;bottom:-35vmax;
+  background:radial-gradient(closest-side,rgba(255,150,70,.20),rgba(190,90,255,.09) 55%,transparent 100%)}
+@media(prefers-reduced-motion:no-preference){
+  body::before{animation:lkdrift1 28s ease-in-out infinite alternate}
+  body::after{animation:lkdrift2 34s ease-in-out infinite alternate}
+}
+@keyframes lkdrift1{to{transform:translate3d(8vmax,6vmax,0)}}
+@keyframes lkdrift2{to{transform:translate3d(-7vmax,-8vmax,0)}}
+
+/* ---------- карточки ---------- */
+.card{position:relative;background:var(--glass-fill);border:1px solid transparent;border-radius:24px;
+  -webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);
+  box-shadow:var(--hi),0 18px 46px -22px rgba(0,0,0,.65),0 22px 60px -34px var(--glow)}
+.card:hover{border-color:transparent}
+/* светящаяся кромка стекла */
+.card::before{content:"";position:absolute;inset:0;z-index:2;border-radius:inherit;padding:1px;pointer-events:none;
+  background:linear-gradient(150deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.09) 28%,rgba(255,255,255,.03) 60%,rgba(255,255,255,.28) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+/* мягкие блики и цветная подсветка у разных блоков */
+.hero{--glow:rgba(92,170,255,.45)}
+.today,.plan{--glow:rgba(255,181,71,.30)}
+.h24,.radarc,.hourly{--glow:rgba(92,200,255,.34)}
+.drive,.pollen{--glow:rgba(74,222,128,.26)}
+.moon,.acc,.util{--glow:rgba(160,130,255,.30)}
+.sea,.mapc,.road{--glow:rgba(70,150,255,.32)}
+.warn{--glow:rgba(255,120,80,.28)}
+.mapc{border-radius:24px}
+
+/* ---------- вложенные «плитки» в том же стекле ---------- */
+.fact,.hc,.pb,.drow,.xfc,.sky{background:var(--tile-fill);border:1px solid var(--tile-edge);box-shadow:var(--hi)}
+.hc{border-radius:16px}
+.hc.nt{background:linear-gradient(160deg,rgba(0,0,0,.26),rgba(0,0,0,.12))}
+.hc.now{background:linear-gradient(160deg,rgba(255,255,255,.2),rgba(255,255,255,.08));box-shadow:var(--hi),0 0 0 1px rgba(255,255,255,.22),0 8px 22px -8px rgba(92,200,255,.45)}
+.hc:hover{background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.06))}
+.fact,.sky,.xfc,.drow{border-radius:16px}
+.pb{border-radius:20px}
+.xp{background:var(--tile-fill);border-color:var(--tile-edge)}
+.xp.rain{background:linear-gradient(160deg,rgba(92,200,255,.28),rgba(92,200,255,.10));border-color:rgba(92,200,255,.5)}
+.row,.sr,.rp,.cfg,.ptire,.pseason,.xlegal{border-color:rgba(255,255,255,.09)}
+.rib-ch{background:var(--tile-fill);border:1px solid var(--tile-edge)}
+
+/* верхние «стекляшки» с приборами: та же кромка и подсветка */
+.gauge{background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(10,21,34,.52));border:1px solid rgba(255,255,255,.16);border-radius:20px;
+  box-shadow:var(--hi),0 10px 26px -14px rgba(0,0,0,.6)}
+.gauge::after{font-family:var(--font);font-style:normal;font-weight:600}
+
+/* ---------- кнопки, чипы, переключатели ---------- */
+.chip,.wbtn,.nowbtn,.install,.pd{background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.04));border:1px solid var(--tile-edge);box-shadow:var(--hi);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#c7d8e6;font-weight:500}
+.chip:hover,.wbtn:hover,.nowbtn:hover{color:#fff;background:linear-gradient(160deg,rgba(255,255,255,.17),rgba(255,255,255,.07))}
+.chip[aria-pressed=true],.seg button[aria-pressed=true]{background:linear-gradient(180deg,#fff,#dbe8f3);color:#0a1522;border-color:rgba(255,255,255,.9);
+  box-shadow:0 6px 18px -6px rgba(255,255,255,.45),0 2px 6px rgba(0,0,0,.25);font-weight:600}
+.chip.geo{background:linear-gradient(160deg,rgba(92,200,255,.22),rgba(92,200,255,.07));border-color:rgba(92,200,255,.45)}
+.chip.geo[aria-pressed=true]{background:linear-gradient(180deg,#fff,#dbe8f3);color:#0a1522}
+.seg{background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1px solid var(--tile-edge);box-shadow:var(--hi);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.seg .tog[aria-pressed=true]{background:linear-gradient(160deg,rgba(92,200,255,.35),rgba(92,200,255,.14));color:#d8f1ff;box-shadow:var(--hi)}
+.wbtn.on,.nowbtn[aria-pressed=true]{background:linear-gradient(160deg,rgba(74,222,128,.32),rgba(74,222,128,.10));border-color:rgba(74,222,128,.55);color:#9df0bd}
+.dbtn{background:linear-gradient(160deg,rgba(92,200,255,.32),rgba(92,200,255,.10));border-color:rgba(92,200,255,.55);color:#fff}
+.dbtn.on{background:linear-gradient(160deg,rgba(255,107,74,.34),rgba(255,107,74,.10));border-color:rgba(255,107,74,.6);color:#ffd2c6}
+.play{background:linear-gradient(180deg,#ffc977,#ffa233);box-shadow:0 8px 22px -6px rgba(255,170,60,.6),inset 0 1px 0 rgba(255,255,255,.5)}
+
+/* ---------- поля ввода ---------- */
+.search input,.cr input[type=number],.cr select,.rsel select,.dopts select{background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
+  border:1px solid var(--tile-edge);box-shadow:var(--hi);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.search input{padding:10px 16px}
+.qres{background:rgba(16,34,54,.82);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);box-shadow:0 18px 40px -12px rgba(0,0,0,.6)}
+
+/* ---------- нижняя панель и всплывающие окна ---------- */
+@media(max-width:860px){
+  .bnav{background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(20,38,58,.62));border:1px solid rgba(255,255,255,.18);
+    -webkit-backdrop-filter:blur(24px) saturate(1.6);backdrop-filter:blur(24px) saturate(1.6);box-shadow:var(--hi),0 16px 40px -10px rgba(0,0,0,.6)}
+  .bnav button[aria-current=true]{background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,.09));box-shadow:var(--hi)}
+  .nsheet:not([hidden]){background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(18,38,58,.78));border-color:rgba(255,255,255,.18);
+    -webkit-backdrop-filter:blur(24px) saturate(1.6);backdrop-filter:blur(24px) saturate(1.6)}
+  .nsheet button{background:var(--tile-fill);border-color:var(--tile-edge);box-shadow:var(--hi)}
+}
+.gi-in{background:linear-gradient(180deg,rgba(32,60,92,.92),rgba(12,26,42,.95) 62%);-webkit-backdrop-filter:blur(26px) saturate(1.5);backdrop-filter:blur(26px) saturate(1.5)}
+.toast{-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+
+/* карта и радар: стеклянная рамка */
+.rmap{border-radius:18px;box-shadow:var(--hi)}
+.lmap{border-color:rgba(255,255,255,.08)}
+
+/* слабые устройства: без тяжёлого размытия */
+@media(prefers-reduced-transparency:reduce){
+  .card,.chip,.wbtn,.seg,.bnav{-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+@media(prefers-reduced-motion:reduce){body::before,body::after{animation:none}}
