@@ -1,5 +1,5 @@
 'use strict';
-/* Laiks — «Полезное сейчас»: когда менять резину, активность клещей, праздники;
+/* Laiks — «Полезное сейчас»: когда менять шины, активность клещей, праздники;
    сравнение с климатической нормой; «дождь через N минут» с уведомлением; апвеллинг (внезапно холодное море).
    Использует данные и функции из app.js (lastW, hourlyData, nowcast, sea, sel, t, fmt, hhmm, TZ, getJSON …). */
 
@@ -96,11 +96,12 @@ function renderPills() {
   const el = $('xpills'); if (!el || !lastW) return;
   const out = [];
   try { const r = rainInfo(); if (r) out.push(`<span class="xp rain${r.soon ? ' soon' : ''}">${esc(r.txt)}</span>`); } catch (e) {}
+  try { const f = frostInfo(); if (f && f.soon) { out.push(`<span class="xp cold frost">❄️ ${esc(frostHead(f))}</span>`); frostToast(f); } } catch (e) {}
   try { const n = normInfo(); if (n) out.push(`<span class="xp ${n.cls}">${esc(n.txt)}</span>`); } catch (e) {}
   el.innerHTML = out.join('');
 }
 
-/* ---------- 🛞 когда менять резину (правила Латвии: зимняя обязательна 1.12–1.03, шипы разрешены 1.10–30.04) ---------- */
+/* ---------- 🛞 когда менять шины (правила Латвии: зимняя обязательна 1.12–1.03, шипы разрешены 1.10–30.04) ---------- */
 function tiresHtml() {
   const X = XT().tires, d = lastW.daily, today = d.time[0], [y, m, dd] = ymd(today), md = m*100 + dd;
   const lo = Math.min(...d.temperature_2m_min.filter(v => v != null));
@@ -126,8 +127,48 @@ function tiresHtml() {
     <div class="pv"><span class="pi">${ico}</span><div><b>${esc(head)}</b><small>${esc(why)}</small></div></div>
     ${legal ? `<div class="xlegal">⚖️ ${esc(legal)}</div>` : ''}</div>`;
 }
-/* резина показывается в блоке «Машина» карточки «Советы на сегодня», рядом с мойкой */
+/* замена шин показывается в блоке «Машина» карточки «Советы на сегодня», рядом с мойкой */
 function tiresInline() { try { return lastW ? tiresHtml() : ''; } catch (e) { return ''; } }
+
+/* ---------- ❄️ заблаговременное предупреждение автолюбителям о заморозках и морозе (до 5 дней вперёд) ----------
+   Ищем первый будущий час с температурой ниже нуля. Если сейчас уже мороз, не предупреждаем: об этом говорят
+   подсказка «гололедица» и раздел предупреждений. За 1–2 дня предупреждение выделяется, за 3–5 дней показывается спокойнее. */
+function frostInfo() {
+  if (!lastW || !lastW.hourly || !lastW.daily || !hourlyData) return null;
+  const h = lastW.hourly, T = h.temperature_2m, n = h.time.length, i0 = xNowIdx(), today = lastW.daily.time[0], FROST = -0.5;
+  if (T[i0] == null || T[i0] <= FROST) return null;
+  let i = -1;
+  for (let k = i0; k < n; k++) if (T[k] != null && T[k] <= FROST) { i = k; break; }
+  if (i < 0) return null;
+  let tmin = T[i];
+  for (let k = i; k < Math.min(n, i + 14); k++) if (T[k] != null && T[k] < tmin) tmin = T[k];
+  let wet = false;                                              /* осадки около нуля: на дороге может образоваться лёд */
+  for (let k = Math.max(i0, i - 6); k < Math.min(n, i + 12); k++)
+    if (T[k] != null && T[k] <= 1 && ((h.precipitation[k] ?? 0) > 0.1 || XSNOW.includes(h.weather_code[k]))) { wet = true; break; }
+  const lead = dBetween(today, h.time[i].slice(0, 10)), hr = Number(h.time[i].slice(11, 13));
+  return {lead, tmin, wet, soon:lead <= 2, kind:tmin <= -15 ? 2 : tmin <= -5 ? 1 : 0, part:hr < 6 ? 0 : hr < 12 ? 1 : hr < 18 ? 2 : 3,
+    wd:new Date(hourlyData.base + i*36e5).toLocaleDateString(LOC, {timeZone:TZ, weekday:'short'})};
+}
+function frostHead(f) {
+  const X = t('fa');
+  return xfill(f.lead === 0 ? X.today : f.lead === 1 ? X.tomorrow : X.later, {k:X.kinds[f.kind], t:fmt(f.tmin), p:X.parts[f.part], n:f.lead, w:f.wd});
+}
+function frostBlock() {
+  try {
+    const f = frostInfo(); if (!f) return '';
+    const X = t('fa');
+    return `<div class="fa${f.soon ? ' soon' : ''}${f.soon && f.wet ? ' ice' : ''}" role="note"><span class="fi" aria-hidden="true">${f.kind ? '🥶' : '❄️'}</span>`
+      + `<div><b>${esc(frostHead(f))}</b><small>${esc(f.soon ? X.soon + (f.wet ? ' ' + X.wet : '') : X.prep)}</small></div></div>`;
+  } catch (e) { return ''; }
+}
+/* всплывающее напоминание: за 1–2 дня и не чаще раза в 4 дня, чтобы зимой не надоедать */
+function frostToast(f) {
+  if (!f || !f.soon) return;
+  const seen = store.get('wx_frost_seen', 0);
+  if (seen && Date.now() - seen < 4*864e5) return;
+  store.set('wx_frost_seen', Date.now());
+  toast('❄️', t('fa').toastTitle, frostHead(f), 'info');
+}
 
 /* ---------- 🕷️ активность клещей: по дневной температуре и влажности ---------- */
 function ticksHtml() {

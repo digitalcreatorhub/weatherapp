@@ -60,6 +60,7 @@ function washHtml() {
     : days.some(d => d.hard) ? `<div class="pwarn">🥶 ${esc(t('washHardSoon', {d:wdName(days.find(d => d.hard).at)}))}</div>` : '';
   const dots = days.map(d => `<span class="pd l${d.lvl}" title="${esc(d.k === 0 ? t('todayL') : wdName(d.at))}"><i></i>${d.hard || d.frost ? '❄️' : ''}${esc(d.k === 0 ? t('todayL') : new Date(d.at).toLocaleDateString(LOC, {timeZone:TZ, weekday:'short'}))}</span>`).join('');
   return `<div class="pb"><div class="ph">🚗 ${esc(t('carTitle'))}</div>
+    ${typeof frostBlock === 'function' ? frostBlock() : ''}
     <div class="ph2">🧽 ${esc(t('washTitle'))}</div>
     <div class="pv"><span class="pi">${ico}</span><div><b>${esc(head)}</b><small>${esc(why)}</small></div></div>
     <div class="pdays">${dots}</div>${cold}
