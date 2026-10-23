@@ -807,17 +807,17 @@ Object.assign(I18N.en, {xt:{
 Object.assign(I18N.ru, {rateErr:'Open-Meteo временно ограничил запросы с вашего подключения (слишком много обращений). Обычно это проходит само за несколько минут — до часа. Можно также переключиться между Wi-Fi и мобильным интернетом.'});
 Object.assign(I18N.lv, {rateErr:'Open-Meteo īslaicīgi ierobežoja pieprasījumus no jūsu interneta (pārāk daudz pieprasījumu). Parasti tas pāriet pats dažu minūšu līdz stundas laikā. Var arī pārslēgties starp Wi-Fi un mobilo internetu.'});
 Object.assign(I18N.en, {rateErr:'Open-Meteo has temporarily limited requests from your connection (too many requests). This usually clears by itself within minutes to an hour. You can also switch between Wi-Fi and mobile data.'});
-Object.assign(I18N.ru, {carTitle:'Автомобиль: мойка и шины', washTitle:'Мойка',
+Object.assign(I18N.ru, {carTitle:'Рекомендации автолюбителям', washTitle:'Мойка',
   washHardHead:'В сильный мороз лучше не мыть', washHardWhy:'Ближайшие дни днём ниже −5°: дождитесь оттепели.',
   washHard:'Днём до {t}: вода замерзает прямо на кузове, двери, замки и уплотнители могут примёрзнуть, на мойках самообслуживания — ледяная корка. Если мыть — только в тёплом боксе с сушкой.',
   washFrost:'После мойки будет мороз (до {t}): протрите уплотнители дверей и багажника, продуйте замки и зеркала, просушите щётки дворников — иначе всё примёрзнет к утру.',
   washHardSoon:'Впереди сильный мороз ({d}): если нужно помыть автомобиль, лучше успеть до него.'});
-Object.assign(I18N.lv, {carTitle:'Auto: mazgāšana un riepas', washTitle:'Mazgāšana',
+Object.assign(I18N.lv, {carTitle:'Ieteikumi autovadītājiem', washTitle:'Mazgāšana',
   washHardHead:'Stiprā salā labāk nemazgāt', washHardWhy:'Tuvākās dienās dienā zem −5°: sagaidiet atkusni.',
   washHard:'Dienā līdz {t}: ūdens sasalst uz virsbūves, durvis, slēdzenes un blīves var piesalt, atklātās pašapkalpošanās mazgātavās — ledus kārta. Ja mazgāt, tad tikai siltā boksā ar žāvēšanu.',
   washFrost:'Pēc mazgāšanas būs sals (līdz {t}): noslaukiet durvju un bagāžnieka blīves, izpūtiet slēdzenes un spoguļus, nosusiniet tīrītāju slotiņas — citādi līdz rītam viss piesals.',
   washHardSoon:'Priekšā stiprs sals ({d}): ja vajag nomazgāt auto, labāk paspēt pirms tā.'});
-Object.assign(I18N.en, {carTitle:'Car: wash and tyres', washTitle:'Car wash',
+Object.assign(I18N.en, {carTitle:'Recommendations for drivers', washTitle:'Car wash',
   washHardHead:'Better not to wash in hard frost', washHardWhy:'Days below −5° ahead: wait for a thaw.',
   washHard:'Daytime down to {t}: water freezes on the body, doors, locks and seals can freeze shut, open self-service washes get icy. If you must, use a heated bay with drying.',
   washFrost:'Frost after washing (down to {t}): wipe the door and boot seals, blow out locks and mirrors, dry the wiper blades — or they will freeze by morning.',
@@ -831,3 +831,26 @@ Object.assign(I18N.lv, {ribAria:'Maršruta josla', ribPick:'Pieskarieties punkta
   moonAhead:'Tuvākais mēnesis', moonStripHint:'pieskarieties dienai', moonDayLit:'apgaismots {p}%'});
 Object.assign(I18N.en, {ribAria:'Route ribbon', ribPick:'Tap a point to see the details', ribPrecip:'precipitation', ribAll:'All points ({n})', ribNow:'Today',
   moonAhead:'Next month', moonStripHint:'tap a day', moonDayLit:'{p}% lit'});
+
+/* заблаговременное предупреждение автолюбителям о заморозках и морозе (до 5 дней вперёд) */
+Object.assign(I18N.ru, {fa:{
+  kinds:['заморозок', 'мороз', 'сильный мороз'], parts:['ночью', 'утром', 'днём', 'вечером'],
+  today:'Сегодня {p}: {k} до {t}', tomorrow:'Завтра {p}: {k} до {t}', later:'Через {n} дн. ({w}) {p}: {k} до {t}',
+  soon:'Будьте внимательны на дороге: возможна гололедица, особенно на мостах, эстакадах и в тени. Снизьте скорость и увеличьте дистанцию.',
+  wet:'Ожидаются осадки при температуре около нуля, поэтому дорога может покрыться льдом.',
+  prep:'Есть время подготовиться: проверьте шины, жидкость для стеклоомывателя и заряд аккумулятора.',
+  toastTitle:'Скоро заморозки'}});
+Object.assign(I18N.lv, {fa:{
+  kinds:['salna', 'sals', 'stiprs sals'], parts:['naktī', 'no rīta', 'dienā', 'vakarā'],
+  today:'Šodien {p}: {k} līdz {t}', tomorrow:'Rīt {p}: {k} līdz {t}', later:'Pēc {n} d. ({w}) {p}: {k} līdz {t}',
+  soon:'Esiet uzmanīgi uz ceļa: iespējams apledojums, īpaši uz tiltiem, estakādēm un ēnainās vietās. Samaziniet ātrumu un palieliniet distanci.',
+  wet:'Gaidāmi nokrišņi pie temperatūras ap nulli, tāpēc ceļš var apledot.',
+  prep:'Ir laiks sagatavoties: pārbaudiet riepas, stikla apskalotāja šķidrumu un akumulatora uzlādi.',
+  toastTitle:'Drīz salna'}});
+Object.assign(I18N.en, {fa:{
+  kinds:['frost', 'hard frost', 'severe frost'], parts:['overnight', 'in the morning', 'in the afternoon', 'in the evening'],
+  today:'Today, {p}: {k}, down to {t}', tomorrow:'Tomorrow, {p}: {k}, down to {t}', later:'In {n} days ({w}), {p}: {k}, down to {t}',
+  soon:'Take care on the road: ice is likely, especially on bridges, overpasses and in shade. Slow down and keep a longer distance.',
+  wet:'Precipitation is expected near freezing, so roads may ice over.',
+  prep:'There is time to prepare: check your tyres, washer fluid and battery.',
+  toastTitle:'Frost ahead'}});
