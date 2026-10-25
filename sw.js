@@ -1,6 +1,6 @@
 // Сервис-воркер: офлайн-кэш, уведомления Android, фоновая проверка погоды (для установленного приложения).
-const VER = 'wx-v49';
-const SHELL = ['./', 'index.html', 'i18n.js?v=49', 'app.js?v=49', 'borders.js?v=49', 'viz.js?v=49', 'drive.js?v=49', 'plan.js?v=49', 'info.js?v=49', 'extra.js?v=49', 'nav.js?v=49', 'leaflet.js?v=49', 'leaflet.css?v=49', 'glass.css?v=49', 'manifest.webmanifest', 'logo.svg', 'icon-192.png', 'icon-512.png'];
+const VER = 'wx-v50';
+const SHELL = ['./', 'index.html', 'i18n.js?v=50', 'app.js?v=50', 'borders.js?v=50', 'viz.js?v=50', 'drive.js?v=50', 'plan.js?v=50', 'info.js?v=50', 'extra.js?v=50', 'nav.js?v=50', 'leaflet.js?v=50', 'leaflet.css?v=50', 'glass.css?v=50', 'motion.css?v=50', 'motion.js?v=50', 'manifest.webmanifest', 'logo.svg', 'icon-192.png', 'icon-512.png'];
 const TYPES = {
   storm:['⛈️','Гроза'], rain:['🌧️','Сильный дождь'], snow:['❄️','Сильный снег'], ice:['🧊','Ледяной дождь, гололёд'],
   wind:['💨','Сильный ветер'], heat:['🥵','Сильная жара'], frost:['🥶','Сильный мороз'], freeze:['🌱','Заморозок']
