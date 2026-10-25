@@ -1,0 +1,60 @@
+/* Laiks: слой движения и глубины. Подключается после glass.css; работает, только если motion.js поставил на <html> класс «mo».
+   Текстов не содержит. Все эффекты отключаются при «уменьшить движение» (motion.js тогда класс не ставит).
+   Чтобы откатить, достаточно убрать <link> и <script> на motion.* в index.html. */
+
+:root{--mo-ease:cubic-bezier(.2,.8,.2,1);--mo-spring:cubic-bezier(.34,1.56,.64,1)}
+
+/* ---------- фон: тот же тёмный градиент, но под ним медленно дрейфуют два мягких пятна цвета неба ---------- */
+html.mo{background:
+  radial-gradient(900px 520px at 88% -10%,rgba(36,70,106,.55) 0%,transparent 62%),
+  radial-gradient(700px 420px at -8% 32%,rgba(22,46,76,.38) 0%,transparent 60%),
+  var(--bg)}
+html.mo body{background:transparent}
+.mo-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;contain:strict}
+.mo-orb{position:absolute;border-radius:50%;opacity:.2;will-change:transform;transition:opacity 1.2s}
+.mo-orb.a{width:52vmax;height:52vmax;left:-18vmax;top:6vh;background:radial-gradient(circle,var(--skyA,#1f4a70) 0%,transparent 68%);animation:mo-a 44s ease-in-out infinite alternate}
+.mo-orb.b{width:44vmax;height:44vmax;right:-16vmax;top:44vh;background:radial-gradient(circle,var(--skyB,#143150) 0%,transparent 68%);animation:mo-b 56s ease-in-out infinite alternate}
+@keyframes mo-a{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(14vmax,10vmax,0) scale(1.12)}}
+@keyframes mo-b{from{transform:translate3d(0,0,0) scale(1.08)}to{transform:translate3d(-12vmax,-12vmax,0) scale(.94)}}
+html.mo-hidden .mo-orb{animation-play-state:paused}
+
+/* ---------- индикатор прокрутки ---------- */
+.mo-prog{position:fixed;left:0;right:0;top:0;height:2px;z-index:60;pointer-events:none;transform-origin:0 50%;
+  transform:scaleX(var(--sp,0));background:linear-gradient(90deg,var(--sky),var(--sun));opacity:.8}
+
+/* ---------- карточки появляются, когда до них доходит прокрутка ---------- */
+html.mo .grid>.card.mo-rv{animation:none;opacity:0;transform:translate3d(0,26px,0) scale(.98);
+  transition:opacity .7s var(--mo-ease),transform .85s var(--mo-ease),border-color .25s;transition-delay:var(--rd,0ms),var(--rd,0ms),0ms}
+html.mo .grid>.card.mo-rv.mo-in{opacity:1;transform:none}
+
+/* ---------- подсветка стекла под курсором (только мышь) ---------- */
+@media (hover:hover) and (pointer:fine){
+  html.mo .card:not(.hero):not(.mapc):not(.radarc)::after{content:"";position:absolute;inset:0;z-index:1;border-radius:inherit;pointer-events:none;
+    background:radial-gradient(340px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.075),transparent 62%);opacity:0;transition:opacity .35s}
+  html.mo .card:not(.hero):not(.mapc):not(.radarc):hover::after{opacity:1}
+  /* главная карточка слегка наклоняется за курсором и пружинит назад */
+  html.mo .hero{transform:perspective(1000px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .6s var(--mo-spring),border-color .25s;will-change:transform}
+  html.mo .hero.mo-tilting{transition:transform .12s linear,border-color .25s}
+}
+
+/* ---------- параллакс главной карточки: содержимое чуть отстаёт от рамки и гаснет, когда карточка уходит вверх ---------- */
+html.mo #hero{transform:translate3d(0,calc(var(--pp,0)*28px),0);opacity:calc(1 - var(--pp,0)*.55);will-change:transform,opacity}
+
+/* ---------- пружинное нажатие ---------- */
+html.mo :is(.chip,.wbtn,.nowbtn,.play,.seg button,.bnav button,.nsheet button,.install,.star){
+  transition:transform .45s var(--mo-spring),background-color .25s,color .25s,border-color .25s,box-shadow .25s}
+html.mo :is(.chip,.wbtn,.nowbtn,.play,.seg button,.bnav button,.nsheet button,.install,.star):active{transform:scale(.94);transition-duration:.1s}
+
+/* ---------- нижняя панель: значок «подпрыгивает», меню разворачивается ---------- */
+@keyframes mo-pop{0%{transform:scale(.72) translateY(3px)}60%{transform:scale(1.18) translateY(-2px)}100%{transform:none}}
+@keyframes mo-sheet{from{opacity:0;transform:translateY(14px) scale(.96)}}
+@media(max-width:860px){
+  html.mo .bnav button[aria-current=true] i{animation:mo-pop .55s var(--mo-spring)}
+  html.mo .nsheet:not([hidden]){animation:mo-sheet .3s var(--mo-spring)}
+}
+
+/* ---------- состояния загрузки: плашки не схлопываются, пока данных нет ---------- */
+html.mo .card>.state{min-height:96px}
+html.mo .hero #hero>.state{min-height:200px}
+/* когда показана ошибка, блеск «идёт загрузка» вводит в заблуждение */
+html.mo .err[style*="block"] ~ .grid .state{animation:none;background:none}
